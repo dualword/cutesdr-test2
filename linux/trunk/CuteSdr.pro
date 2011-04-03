@@ -4,10 +4,30 @@
 #
 #-------------------------------------------------
 
+# check Qt version, 4.7is mandatory due to usage of some class introduced in Qt library only since release 4.7
+
+QT_VERSION = $$[QT_VERSION]
+QT_VERSION = $$split(QT_VERSION, ".")
+QT_VER_MAJ = $$member(QT_VERSION, 0)
+QT_VER_MIN = $$member(QT_VERSION, 1)
+lessThan(QT_VER_MAJ, 4) | lessThan(QT_VER_MIN, 7) {
+   error(CuteSDR requires Qt 4.7 or newer but Qt $$[QT_VERSION] was detected.)
+}
+
+
 QT += core gui
 QT += network
-QT += multimedia
 
+#
+# Ubuntu 10.10: changes due to some strangeness in Debian Qt packages 
+# 
+
+linux-g++ {
+  INCLUDEPATH += $$quote(/usr/include/QtMultimediaKit)
+  LIBS += $$quote(-lQtMultimediaKit)
+} else {
+  QT += multimedia
+} 
 
 TARGET = CuteSdr
 TEMPLATE = app
