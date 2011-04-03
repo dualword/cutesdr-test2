@@ -1,6 +1,7 @@
 #-------------------------------------------------
 #
 # Project created by QtCreator 2010-09-15T13:53:54
+# patched for U10.10, Andrea IW0HDV, Ken N9VV
 #
 #-------------------------------------------------
 
@@ -25,6 +26,17 @@ QT += network
 linux-g++ {
   INCLUDEPATH += $$quote(/usr/include/QtMultimediaKit)
   LIBS += $$quote(-lQtMultimediaKit)
+
+  # compiler optimization options, as per suggestion by Ken N9VV
+  QMAKE_CXXFLAGS += -O3 \
+                    -mfpmath=sse \
+                    -msse \
+                    -msse2 \
+                    -msse3 \
+                    -fomit-frame-pointer \
+                    -ffast-math \
+                    -march=i686 \
+                    -fexceptions 
 } else {
   QT += multimedia
 } 
