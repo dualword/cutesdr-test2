@@ -6,7 +6,7 @@ sudo apt-get  install qt4-dev-tools
 # checkout the repository in your home directory
 cd
 svn co https://cutesdr.svn.sourceforge.net/svnroot/cutesdr/branches/iw0hdv/linux/trunk/ cutesdr-lx
-cd cutesdr-lx/trunk
+cd cutesdr-lx/
 
 # generate the Makefile
 qmake-qt4 CuteSdr.pro
