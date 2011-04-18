@@ -1,7 +1,7 @@
 1. Build instructions on Ubuntu 10.10 - Andrea Montefusco IW0HDV - andrew att montefusco dott com
 
 # install the Qt packages
-sudo apt-get  install qt4-dev-tools
+sudo apt-get  install qt4-dev-tools qtmobility-dev
 
 # checkout the repository in your home directory
 cd
