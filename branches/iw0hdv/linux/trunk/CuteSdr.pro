@@ -20,7 +20,7 @@ QT += core gui
 QT += network
 
 #
-# Ubuntu 10.10: changes due to some strangeness in Debian Qt packages 
+# Ubuntu 10.10 and 11.04: changes due to some strangeness in Debian Qt packages 
 # 
 linux-g++ {
     #
@@ -30,13 +30,21 @@ linux-g++ {
     DISTRO_MAJ=$$system(cat /etc/issue | head -n1 | cut -f2 -d\' \' | cut -f1 -d\\.)
     DISTRO_MIN=$$system(cat /etc/issue | head -n1 | cut -f2 -d\' \' | cut -f2 -d\\.)
 
-    # specific to Ubuntu
+    # specific to Ubuntu 10.10
     equals(DISTRO,Ubuntu):equals(DISTRO_MAJ,10):equals(DISTRO_MIN,10) {
-       message(Linux $$DISTRO $$DISTRO_MAJ.$$DISTRO_MIN)
+       message(Linux $$DISTRO $$DISTRO_MAJ $$DISTRO_MIN)
        INCLUDEPATH += $$quote(/usr/include/QtMultimediaKit)
        LIBS += $$quote(-lQtMultimediaKit)
     } else {
-       QT += multimedia
+       # specific to Ubuntu 11.04
+       equals(DISTRO,Ubuntu):equals(DISTRO_MAJ,11):equals(DISTRO_MIN,04) {
+          message(Linux $$DISTRO $$DISTRO_MAJ $$DISTRO_MIN)
+          INCLUDEPATH += $$quote(/usr/include/QtMobility)
+          INCLUDEPATH += $$quote(/usr/include/QtMultimediaKit)
+          LIBS += $$quote(-lQtMultimediaKit)
+       } else {
+          QT += multimedia
+       }
     }
 }
 
