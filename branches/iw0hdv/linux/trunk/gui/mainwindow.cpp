@@ -8,6 +8,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-04-16  Added Frequency range logic
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -59,7 +60,7 @@ QUdpSocket g_UdpDiscoverSocket;	//global hack to get around bug in UDP sockets
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION "CuteSdr 1.00 "
+#define PROGRAM_TITLE_VERSION "CuteSdr 1.01 "
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -136,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	//tmp save demod freq since gets set to center freq by center freq control inititalization
 	qint64 tmpdemod = m_DemodFrequency;
 
-	ui->frameFreqCtrl->Setup(9, 10000U, 32000000U, 1, UNITS_KHZ );
+	ui->frameFreqCtrl->Setup(9, 100U, 500000000U, 1, UNITS_KHZ );
 	ui->frameFreqCtrl->SetBkColor(Qt::darkBlue);
 	ui->frameFreqCtrl->SetDigitColor(Qt::cyan);
 	ui->frameFreqCtrl->SetUnitsColor(Qt::lightGray);
@@ -144,7 +145,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->frameFreqCtrl->SetFrequency(m_CenterFrequency);
 
 	m_DemodFrequency = tmpdemod;
-	ui->frameDemodFreqCtrl->Setup(9, 100U, 32000000U, 1, UNITS_KHZ );
+	ui->frameDemodFreqCtrl->Setup(9, 100U, 500000000U, 1, UNITS_KHZ );
 	ui->frameDemodFreqCtrl->SetBkColor(Qt::darkBlue);
 	ui->frameDemodFreqCtrl->SetDigitColor(Qt::white);
 	ui->frameDemodFreqCtrl->SetUnitsColor(Qt::lightGray);
@@ -208,6 +209,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	if(m_UseTestBench)
 	{
+		//make sure top of dialog is visable(0,0 doesn't include menu bar.Qt bug?)
+		if(m_TestBenchRect.top()<30)
+			m_TestBenchRect.setTop(30);
 		g_pTestBench->setGeometry(m_TestBenchRect);
 		g_pTestBench->show();
 		g_pTestBench->Init();
@@ -302,7 +306,6 @@ void MainWindow::writeSettings()
 	settings.setValue("AlwaysOnTop",m_AlwaysOnTop);
 	settings.setValue("Volume",m_Volume);
 	settings.setValue("Percent2DScreen",m_Percent2DScreen);
-
 
 	//Get NCO spur offsets and save
 	m_pSdrInterface->ManageNCOSpurOffsets(CSdrInterface::NCOSPUR_CMD_READ,
@@ -524,7 +527,7 @@ CDisplayDlg dlg(this);
 			}
 		}
 		if(m_Percent2DScreen != dlg.m_Percent2DScreen)
-		{	//if @D screen size changed then update it
+		{	//if 2D screen size changed then update it
 			m_Percent2DScreen = dlg.m_Percent2DScreen;
 			ui->framePlot->SetPercent2DScreen(m_Percent2DScreen);
 		}
@@ -541,6 +544,9 @@ CDisplayDlg dlg(this);
 		{	//make TestBench visable if not already
 			if(!g_pTestBench->isVisible())
 			{
+				//make sure top of dialog is visable(0,0 doesn't include menu bar.Qt bug?)
+				if(m_TestBenchRect.top()<30)
+					m_TestBenchRect.setTop(30);
 				g_pTestBench->setGeometry(m_TestBenchRect);
 				g_pTestBench->show();
 				g_pTestBench->Init();
@@ -590,7 +596,7 @@ CSdrSetupDlg dlg(this,m_pSdrInterface);
 	dlg.InitDlg();
 	if( dlg.exec() )
 	{
-		if(m_BandwidthIndex != dlg.m_BandwidthIndex)
+		if( m_BandwidthIndex != dlg.m_BandwidthIndex )
 		{
 			m_BandwidthIndex = dlg.m_BandwidthIndex;
 			if(CSdrInterface::RUNNING == m_Status)
@@ -690,7 +696,7 @@ void MainWindow::OnRun()
 {
 	if( CSdrInterface::CONNECTED == m_Status)
 	{
-		m_pSdrInterface->SetRxFreq(m_CenterFrequency);
+		m_CenterFrequency = m_pSdrInterface->SetRxFreq(m_CenterFrequency);
 		m_pSdrInterface->SetDemodFreq(m_CenterFrequency - m_DemodFrequency);
 		m_pSdrInterface->StartSdr();
 		m_pSdrInterface->m_MissedPackets = 0;
@@ -805,9 +811,11 @@ void MainWindow::OnNewInfoData()
 /////////////////////////////////////////////////////////////////////
 void MainWindow::OnNewCenterFrequency(qint64 freq)
 {
-	m_CenterFrequency = freq;
-	m_DemodFrequency = freq;
-	m_pSdrInterface->SetRxFreq(m_CenterFrequency);
+//qDebug()<<"F = "<<freq;
+	m_CenterFrequency = m_pSdrInterface->SetRxFreq(freq);
+	if(m_CenterFrequency!=freq)	//if freq was clamped by sdr range then update control again
+		ui->frameFreqCtrl->SetFrequency(m_CenterFrequency);
+	m_DemodFrequency = m_CenterFrequency;
 	m_pSdrInterface->SetDemodFreq(m_CenterFrequency - m_DemodFrequency);
 	ui->framePlot->SetCenterFreq( m_CenterFrequency );
 	ui->framePlot->SetDemodCenterFreq( m_DemodFrequency );
