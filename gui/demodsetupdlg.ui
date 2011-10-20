@@ -35,7 +35,7 @@
      <x>10</x>
      <y>10</y>
      <width>101</width>
-     <height>191</height>
+     <height>211</height>
     </rect>
    </property>
    <property name="title">
@@ -47,7 +47,7 @@
       <x>20</x>
       <y>21</y>
       <width>56</width>
-      <height>157</height>
+      <height>181</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -69,6 +69,13 @@
       <widget class="QRadioButton" name="FMradioButton">
        <property name="text">
         <string>FM</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="WFMradioButton">
+       <property name="text">
+        <string>WFM</string>
        </property>
       </widget>
      </item>
@@ -393,8 +400,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>53</x>
-     <y>106</y>
+     <x>54</x>
+     <y>140</y>
     </hint>
     <hint type="destinationlabel">
      <x>241</x>
@@ -409,8 +416,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>44</x>
-     <y>138</y>
+     <x>45</x>
+     <y>163</y>
     </hint>
     <hint type="destinationlabel">
      <x>178</x>
@@ -425,8 +432,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>64</x>
-     <y>156</y>
+     <x>65</x>
+     <y>186</y>
     </hint>
     <hint type="destinationlabel">
      <x>124</x>
@@ -441,8 +448,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>35</x>
-     <y>179</y>
+     <x>36</x>
+     <y>209</y>
     </hint>
     <hint type="destinationlabel">
      <x>35</x>
@@ -514,6 +521,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>WFMradioButton</sender>
+   <signal>clicked()</signal>
+   <receiver>CDemodSetupDlg</receiver>
+   <slot>ModeChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>57</x>
+     <y>109</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>175</x>
+     <y>154</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>ModeChanged()</slot>
@@ -521,5 +544,6 @@
   <slot>OnAgcOn(bool)</slot>
   <slot>OnHangOn(bool)</slot>
   <slot>OnSquelchChanged(int)</slot>
+  <slot>OnUSFm(bool)</slot>
  </slots>
 </ui>

@@ -149,7 +149,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Find SDR's</string>
+    <string>Find SDRs</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_SDR">

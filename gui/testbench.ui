@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>633</width>
+    <width>695</width>
     <height>400</height>
    </rect>
   </property>
@@ -88,6 +88,43 @@
        </property>
        <property name="text">
         <string>Enable Peak</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="horizontalSliderTest">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="minimum">
+        <number>-34156</number>
+       </property>
+       <property name="maximum">
+        <number>34156</number>
+       </property>
+       <property name="singleStep">
+        <number>10</number>
+       </property>
+       <property name="pageStep">
+        <number>10</number>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+       <property name="sliderPosition">
+        <number>0</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -338,7 +375,7 @@
         <property name="geometry">
          <rect>
           <x>220</x>
-          <y>20</y>
+          <y>10</y>
           <width>70</width>
           <height>17</height>
          </rect>
@@ -423,6 +460,25 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBoxFm">
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>40</y>
+          <width>70</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>70</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>FM Stereo</string>
         </property>
        </widget>
       </widget>
@@ -587,8 +643,8 @@
    <slot>OnTimeDisplay(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>116</x>
-     <y>354</y>
+     <x>109</x>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
      <x>40</x>
@@ -603,8 +659,8 @@
    <slot>OnDisplayRate(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>279</x>
-     <y>355</y>
+     <x>375</x>
+     <y>237</y>
     </hint>
     <hint type="destinationlabel">
      <x>234</x>
@@ -620,7 +676,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>613</x>
-     <y>406</y>
+     <y>288</y>
     </hint>
     <hint type="destinationlabel">
      <x>539</x>
@@ -636,7 +692,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>613</x>
-     <y>436</y>
+     <y>318</y>
     </hint>
     <hint type="destinationlabel">
      <x>541</x>
@@ -652,7 +708,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>613</x>
-     <y>498</y>
+     <y>380</y>
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
@@ -667,8 +723,8 @@
    <slot>Reset()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>392</x>
-     <y>358</y>
+     <x>456</x>
+     <y>240</y>
     </hint>
     <hint type="destinationlabel">
      <x>231</x>
@@ -683,8 +739,8 @@
    <slot>OnSweepStart(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>115</x>
-     <y>406</y>
+     <x>120</x>
+     <y>288</y>
     </hint>
     <hint type="destinationlabel">
      <x>75</x>
@@ -699,8 +755,8 @@
    <slot>OnSweepStop(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>79</x>
-     <y>436</y>
+     <x>89</x>
+     <y>318</y>
     </hint>
     <hint type="destinationlabel">
      <x>7</x>
@@ -715,8 +771,8 @@
    <slot>OnSweepRate(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>52</x>
-     <y>466</y>
+     <x>62</x>
+     <y>348</y>
     </hint>
     <hint type="destinationlabel">
      <x>5</x>
@@ -732,7 +788,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>613</x>
-     <y>466</y>
+     <y>348</y>
     </hint>
     <hint type="destinationlabel">
      <x>470</x>
@@ -747,8 +803,8 @@
    <slot>OnProfile(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>590</x>
-     <y>356</y>
+     <x>622</x>
+     <y>238</y>
     </hint>
     <hint type="destinationlabel">
      <x>608</x>
@@ -763,8 +819,8 @@
    <slot>OnSignalPwr(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>179</x>
-     <y>399</y>
+     <x>189</x>
+     <y>290</y>
     </hint>
     <hint type="destinationlabel">
      <x>163</x>
@@ -779,8 +835,8 @@
    <slot>OnGenOn(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>236</x>
-     <y>392</y>
+     <x>271</x>
+     <y>275</y>
     </hint>
     <hint type="destinationlabel">
      <x>238</x>
@@ -795,8 +851,8 @@
    <slot>OnNoisePwr(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>102</x>
-     <y>493</y>
+     <x>112</x>
+     <y>380</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -811,8 +867,8 @@
    <slot>OnPulseWidth(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>271</x>
-     <y>458</y>
+     <x>281</x>
+     <y>350</y>
     </hint>
     <hint type="destinationlabel">
      <x>306</x>
@@ -827,8 +883,8 @@
    <slot>OnPulsePeriod(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>226</x>
-     <y>489</y>
+     <x>236</x>
+     <y>380</y>
     </hint>
     <hint type="destinationlabel">
      <x>296</x>
@@ -843,12 +899,44 @@
    <slot>OnEnablePeak(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>184</x>
-     <y>343</y>
+     <x>225</x>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
      <x>194</x>
      <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>horizontalSliderTest</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>CTestBench</receiver>
+   <slot>OnTestSlider1(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>271</x>
+     <y>226</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>291</x>
+     <y>242</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxFm</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>CTestBench</receiver>
+   <slot>OnFmGen(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>299</x>
+     <y>296</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>333</x>
+     <y>294</y>
     </hint>
    </hints>
   </connection>
@@ -873,5 +961,8 @@
   <slot>OnPulseWidth(int)</slot>
   <slot>OnPulsePeriod(int)</slot>
   <slot>OnEnablePeak(bool)</slot>
+  <slot>OnTestSlider1()</slot>
+  <slot>OnTestSlider1(int)</slot>
+  <slot>OnFmGen(bool)</slot>
  </slots>
 </ui>

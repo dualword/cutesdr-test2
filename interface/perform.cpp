@@ -13,7 +13,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 
-//#define USE_PERFORMANCE	//uncomment to use
+#define USE_PERFORMANCE	//uncomment to use
 
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +

@@ -16,6 +16,7 @@
 #define VERT_DIVS 14	//specify grid screen divisions
 #define HORZ_DIVS 10
 
+#define MAX_TXT 128
 
 class CPlotter : public QFrame
 {
@@ -43,6 +44,9 @@ public:
 	void SetADOverload(bool ADOverLoad){m_ADOverLoad = ADOverLoad;m_ADOverloadOneShotCounter=0;}
 	void SetdBStepSize(int stepsz){m_dBStepSize=stepsz;}
 	void UpdateOverlay(){DrawOverlay();}
+
+	char m_RdsCall[MAX_TXT];
+	char m_RdsText[MAX_TXT];
 
 signals:
 	void NewCenterFreq(qint64 f);

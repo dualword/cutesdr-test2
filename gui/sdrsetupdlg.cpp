@@ -6,6 +6,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-08-07  Added Spectrum inversion Support
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -76,22 +77,27 @@ void CSdrSetupDlg::InitDlg()
 	ui->radioButtonRate3->setText(m_Str1 + m_Str2 );
 
 	if(0==m_RfGain)
-		ui->radioButtonAttn0->setChecked(TRUE);
+		ui->radioButtonAttn0->setChecked(true);
 	else if(-10==m_RfGain)
-		ui->radioButtonAttn10->setChecked(TRUE);
+		ui->radioButtonAttn10->setChecked(true);
 	else if(-20==m_RfGain)
-		ui->radioButtonAttn20->setChecked(TRUE);
+		ui->radioButtonAttn20->setChecked(true);
 	else if(-30==m_RfGain)
-		ui->radioButtonAttn30->setChecked(TRUE);
+		ui->radioButtonAttn30->setChecked(true);
 
 	if(0 == m_BandwidthIndex)
-		ui->radioButtonRate0->setChecked(TRUE);
+		ui->radioButtonRate0->setChecked(true);
 	else if(1 == m_BandwidthIndex)
-		ui->radioButtonRate1->setChecked(TRUE);
+		ui->radioButtonRate1->setChecked(true);
 	else if(2 == m_BandwidthIndex)
-		ui->radioButtonRate2->setChecked(TRUE);
+		ui->radioButtonRate2->setChecked(true);
 	else if(3 == m_BandwidthIndex)
-		ui->radioButtonRate3->setChecked(TRUE);
+		ui->radioButtonRate3->setChecked(true);
+
+	if(m_USFm)
+		ui->checkBoxUSFmVer->setChecked(true);
+	else
+		ui->checkBoxUSFmVer->setChecked(false);
 
 	ui->labelRadioType->setText(m_pSdrInterface->m_DeviceName);
 }
@@ -121,6 +127,11 @@ void CSdrSetupDlg::accept()
 		m_BandwidthIndex = 2;
 	else if(ui->radioButtonRate3->isChecked())
 		m_BandwidthIndex = 3;
+
+	if( ui->checkBoxUSFmVer->isChecked() )
+		m_USFm = true;
+	else
+		m_USFm = false;
 
 	QDialog::accept();
 }
