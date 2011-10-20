@@ -13,6 +13,7 @@
 #include "interface/sdrinterface.h"
 #include <QHostAddress>
 #include "gui/demodsetupdlg.h"
+#include "rdsdecode.h"
 
 
 
@@ -77,6 +78,8 @@ private:
 	bool m_UseTestBench;
 	bool m_AlwaysOnTop;
 	bool m_AgcOn;
+	bool m_InvertSpectrum;
+	bool m_USFm;
 	qint64 m_CenterFrequency;
 	qint64 m_DemodFrequency;
 	quint32 m_SpanFrequency;
@@ -102,6 +105,7 @@ private:
 	double m_NCOSpurOffsetQ;
 	tNoiseProcdInfo m_NoiseProcSettings;
 
+	bool m_FreqChanged;
 	QRect m_TestBenchRect;
 	QString m_Str;
 	QString m_Str2;
@@ -111,6 +115,7 @@ private:
 	QTimer *m_pTimer;
 	CSdrInterface* m_pSdrInterface;
 	CDemodSetupDlg* m_pDemodSetupDlg;
+	CRdsDecode m_RdsDecode;
 	qint32 m_KeepAliveTimer;
 	Ui::MainWindow *ui;
 };

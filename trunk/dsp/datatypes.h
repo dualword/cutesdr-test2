@@ -43,6 +43,9 @@ typedef struct _isCplx
 //#define K_2PI (8.0*atan(1))	//maybe some compilers are't too smart to optimize out
 #define K_2PI (2.0 * 3.14159265358979323846)
 #define K_PI (3.14159265358979323846)
+#define K_PI4 (K_PI/4.0)
+#define K_PI2 (K_PI/2.0)
+#define K_3PI4 (3.0*K_PI4)
 
 
 #endif // DATATYPES_H

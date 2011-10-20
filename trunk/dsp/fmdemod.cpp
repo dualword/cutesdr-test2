@@ -6,6 +6,7 @@
 // History:
 //	2011-01-17  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-08-07  Modified FIR filter initialization to force fixed size
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -42,19 +43,21 @@
 #include <QDebug>
 
 
-#define FMPLL_RANGE 6000.0	//maximum deviation limit of PLL
+#define FMPLL_RANGE 15000.0	//maximum deviation limit of PLL
 #define VOICE_BANDWIDTH 3000.0
 
-#define FMPLL_BW VOICE_BANDWIDTH*2.0	//natural frequency ~loop bandwidth
+#define FMPLL_BW VOICE_BANDWIDTH	//natural frequency ~loop bandwidth
 #define FMPLL_ZETA .707				//PLL Loop damping factor
 
-#define FMDC_ALPHA 0.01	//time constant for DC removal filter
+#define FMDC_ALPHA 0.001	//time constant for DC removal filter
 
-#define MAX_FMOUT 25000.0
+#define MAX_FMOUT 100000.0
 
-#define SQUELCH_MAX 5000.0		//roughly the maximum noise average with no signal
+#define SQUELCH_MAX 8000.0		//roughly the maximum noise average with no signal
 #define SQUELCHAVE_TIMECONST .02
-#define SQUELCH_HYSTERESIS 100.0
+#define SQUELCH_HYSTERESIS 50.0
+
+#define DEMPHASIS_TIME 80e-6
 
 /////////////////////////////////////////////////////////////////////////////////
 //	Construct FM demod object
@@ -64,6 +67,17 @@ CFmDemod::CFmDemod(TYPEREAL samplerate) : m_SampleRate(samplerate)
 	m_FreqErrorDC = 0.0;
 	m_NcoPhase = 0.0;
 	m_NcoFreq = 0.0;
+
+	SetSampleRate(m_SampleRate);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+// Sets sample rate and adjusts any parameters that are affected.
+/////////////////////////////////////////////////////////////////////////////////
+void CFmDemod::SetSampleRate(TYPEREAL samplerate)
+{
+	m_SampleRate = samplerate;
 
 	TYPEREAL norm = K_2PI/m_SampleRate;	//to normalize Hz to radians
 
@@ -84,7 +98,11 @@ CFmDemod::CFmDemod(TYPEREAL samplerate) : m_SampleRate(samplerate)
 	m_SquelchState = true;
 	m_SquelchAlpha = (1.0-exp(-1.0/(m_SampleRate*SQUELCHAVE_TIMECONST)) );
 
-	m_LpIir.InitLP(VOICE_BANDWIDTH, 1.0,m_SampleRate);
+	m_DeemphasisAlpha = (1.0-exp(-1.0/(m_SampleRate*DEMPHASIS_TIME)) );
+	m_DeemphasisAve = 0.0;
+
+	m_LpFir.InitLPFilter(0,1.0,50.0,VOICE_BANDWIDTH, 1.6*VOICE_BANDWIDTH, m_SampleRate);
+
 	InitNoiseSquelch();
 }
 
@@ -103,7 +121,8 @@ void CFmDemod::SetSquelch(int Value)
 /////////////////////////////////////////////////////////////////////////////////
 void CFmDemod::InitNoiseSquelch()
 {
-	m_HpFir.InitHPFilter(1.0, 50.0, m_SquelchHPFreq, m_SquelchHPFreq*.6, m_SampleRate);
+	m_HpFir.InitHPFilter(0, 1.0, 50.0, m_SquelchHPFreq*.8, m_SquelchHPFreq*.65, m_SampleRate);
+//	m_HpFir.InitHPFilter(0, 1.0, 50.0, VOICE_BANDWIDTH*2.0, VOICE_BANDWIDTH, m_SampleRate);
 }
 
 
@@ -123,7 +142,7 @@ void CFmDemod::PerformNoiseSquelch(int InLength, TYPEREAL* pOutData)
 		TYPEREAL mag = fabs( sqbuf[i] );	//get magnitude of High pass filtered data
 		// exponential filter squelch magnitude
 		m_SquelchAve = (1.0-m_SquelchAlpha)*m_SquelchAve + m_SquelchAlpha*mag;
-//g_pTestBench->DisplayData(1, &m_SquelchAve, m_SampleRate,PROFILE_6);
+//g_pTestBench->DisplayData(1, &m_SquelchAve, m_SampleRate,PROFILE_3);
 	}
 	//perform squelch compare to threshold using some Hysteresis
 	if(0==m_SquelchThreshold)
@@ -140,6 +159,7 @@ void CFmDemod::PerformNoiseSquelch(int InLength, TYPEREAL* pOutData)
 		if(m_SquelchAve >= (m_SquelchThreshold+SQUELCH_HYSTERESIS))
 			m_SquelchState = true;
 	}
+//m_SquelchState = false;
 	if(m_SquelchState)
 	{	//zero output if squelched
 		for(int i=0; i<InLength; i++)
@@ -147,7 +167,9 @@ void CFmDemod::PerformNoiseSquelch(int InLength, TYPEREAL* pOutData)
 	}
 	else
 	{	//low pass filter audio if squelch is open
-		m_LpIir.ProcessFilter(InLength, pOutData, pOutData);
+//		ProcessDeemphasisFilter(InLength, pOutData, pOutData);
+		m_LpFir.ProcessFilter(InLength, pOutData, pOutData);
+g_pTestBench->DisplayData(InLength, pOutData, m_SampleRate,PROFILE_6);
 	}
 }
 
@@ -171,7 +193,6 @@ TYPECPX tmp;
 		tmp.im = Cos * pInData[i].im + Sin * pInData[i].re;
 		//find current sample phase after being shifted by NCO frequency
 		TYPEREAL phzerror = -atan2(tmp.im, tmp.re);
-
 		//create new NCO frequency term
 		m_NcoFreq += (m_PllBeta * phzerror);		//  radians per sampletime
 		//clamp NCO frequency so doesn't get out of lock range
@@ -186,6 +207,7 @@ TYPECPX tmp;
 		//subtract out DC term to get FM audio
 		pOutData[i] = (m_NcoFreq-m_FreqErrorDC)*m_OutGain;
 	}
+//g_pTestBench->DisplayData(InLength, pOutData, m_SampleRate, PROFILE_3);
 	m_NcoPhase = fmod(m_NcoPhase, K_2PI);	//keep radian counter bounded
 	PerformNoiseSquelch(InLength, pOutData);	//calculate squelch
 	return InLength;
@@ -233,5 +255,18 @@ TYPECPX tmp;
 		pOutData[i].im = m_OutBuf[i];
 	}
 	return InLength;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+//	Process InLength InBuf[] samples and place in OutBuf[]
+//MONO version
+/////////////////////////////////////////////////////////////////////////////////
+void CFmDemod::ProcessDeemphasisFilter(int InLength, TYPEREAL* InBuf, TYPEREAL* OutBuf)
+{
+	for(int i=0; i<InLength; i++)
+	{
+		m_DeemphasisAve = (1.0-m_DeemphasisAlpha)*m_DeemphasisAve + m_DeemphasisAlpha*InBuf[i];
+		OutBuf[i] = m_DeemphasisAve;
+	}
 }
 

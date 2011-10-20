@@ -66,6 +66,7 @@ SOURCES += gui/main.cpp \
 	gui/sliderctrl.cpp \
 	gui/noiseprocdlg.cpp \
 	gui/aboutdlg.cpp \
+	gui/rdsdecode.cpp \
 	interface/soundout.cpp \
     interface/sdrinterface.cpp \
     interface/netiobase.cpp \
@@ -84,7 +85,9 @@ SOURCES += gui/main.cpp \
     dsp/fmdemod.cpp \
 	dsp/fir.cpp \
     dsp/iir.cpp \
-	dsp/noiseproc.cpp
+	dsp/noiseproc.cpp \
+    dsp/wfmdemod.cpp \
+	dsp/wfmmod.cpp
 
 
 HEADERS  += gui/mainwindow.h \
@@ -102,6 +105,7 @@ HEADERS  += gui/mainwindow.h \
 	gui/meter.h \
 	gui/noiseprocdlg.h \
 	gui/aboutdlg.h \
+	gui/rdsdecode.h \
 	interface/soundout.h \
     interface/sdrinterface.h \
     interface/protocoldefs.h \
@@ -124,7 +128,10 @@ HEADERS  += gui/mainwindow.h \
     dsp/fmdemod.h \
 	dsp/fir.h \
     dsp/iir.h \
-	dsp/noiseproc.h
+	dsp/noiseproc.h \
+    dsp/wfmdemod.h \
+    dsp/wfmmod.h \
+	dsp/rbdsconstants.h
 
 FORMS += gui/mainwindow.ui \
 	gui/sdrdiscoverdlg.ui \
@@ -146,7 +153,8 @@ macx {
 	LIBS += -framework \
 		IOKit \
 		-framework \
-		CoreFoundation
+                CoreFoundation
+		ICON=cutesdr1.icns
 }
 win32 {
 	SOURCES +=

@@ -106,13 +106,17 @@ public slots:
 private slots:
 	void OnFind();
 	void OnItemDoubleClick( QListWidgetItem * item );
-	void OnTimerRead();
+	void ReadUDPMessages();
+	void SendDiscoverRequest();
+	void CloseUdp();
 
 private:
     Ui::CSdrDiscoverDlg *ui;
 	void ParseMsg(int index);
-	void ReadUDPMessages();
 	QTimer m_Timer;
+	QTimer m_CloseTimer;
+	bool m_UdpOpen;
+//	QUdpSocket* m_pUdpDiscoverSocket;
 	tDiscover_COMMONMSG m_DiscovermsgCommon[MAX_DEVICES];
 	tDiscover_NETSDR m_DiscovermsgNetSDR[MAX_DEVICES];
 	tDiscover_SDRxx m_DiscovermsgSDRxx[MAX_DEVICES];

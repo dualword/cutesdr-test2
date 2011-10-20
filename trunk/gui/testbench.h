@@ -18,6 +18,10 @@
 
 #include "dsp/datatypes.h"
 #include "dsp/fft.h"
+#include "dsp/wfmmod.h"
+
+
+extern double g_TestValue;
 
 
 //////////////////////////////////////////////////////////////////////
@@ -38,11 +42,9 @@
 #define NUM_PROFILES 8
 
 
-#define TB_VERT_DIVS 18	//specify grid screen divisions
-#define TB_HORZ_DIVS 10
-#define TB_TIMEVERT_DIVS 10	//specify time display grid screen divisions
 #define TEST_FFTSIZE 2048
 
+#define TB_HORZ_DIVS 10
 #define TB_MAX_SCREENSIZE 2048
 
 
@@ -88,6 +90,7 @@ public:
 	bool m_PeakOn;
 	bool m_NewDataIsCpx;
 	bool m_CurrentDataIsCpx;
+	bool m_UseFmGen;
 	int m_Profile;
 	int m_TrigIndex;
 	int m_DisplayRate;
@@ -110,6 +113,7 @@ public slots:
 	void OnTimer();
 
 	void OnGenOn(bool On);
+	void OnFmGen(bool On);
 	void OnTimeDisplay(bool timemode);
 	void OnEnablePeak(bool enablepeak);
 	void OnSweepStart(int start);
@@ -125,6 +129,7 @@ public slots:
 	void OnPulsePeriod(int pperiod);
 	void OnSignalPwr(int pwr);
 	void OnNoisePwr(int pwr);
+	void OnTestSlider1(int val);
 
 signals:
 	void ResetSignal();		//internal signals from worker thread called functions
@@ -191,6 +196,7 @@ private:
 
 	CFft m_Fft;
 	QFile m_File;
+	CWFmMod* m_pWFmMod;
 
 };
 

@@ -47,7 +47,8 @@
 CDemodulator::CDemodulator()
 {
 	m_DesiredMaxOutputBandwidth = 48000.0;
-	m_OutputRate = 48000.0;
+	m_DownConverterOutputRate = 48000.0;
+	m_DemodOutputRate = 48000.0;
 	m_pDemodInBuf = new TYPECPX[MAX_INBUFSIZE];
 	m_pDemodTmpBuf = new TYPECPX[MAX_INBUFSIZE];
 	m_InBufPos = 0;
@@ -56,6 +57,9 @@ CDemodulator::CDemodulator()
 	m_pAmDemod = NULL;
 	m_pSamDemod = NULL;
 	m_pSsbDemod = NULL;
+	m_pFmDemod = NULL;
+	m_pWFmDemod = NULL;
+	m_USFm = true;
 	SetDemodFreq(0.0);
 }
 
@@ -79,11 +83,14 @@ void CDemodulator::DeleteAllDemods()
 		delete m_pSamDemod;
 	if(m_pFmDemod)
 		delete m_pFmDemod;
+	if(m_pWFmDemod)
+		delete m_pWFmDemod;
 	if(m_pSsbDemod)
 		delete m_pSsbDemod;
 	m_pAmDemod = NULL;
 	m_pSamDemod = NULL;
 	m_pFmDemod = NULL;
+	m_pWFmDemod = NULL;
 	m_pSsbDemod = NULL;
 }
 
@@ -96,7 +103,30 @@ void CDemodulator::SetInputSampleRate(TYPEREAL InputRate)
 	if(m_InputRate != InputRate)
 	{
 		m_InputRate = InputRate;
-		m_OutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+		//change any demod parameters that may occur with sample rate change
+		switch(m_DemodMode)
+		{
+			case DEMOD_FM:
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_DemodOutputRate = m_DownConverterOutputRate;
+				if(m_pFmDemod)
+					m_pFmDemod->SetSampleRate(m_DownConverterOutputRate);
+				break;
+			case DEMOD_WFM:
+				m_DownConverterOutputRate = m_DownConvert.SetWfmDataRate(m_InputRate, 100000);
+				if(m_pWFmDemod)
+					m_DemodOutputRate = m_pWFmDemod->SetSampleRate(m_DownConverterOutputRate, m_USFm);
+				break;
+			case DEMOD_AM:
+			case DEMOD_SAM:
+			case DEMOD_USB:
+			case DEMOD_LSB:
+			case DEMOD_CWU:
+			case DEMOD_CWL:
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_DemodOutputRate = m_DownConverterOutputRate;
+				break;
+		}
 	}
 }
 
@@ -117,42 +147,55 @@ void CDemodulator::SetDemod(int Mode, tDemodInfo CurrentDemodInfo)
 			m_DesiredMaxOutputBandwidth = -m_DemodInfo.LowCutmin;
 		else
 			m_DesiredMaxOutputBandwidth = m_DemodInfo.HiCutmax;
-		m_OutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+
 		//now create correct demodulator
 		switch(m_DemodMode)
 		{
 			case DEMOD_AM:
-				m_pAmDemod = new CAmDemod(m_OutputRate);
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_pAmDemod = new CAmDemod(m_DownConverterOutputRate);
+				m_DemodOutputRate = m_DownConverterOutputRate;
 				break;
 			case DEMOD_SAM:
-				m_pSamDemod = new CSamDemod(m_OutputRate);
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_pSamDemod = new CSamDemod(m_DownConverterOutputRate);
+				m_DemodOutputRate = m_DownConverterOutputRate;
 				break;
 			case DEMOD_FM:
-				m_pFmDemod = new CFmDemod(m_OutputRate);
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_pFmDemod = new CFmDemod(m_DownConverterOutputRate);
+				m_DemodOutputRate = m_DownConverterOutputRate;
+				break;
+			case DEMOD_WFM:
+				m_DownConverterOutputRate = m_DownConvert.SetWfmDataRate(m_InputRate, 100000);
+				m_pWFmDemod = new CWFmDemod(m_DownConverterOutputRate);
+				m_DemodOutputRate = m_pWFmDemod->GetDemodRate();
 				break;
 			case DEMOD_USB:
 			case DEMOD_LSB:
 			case DEMOD_CWU:
 			case DEMOD_CWL:
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
 				m_pSsbDemod = new CSsbDemod();
+				m_DemodOutputRate = m_DownConverterOutputRate;
 				break;
 		}
 	}
 	m_CW_Offset = m_DemodInfo.Offset;
 	m_DownConvert.SetCwOffset(m_CW_Offset);
-	m_FastFIR.SetupParameters(m_DemodInfo.LowCut, m_DemodInfo.HiCut,m_CW_Offset,m_OutputRate);
-	//set input buffer limit so that decimated output is abt 10mSec or more of data
-	m_InBufLimit = (m_OutputRate/100.0) * m_InputRate/m_OutputRate;	//process abt .01sec of output samples at a time
-	m_InBufLimit &= 0xFFFFFF00;	//keep modulo 256 since decimation is only in power of 2
+	if(m_DemodMode != DEMOD_WFM)
+		m_FastFIR.SetupParameters(m_DemodInfo.LowCut, m_DemodInfo.HiCut,m_CW_Offset,m_DownConverterOutputRate);
 	m_Agc.SetParameters(m_DemodInfo.AgcOn, m_DemodInfo.AgcHangOn, m_DemodInfo.AgcThresh,
-						m_DemodInfo.AgcManualGain, m_DemodInfo.AgcSlope, m_DemodInfo.AgcDecay, m_OutputRate);
+						m_DemodInfo.AgcManualGain, m_DemodInfo.AgcSlope, m_DemodInfo.AgcDecay, m_DownConverterOutputRate);
 	if(	m_pFmDemod != NULL)
 		m_pFmDemod->SetSquelch(m_DemodInfo.SquelchValue);
 	if(m_pAmDemod != NULL)
 		m_pAmDemod->SetBandwidth( (m_DemodInfo.HiCut-m_DemodInfo.LowCut)/2.0);
-
+	//set input buffer limit so that decimated output is abt 10mSec or more of data
+	m_InBufLimit = (m_DemodOutputRate/100.0) * m_InputRate/m_DemodOutputRate;	//process abt .01sec of output samples at a time
+	m_InBufLimit &= 0xFFFFFF00;	//keep modulo 256 since decimation is only in power of 2
 	m_Mutex.unlock();
-//qDebug()<<"m_InputRate="<<m_InputRate<<" DesiredMaxOutputBandwidth=="<<m_DesiredMaxOutputBandwidth <<"OutputRate="<<m_OutputRate;
+qDebug()<<"m_InputRate="<<m_InputRate<<" DesiredMaxOutputBandwidth=="<<m_DesiredMaxOutputBandwidth <<"DemodOutputRate="<<m_DemodOutputRate;
 //qDebug()<<"m_InBufLimit="<<m_InBufLimit;
 }
 
@@ -172,19 +215,26 @@ int ret = 0;
 
 			//perform baseband tuning and decimation
 			int n = m_DownConvert.ProcessData(m_InBufPos, m_pDemodInBuf, m_pDemodInBuf);
-			g_pTestBench->DisplayData(n, m_pDemodInBuf, m_OutputRate,PROFILE_1);
+			g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1);
 
+			if(m_DemodMode != DEMOD_WFM)
+			{	//if not wideband FM mode do filtering and AGC
+				//perform main bandpass filtering
+				n = m_FastFIR.ProcessData(n, m_pDemodInBuf, m_pDemodTmpBuf);
+				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
 
-			//perform main bandpass filtering
-			n = m_FastFIR.ProcessData(n, m_pDemodInBuf, m_pDemodTmpBuf);
-			g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_OutputRate,PROFILE_2);
+				//perform S-Meter processing
+				m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_DemodOutputRate);
 
-			//perform S-Meter processing
-			m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_OutputRate);
-
-			//perform AGC
-			m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
-			g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_OutputRate, PROFILE_3);
+				//perform AGC
+				m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
+//				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
+			}
+			else
+			{
+				//perform S-Meter processing for wideband FM
+				m_SMeter.ProcessData(n, m_pDemodInBuf, m_DownConverterOutputRate);
+			}
 
 			//perform the desired demod action
 			switch(m_DemodMode)
@@ -198,6 +248,9 @@ int ret = 0;
 				case DEMOD_FM:
 					n = m_pFmDemod->ProcessData(n, m_DemodInfo.HiCut, m_pDemodTmpBuf, pOutData );
 					break;
+				case DEMOD_WFM:
+					n = m_pWFmDemod->ProcessData(n, m_pDemodInBuf, pOutData );
+					break;
 				case DEMOD_USB:
 				case DEMOD_LSB:
 				case DEMOD_CWU:
@@ -205,7 +258,7 @@ int ret = 0;
 					n = m_pSsbDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
 			}
-			g_pTestBench->DisplayData(n, pOutData, m_OutputRate,PROFILE_4);
+			g_pTestBench->DisplayData(n, pOutData, m_DemodOutputRate,PROFILE_4);
 			m_InBufPos = 0;
 			ret += n;
 		}
@@ -230,20 +283,27 @@ int ret = 0;
 
 			//perform baseband tuning and decimation
 			int n = m_DownConvert.ProcessData(m_InBufPos, m_pDemodInBuf, m_pDemodInBuf);
-			g_pTestBench->DisplayData(n, m_pDemodInBuf, m_OutputRate,PROFILE_1);
+g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1);
 
 
-			//perform main bandpass filtering
-			n = m_FastFIR.ProcessData(n, m_pDemodInBuf, m_pDemodTmpBuf);
-			g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_OutputRate,PROFILE_2);
+			if(m_DemodMode != DEMOD_WFM)
+			{	//if not wideband FM mode do filtering and AGC
+				//perform main bandpass filtering
+				n = m_FastFIR.ProcessData(n, m_pDemodInBuf, m_pDemodTmpBuf);
+				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
 
-			//perform S-Meter processing
-			m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_OutputRate);
+				//perform S-Meter processing
+				m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_DemodOutputRate);
 
-			//perform AGC
-			m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
-			g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_OutputRate, PROFILE_3);
-
+				//perform AGC
+				m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
+//				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
+			}
+			else
+			{
+				//perform S-Meter processing for wideband FM
+				m_SMeter.ProcessData(n, m_pDemodInBuf, m_DownConverterOutputRate);
+			}
 			//perform the desired demod action
 			switch(m_DemodMode)
 			{
@@ -256,6 +316,9 @@ int ret = 0;
 				case DEMOD_FM:
 					n = m_pFmDemod->ProcessData(n, m_DemodInfo.HiCut, m_pDemodTmpBuf, pOutData );
 					break;
+				case DEMOD_WFM:
+					n = m_pWFmDemod->ProcessData(n, m_pDemodInBuf, pOutData );
+					break;
 				case DEMOD_USB:
 				case DEMOD_LSB:
 				case DEMOD_CWU:
@@ -263,7 +326,7 @@ int ret = 0;
 					n = m_pSsbDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
 			}
-		g_pTestBench->DisplayData(n, pOutData, m_OutputRate,PROFILE_4);
+		g_pTestBench->DisplayData(n, pOutData, m_DemodOutputRate,PROFILE_4);
 			m_InBufPos = 0;
 			ret += n;
 		}

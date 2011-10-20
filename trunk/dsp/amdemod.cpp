@@ -5,6 +5,7 @@
 // History:
 //	2010-09-22  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-08-07  Modified FIR filter initialization call
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -50,13 +51,13 @@
 CAmDemod::CAmDemod(TYPEREAL samplerate) : m_SampleRate(samplerate)
 {
 	m_z1 = 0.0;
-	m_Fir.InitLPFilter(1.0, 50.0, 10000, 10000*1.8, m_SampleRate);//initialize LP FIR filter
+	m_Fir.InitLPFilter(0, 1.0, 50.0, 10000, 10000*1.8, m_SampleRate);//initialize LP FIR filter
 }
 
 void CAmDemod::SetBandwidth(TYPEREAL Bandwidth)
 {
 	//create a LP filter with passband the same as the main filter bandwidth for post audio filtering
-	m_Fir.InitLPFilter(1.0, 50.0, Bandwidth, Bandwidth*1.8, m_SampleRate);//initialize LP FIR filter
+	m_Fir.InitLPFilter(0, 1.0, 50.0, Bandwidth, Bandwidth*1.8, m_SampleRate);//initialize LP FIR filter
 }
 
 
