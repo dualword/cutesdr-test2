@@ -12,6 +12,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-11-03  Fixed m_pFFTOverlapBuf initialization bug
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -96,8 +97,8 @@ int i;
 			- 0.4891775*cos( (K_2PI*i)/(CONV_FIR_SIZE-1) )
 			+ 0.1365995*cos( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
 			- 0.0106411*cos( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
-		m_pFFTOverlapBuf->re = 0.0;
-		m_pFFTOverlapBuf->im = 0.0;
+		m_pFFTOverlapBuf[i].re = 0.0;
+		m_pFFTOverlapBuf[i].im = 0.0;
 	}
 #endif
 #if 0
@@ -108,8 +109,8 @@ int i;
 			- 0.48829*cos( (K_2PI*i)/(CONV_FIR_SIZE-1) )
 			+ 0.14128*cos( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
 			- 0.01168*cos( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
-		m_pFFTOverlapBuf->re = 0.0;
-		m_pFFTOverlapBuf->im = 0.0;
+		m_pFFTOverlapBuf[i].re = 0.0;
+		m_pFFTOverlapBuf[i].im = 0.0;
 	}
 #endif
 #if 0
@@ -120,8 +121,8 @@ int i;
 			- 0.487396*cos( (K_2PI*i)/(CONV_FIR_SIZE-1) )
 			+ 0.144232*cos( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
 			- 0.012604*cos( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
-		m_pFFTOverlapBuf->re = 0.0;
-		m_pFFTOverlapBuf->im = 0.0;
+		m_pFFTOverlapBuf[i].re = 0.0;
+		m_pFFTOverlapBuf[i].im = 0.0;
 	}
 #endif
 	m_Fft.SetFFTParams(CONV_FFT_SIZE, false, 0.0, 1.0);
