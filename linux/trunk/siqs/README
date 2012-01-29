@@ -1,0 +1,84 @@
+Sdr IQ Server
+-------------------------------------------
+Copyright (C) 2012 Andrea Montefusco IW0HDV
+
+
+0. Introduction
+===============
+
+This program attempt to mimic the sdrxx server created by Moe WHEATLEY in order to
+provide SDR-IQ with a network interface compatible with that of more sophisticated radio
+from RFSPACE.
+Alas the sdrxx server source code resulted unfeasible to port to Linux, but was invaluable 
+as reference for write
+
+A special mention deservers Ken N9VV that put his radio, Linux computer and Internet connection
+to my disposal in order to develop and test this software.
+
+
+
+1. Build
+========
+
+In order to compile this program and CuteSDR, you need to install the libftdi support and cmake:
+
+sudo apt-get install libftdi-dev cmake subversion  # Debian /Ubuntu
+sudo rpm install libftdi-devel cmake subversion    # RH/Fedora/OpenSuse
+
+After that you can extract the 
+
+svn co https://cutesdr.svn.sourceforge.net/svnroot/cutesdr/branches/iw0hdv/linux/ cutesdr-lx
+
+Next compile with the following command:
+
+cd cutesdr-lx
+mkdir build
+cd build
+cmake ../
+make -j4
+sudo cmake install
+
+
+2. Run
+======
+
+In order to run CuteSDR you have to remove from your system the standard Linux kernel FTDI driver;
+this is feasible at run time:
+
+sudo rmmod usbserial ftdi_sio
+
+Next check that the radio is correctly linked to the system:
+
+lsusb
+
+....
+Bus 006 Device 002: ID 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC
+....
+
+If everything is fine, open a terminal window and start the server:
+
+siqs
+------ 
+------ SDR-IQ server for Cute SDR
+------ 
+------ libftdi version
+------ 
+------ (C) 2012, Ken N9VV && Andrea IW0HDV
+
+interfaces = 2:
+lo - 127.0.0.1
+eth0 - 192.168.10.1
+SRXXX STARTED: size 56
+Press q <ENTER> to exit.
+Listening for TCP connections on port 50000 socket: 6
+
+
+Last, run CuteSDR from another terminal window, and into the menu Setup->Network press "Find SDR" push button
+or manually insert the network data.
+The auto discovery proceudre works only if the CuteSDR and the server are placed
+on the same LAN (broadcast domain).
+
+Please not that the server is not yet completed with all the features: e.g. the discovery 
+messages is only partially supported.
+
+
