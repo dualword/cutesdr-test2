@@ -37,6 +37,7 @@ private slots:
 	void OnAgcDecay(int);
 	void OnAgcOn(bool);
 	void OnHangOn(bool);
+	void OnUSFm(bool);
 
 
 private:

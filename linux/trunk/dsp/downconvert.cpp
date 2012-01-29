@@ -120,7 +120,6 @@ TYPEREAL f = InRate;
 	{
 		m_InRate = InRate;
 		m_MaxBW = MaxBW;
-qDebug()<<"Inrate="<<m_InRate<<" BW="<<m_MaxBW;
 		m_Mutex.lock();
 		DeleteFilters();
 		//loop until closest output rate is found and list of pointers to decimate by 2 stages is generated
@@ -167,7 +166,34 @@ qDebug()<<"Inrate="<<m_InRate<<" BW="<<m_MaxBW;
 		m_Mutex.unlock();
 		m_OutputRate = f;
 		SetFrequency(m_NcoFreq);
-//qDebug()<<"Filters "<<n<<" fout= "<<m_OutputRate;
+qDebug()<<"Filters "<<n<< " Fin="<<InRate<<" BW="<<m_MaxBW<<" fout="<<m_OutputRate;
+	}
+	return m_OutputRate;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Calculates sequence and number of decimation stages for WBFM based on
+// input sample rate and desired output bandwidth.  Returns final output rate
+//from divide by 2 stages.
+//////////////////////////////////////////////////////////////////////
+TYPEREAL CDownConvert::SetWfmDataRate(TYPEREAL InRate, TYPEREAL MaxBW)
+{
+int n = 0;
+TYPEREAL f = InRate;
+	if( (m_InRate!=InRate) ||
+		(m_MaxBW!=MaxBW) )
+	{
+		m_InRate = InRate;
+		m_MaxBW = MaxBW;
+		DeleteFilters();
+		//loop until closest output rate is found and list of pointers to decimate by 2 stages is generated
+		while( (f > 400000.0)  )
+		{
+			m_pDecimatorPtrs[n++] = new CDownConvert::CHalfBandDecimateBy2(HB51TAP_LENGTH, HB51TAP_H);
+			f /= 2.0;
+		}
+		m_OutputRate = f;
+		SetFrequency(m_NcoFreq);
 	}
 	return m_OutputRate;
 }

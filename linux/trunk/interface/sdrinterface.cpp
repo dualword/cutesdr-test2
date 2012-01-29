@@ -10,6 +10,8 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-04-16  Added Frequency range logic for optional down converter modules
+//	2011-07-21  Modified Frequency range logic by adding VCO frequency and number of ranges parameters
+//	2011-08-07  Added WFM Support
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -262,7 +264,13 @@ quint32 tmp32;
 					m_RadioType = SDRIP;
 				if("NetSDR" == m_DeviceName)
 					m_RadioType = NETSDR;
-				break;
+				if( (SDRIP==m_RadioType) || (NETSDR==m_RadioType) )
+				{
+					m_TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM_RANGE);
+					m_TxMsg.AddCItem(CI_RX_FREQUENCY);
+					m_TxMsg.AddParm8(CI_RX_CHAN_1);
+					SendAscpMsg(&m_TxMsg);
+				}				break;
 			case CI_GENERAL_INTERFACE_SERIALNUM:
 				m_SerialNum = (const char*)(&pMsg->Buf8[4]);
 				break;
@@ -318,23 +326,28 @@ quint32 tmp32;
 		}
 	}
 	else if( pMsg->GetType() == TYPE_TARG_RESP_CITEM_RANGE )
-	{	// Is a range message from SDR
+	{	// Is a range request message from SDR
 		switch( pMsg->GetCItem() )
 		{
 			case CI_RX_FREQUENCY:
-				Length = pMsg->GetLength();
-				pMsg->GetParm8();
+				pMsg->GetParm8();	//ignor channel
+				Length = pMsg->GetParm8();
+//qDebug()<<"range Length"<<Length;
 				m_BaseFrequencyRangeMin = (quint64)pMsg->GetParm32();
-				pMsg->GetParm8();
+				pMsg->GetParm8();//ignor msb
 				m_BaseFrequencyRangeMax = (quint64)pMsg->GetParm32();
-				pMsg->GetParm8();
+				pMsg->GetParm8();	//ignor msb
+				pMsg->GetParm32();	//ignor VCO frequency
+				pMsg->GetParm8();	//ignor msb
 				m_OptionFrequencyRangeMin = m_BaseFrequencyRangeMin;	//set option range to base range
 				m_OptionFrequencyRangeMax = m_BaseFrequencyRangeMax;
-				if(Length>15)
+				if(Length>1)
 				{
 					m_OptionFrequencyRangeMin = (quint64)pMsg->GetParm32();
-					pMsg->GetParm8();
+					pMsg->GetParm8();//ignor msb
 					m_OptionFrequencyRangeMax = (quint64)pMsg->GetParm32();
+					pMsg->GetParm8();//ignor msb
+					pMsg->GetParm32();	//ignor VCO frequency
 				}
 //qDebug()<<"Base range"<<m_BaseFrequencyRangeMin << m_BaseFrequencyRangeMax;
 //qDebug()<<"Option range"<<m_OptionFrequencyRangeMin << m_OptionFrequencyRangeMax;
@@ -457,13 +470,10 @@ void CSdrInterface::GetSdrInfo()
 	m_TxMsg.AddParm8(1);
 	SendAscpMsg(&m_TxMsg);
 
-	if( (SDRIP==m_RadioType) || (NETSDR==m_RadioType) )
-	{
-		m_TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM_RANGE);
-		m_TxMsg.AddCItem(CI_RX_FREQUENCY);
-		m_TxMsg.AddParm8(CI_RX_CHAN_1);
-		SendAscpMsg(&m_TxMsg);
-	}
+	m_BaseFrequencyRangeMin = 0;		//load default frequency ranges
+	m_BaseFrequencyRangeMax = 30000000;
+	m_OptionFrequencyRangeMin = 0;
+	m_OptionFrequencyRangeMax = 30000000;
 }
 
 
@@ -762,6 +772,7 @@ void CSdrInterface::SetDemod(int Mode, tDemodInfo CurrentDemodInfo)
 {
 	m_Demodulator.SetDemod(Mode, CurrentDemodInfo );
 	m_pSoundCardOut->ChangeUserDataRate( m_Demodulator.GetOutputRate());
+qDebug()<<"UsrDataRate="<< m_Demodulator.GetOutputRate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -879,6 +890,17 @@ void CSdrInterface::ProcessIQData( double* pIQData, int Length)
 {
 	if(!m_Running)	//ignor any incoming data if not running
 		return;
+
+	if(m_InvertSpectrum)	//if need to swap I/Q data for inverting the spectrum
+	{						//probably faster to do at lower level network level
+		double tmp;
+		for(int i=0; i<Length; i+=2)
+		{
+			tmp = pIQData[i];
+			pIQData[i] = pIQData[i+1];
+			pIQData[i+1] = tmp;
+		}
+	}
 
 	g_pTestBench->CreateGeneratorSamples(Length/2, (TYPECPX*)pIQData, m_SampleRate);
 	m_NoiseProc.ProcessBlanker(Length/2, (TYPECPX*)pIQData, (TYPECPX*)pIQData);

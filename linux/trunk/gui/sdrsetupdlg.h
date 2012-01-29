@@ -10,6 +10,7 @@
 
 #include <QDialog>
 #include "interface/sdrinterface.h"
+#include "ui_sdrsetupdlg.h"
 
 namespace Ui {
     class CSdrSetupDlg;
@@ -22,11 +23,13 @@ class CSdrSetupDlg : public QDialog
 public:
 	explicit CSdrSetupDlg(QWidget *parent, CSdrInterface*  pSdrInterface);
     ~CSdrSetupDlg();
+	void SetSpectrumInversion(bool Invert){ui->checkBoxInvert->setChecked(Invert);}
+	bool GetSpectrumInversion(){return ui->checkBoxInvert->checkState();}
 
 	void InitDlg();
 	qint32 m_RfGain;
 	qint32 m_BandwidthIndex;
-
+	bool m_USFm;
 
 public slots:
 	void accept();

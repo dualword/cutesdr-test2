@@ -9,6 +9,8 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-04-16  Added Frequency range logic
+//	2011-05-26  Added support for In Use Status allowed wider sideband filters
+//	2011-08-07  Added WFM Support and spectrum inversion
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -54,16 +56,19 @@
 
 
 #define DISCOVER_CLIENT_PORT 48322	/* PC client Rx port, SDR Server Tx Port */
-QUdpSocket g_UdpDiscoverSocket;	//global hack to get around bug in UDP sockets
-
 
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION "CuteSdr 1.01 "
+#define PROGRAM_TITLE_VERSION "CuteSdr 1.04"
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
+
+//?????Global hack to get around Qt UDP socket bug that doesnt allow
+//re binding a socket after closing it on some WinXP machines
+QUdpSocket* g_pUdpDiscoverSocket=0;
+
 
 /////////////////////////////////////////////////////////////////////
 // Constructor/Destructor
@@ -160,6 +165,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->framePlot->SetSpanFreq( m_SpanFrequency );
 	ui->framePlot->SetCenterFreq( m_CenterFrequency );
 	ui->framePlot->SetClickResolution(m_ClickResolution);
+	m_FreqChanged = false;
 
 	ui->horizontalSliderVol->setValue(m_Volume);
 	m_pSdrInterface->SetVolume(m_Volume);
@@ -189,10 +195,13 @@ MainWindow::MainWindow(QWidget *parent) :
 										  &m_NCOSpurOffsetQ);
 
 	m_pSdrInterface->SetSoundCardSelection(m_SoundInIndex, m_SoundOutIndex, m_StereoOut);
+	m_pSdrInterface->SetSpectrumInversion(m_InvertSpectrum);
+	m_pSdrInterface->SetUSFmVersion(m_USFm);
 
 	InitDemodSettings();
 	ui->framePlot->SetDemodCenterFreq( m_DemodFrequency );
 	SetupDemod(m_DemodMode);
+	m_RdsDecode.DecodeReset(m_USFm);
 
 	SetupNoiseProc();
 
@@ -216,9 +225,9 @@ MainWindow::MainWindow(QWidget *parent) :
 		g_pTestBench->show();
 		g_pTestBench->Init();
 	}
-
-	//QT bug, can only bind once on some Windows machines??
-	g_UdpDiscoverSocket.bind(DISCOVER_CLIENT_PORT);
+	//?????Global hack to get around Qt UDP socket bug that doesnt allow
+	//re binding a socket after closing it
+	g_pUdpDiscoverSocket = new QUdpSocket(this);
 }
 
 MainWindow::~MainWindow()
@@ -232,8 +241,11 @@ MainWindow::~MainWindow()
 	}
 	if(m_pDemodSetupDlg)
 		delete m_pDemodSetupDlg;
-	g_UdpDiscoverSocket.close();
 	delete ui;
+	//?????Global hack to get around Qt UDP socket bug that doesnt allow
+	//re binding a socket after closing it
+	if(g_pUdpDiscoverSocket)
+		delete g_pUdpDiscoverSocket;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -306,6 +318,9 @@ void MainWindow::writeSettings()
 	settings.setValue("AlwaysOnTop",m_AlwaysOnTop);
 	settings.setValue("Volume",m_Volume);
 	settings.setValue("Percent2DScreen",m_Percent2DScreen);
+	settings.setValue("InvertSpectrum",m_InvertSpectrum);
+	settings.setValue("USFm",m_USFm);
+
 
 	//Get NCO spur offsets and save
 	m_pSdrInterface->ManageNCOSpurOffsets(CSdrInterface::NCOSPUR_CMD_READ,
@@ -341,6 +356,7 @@ void MainWindow::writeSettings()
 	settings.setValue("PulsePeriod",g_pTestBench->m_PulsePeriod);
 	settings.setValue("SignalPower",g_pTestBench->m_SignalPower);
 	settings.setValue("NoisePower",g_pTestBench->m_NoisePower);
+	settings.setValue("UseFmGen",g_pTestBench->m_UseFmGen);
 
 	settings.endGroup();
 
@@ -402,10 +418,12 @@ void MainWindow::readSettings()
 	m_UseTestBench = settings.value("UseTestBench", false).toBool();
 	m_AlwaysOnTop = settings.value("AlwaysOnTop", false).toBool();
 
+	m_InvertSpectrum = settings.value("InvertSpectrum", false).toBool();
+	m_USFm = settings.value("USFm", true).toBool();
+
 	m_NoiseProcSettings.NBOn = settings.value("NBOn", false).toBool();
 	m_NoiseProcSettings.NBThreshold = settings.value("NBThreshold",0).toInt();
 	m_NoiseProcSettings.NBWidth = settings.value("NBWidth",50).toInt();
-
 
 	m_DemodMode = settings.value("DemodMode", DEMOD_AM).toInt();
 	m_DemodFrequency = (qint64)settings.value("DemodFrequency", 15000000).toUInt();
@@ -430,6 +448,7 @@ void MainWindow::readSettings()
 	g_pTestBench->m_PulsePeriod = settings.value("PulsePeriod",0.0).toDouble();
 	g_pTestBench->m_SignalPower = settings.value("SignalPower",0.0).toDouble();
 	g_pTestBench->m_NoisePower = settings.value("NoisePower",0.0).toDouble();
+	g_pTestBench->m_UseFmGen = settings.value("UseFmGen",false).toBool();
 
 	settings.endGroup();
 
@@ -461,7 +480,6 @@ void MainWindow::readSettings()
 /////////////////////////////////////////////////////////////////////
 void MainWindow::OnTimer()
 {
-
 	OnStatus(m_Status);
 	if(++m_KeepAliveTimer>5)
 	{
@@ -470,6 +488,44 @@ void MainWindow::OnTimer()
 			m_pSdrInterface->KeepAlive();
 	}
 	ui->frameMeter->SetdBmLevel( m_pSdrInterface->GetSMeterAve() );
+	if(DEMOD_WFM == m_DemodMode)	//if in WFM mode manage stereo status display
+	{
+		bool update = false;
+		if(	m_FreqChanged )
+		{
+			m_FreqChanged = false;
+			m_RdsDecode.DecodeReset(m_USFm);
+			ui->framePlot->m_RdsCall[0] = 0;
+			ui->framePlot->m_RdsText[0] = 0;
+			update = true;
+		}
+		else
+		{
+			tRDS_GROUPS RdsGroups;
+			if( m_pSdrInterface->GetStereoLock(NULL) )	//if Stereo pilot state changed
+				update = true;
+			if( m_pSdrInterface->GetNextRdsGroupData(&RdsGroups) )	//if new data in RDS queue
+			{
+				if( 0 != RdsGroups.BlockA)
+				{	//if valid data in que then decode it
+					m_RdsDecode.DecodeRdsGroup(&RdsGroups);
+					if( m_RdsDecode.GetRdsString(ui->framePlot->m_RdsText) )
+						update = true;
+					if( m_RdsDecode.GetRdsCallString(ui->framePlot->m_RdsCall) )
+						update = true;
+				}
+				else
+				{	//a zero data block means loss of signal so clear display and reset decoder
+					m_RdsDecode.DecodeReset(m_USFm);
+					ui->framePlot->m_RdsCall[0] = 0;
+					ui->framePlot->m_RdsText[0] = 0;
+					update = true;
+				}
+			}
+		}
+		if(update)
+			ui->framePlot->UpdateOverlay();
+	}
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -482,7 +538,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 		OnDemodDlg();
 	}
 }
-
 
 /////////////////////////////////////////////////////////////////////
 // About Dialog Menu Bar action item handler.
@@ -593,7 +648,9 @@ void MainWindow::OnSdrDlg()
 {
 CSdrSetupDlg dlg(this,m_pSdrInterface);
 	dlg.m_BandwidthIndex = m_BandwidthIndex;
+	dlg.m_USFm = m_USFm;
 	dlg.InitDlg();
+	dlg.SetSpectrumInversion(m_InvertSpectrum);
 	if( dlg.exec() )
 	{
 		if( m_BandwidthIndex != dlg.m_BandwidthIndex )
@@ -607,7 +664,9 @@ CSdrSetupDlg dlg(this,m_pSdrInterface);
 		}
 		SetupNoiseProc();
 		m_RfGain = dlg.m_RfGain;
+		m_USFm = dlg.m_USFm;
 		m_pSdrInterface->SetSdrRfGain( dlg.m_RfGain);
+		m_pSdrInterface->SetUSFmVersion(m_USFm);
 		m_pSdrInterface->SetSdrBandwidthIndex(m_BandwidthIndex);
 		quint32 maxspan = m_pSdrInterface->GetMaxBWFromIndex(m_BandwidthIndex);
 		ui->SpanspinBox->setMaximum(maxspan/1000);
@@ -622,6 +681,9 @@ CSdrSetupDlg dlg(this,m_pSdrInterface);
 									  UNITS_KHZ );
 		ui->frameDemodFreqCtrl->SetFrequency(m_DemodFrequency);
 		m_pSdrInterface->SetDemod(m_DemodMode, m_DemodSettings[m_DemodMode]);
+
+		m_InvertSpectrum = dlg.GetSpectrumInversion();
+		m_pSdrInterface->SetSpectrumInversion(m_InvertSpectrum);
 	}
 }
 
@@ -703,6 +765,7 @@ void MainWindow::OnRun()
 
 		ui->framePlot->SetRunningState(true);
 		InitPerformance();
+		m_RdsDecode.DecodeReset(m_USFm);
 	}
 	else if(CSdrInterface::RUNNING == m_Status)
 	{
@@ -825,6 +888,7 @@ void MainWindow::OnNewCenterFrequency(qint64 freq)
 								  1,
 								  UNITS_KHZ );
 	ui->frameDemodFreqCtrl->SetFrequency(m_DemodFrequency);
+	m_FreqChanged = true;
 	ui->framePlot->UpdateOverlay();
 }
 
@@ -837,6 +901,7 @@ void MainWindow::OnNewDemodFrequency(qint64 freq)
 	ui->framePlot->SetDemodCenterFreq( m_DemodFrequency );
 	ui->framePlot->UpdateOverlay();
 	m_pSdrInterface->SetDemodFreq(m_CenterFrequency - m_DemodFrequency);
+	m_FreqChanged = true;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1021,9 +1086,16 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_FM].LowCutmin = -15000;
 	m_DemodSettings[DEMOD_FM].Symetric = true;
 
+	m_DemodSettings[DEMOD_WFM].txt = "WFM";
+	m_DemodSettings[DEMOD_WFM].HiCutmin = 100000;
+	m_DemodSettings[DEMOD_WFM].HiCutmax = 100000;
+	m_DemodSettings[DEMOD_WFM].LowCutmax = -100000;
+	m_DemodSettings[DEMOD_WFM].LowCutmin = -100000;
+	m_DemodSettings[DEMOD_WFM].Symetric = true;
+
 	m_DemodSettings[DEMOD_USB].txt = "USB";
 	m_DemodSettings[DEMOD_USB].HiCutmin = 500;
-	m_DemodSettings[DEMOD_USB].HiCutmax = 4900;
+	m_DemodSettings[DEMOD_USB].HiCutmax = 20000;
 	m_DemodSettings[DEMOD_USB].LowCutmax = 200;
 	m_DemodSettings[DEMOD_USB].LowCutmin = 0;
 	m_DemodSettings[DEMOD_USB].Symetric = false;
@@ -1032,7 +1104,7 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_LSB].HiCutmin = -200;
 	m_DemodSettings[DEMOD_LSB].HiCutmax = 0;
 	m_DemodSettings[DEMOD_LSB].LowCutmax = -500;
-	m_DemodSettings[DEMOD_LSB].LowCutmin = -4900;
+	m_DemodSettings[DEMOD_LSB].LowCutmin = -20000;
 	m_DemodSettings[DEMOD_LSB].Symetric = false;
 
 	m_DemodSettings[DEMOD_CWU].txt = "CWU";

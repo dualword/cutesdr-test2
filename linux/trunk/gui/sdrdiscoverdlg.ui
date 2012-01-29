@@ -63,7 +63,7 @@
     <string>Press to Find all SDR's on Network</string>
    </property>
    <property name="text">
-    <string>Find SDR's</string>
+    <string>Find SDR</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">

@@ -19,47 +19,31 @@ lessThan(QT_VER_MAJ, 4) | lessThan(QT_VER_MIN, 7) {
 QT += core gui
 QT += network
 
+
+
+linux-g++ {
 #
-# Ubuntu 10.10 and 11.04: changes due to some strangeness in Debian Qt packages 
-# 
-linux-g++ {
-    #
-    # Try to catch distro informations
-    #
-    DISTRO=$$system(cat /etc/issue | head -n1 | cut -f1 -d\' \')
-    DISTRO_MAJ=$$system(cat /etc/issue | head -n1 | cut -f2 -d\' \' | cut -f1 -d\\.)
-    DISTRO_MIN=$$system(cat /etc/issue | head -n1 | cut -f2 -d\' \' | cut -f2 -d\\.)
+# Ubuntu 10.10: changes due to some strangeness in Debian Qt packages
+#	uncomment out to use changes since doesnt work with Mint
 
-    # specific to Ubuntu 10.10
-    equals(DISTRO,Ubuntu):equals(DISTRO_MAJ,10):equals(DISTRO_MIN,10) {
-       message(Linux $$DISTRO $$DISTRO_MAJ $$DISTRO_MIN)
-       INCLUDEPATH += $$quote(/usr/include/QtMultimediaKit)
-       LIBS += $$quote(-lQtMultimediaKit)
-    } else {
-       # specific to Ubuntu 11.04
-       equals(DISTRO,Ubuntu):equals(DISTRO_MAJ,11):equals(DISTRO_MIN,04) {
-          message(Linux $$DISTRO $$DISTRO_MAJ $$DISTRO_MIN)
-          INCLUDEPATH += $$quote(/usr/include/QtMobility)
-          INCLUDEPATH += $$quote(/usr/include/QtMultimediaKit)
-          LIBS += $$quote(-lQtMultimediaKit)
-       } else {
-          QT += multimedia
-       }
-    }
-}
+#  INCLUDEPATH += $$quote(/usr/include/QtMultimediaKit)
+#  LIBS += $$quote(-lQtMultimediaKit)
+  QT += multimedia
 
+# compiler optimization options, as per suggestion by Ken N9VV
+#  Uncomment to try.  Seems to use more CPU on some machines
 
-linux-g++ {
-  # gcc compiler optimization options, as per suggestion by Ken N9VV
-  QMAKE_CXXFLAGS += -O3 \
-                    -mfpmath=sse \
-                    -msse \
-                    -msse2 \
-                    -msse3 \
-                    -fomit-frame-pointer \
-                    -ffast-math \
-                    -march=i686 \
-                    -fexceptions 
+# QMAKE_CXXFLAGS += -O3 \
+#					-mfpmath=sse \
+#					-msse \
+#					-msse2 \
+#					-msse3 \
+#					-fomit-frame-pointer \
+#					-ffast-math \
+#					-march=i686 \
+#					-fexceptions
+} else {
+  QT += multimedia
 } 
 
 TARGET = CuteSdr
@@ -82,6 +66,7 @@ SOURCES += gui/main.cpp \
 	gui/sliderctrl.cpp \
 	gui/noiseprocdlg.cpp \
 	gui/aboutdlg.cpp \
+	gui/rdsdecode.cpp \
 	interface/soundout.cpp \
     interface/sdrinterface.cpp \
     interface/netiobase.cpp \
@@ -100,7 +85,9 @@ SOURCES += gui/main.cpp \
     dsp/fmdemod.cpp \
 	dsp/fir.cpp \
     dsp/iir.cpp \
-	dsp/noiseproc.cpp
+	dsp/noiseproc.cpp \
+    dsp/wfmdemod.cpp \
+	dsp/wfmmod.cpp
 
 
 HEADERS  += gui/mainwindow.h \
@@ -118,6 +105,7 @@ HEADERS  += gui/mainwindow.h \
 	gui/meter.h \
 	gui/noiseprocdlg.h \
 	gui/aboutdlg.h \
+	gui/rdsdecode.h \
 	interface/soundout.h \
     interface/sdrinterface.h \
     interface/protocoldefs.h \
@@ -140,7 +128,10 @@ HEADERS  += gui/mainwindow.h \
     dsp/fmdemod.h \
 	dsp/fir.h \
     dsp/iir.h \
-	dsp/noiseproc.h
+	dsp/noiseproc.h \
+    dsp/wfmdemod.h \
+    dsp/wfmmod.h \
+	dsp/rbdsconstants.h
 
 FORMS += gui/mainwindow.ui \
 	gui/sdrdiscoverdlg.ui \
@@ -162,7 +153,8 @@ macx {
 	LIBS += -framework \
 		IOKit \
 		-framework \
-		CoreFoundation
+                CoreFoundation
+		ICON=cutesdr1.icns
 }
 win32 {
 	SOURCES +=

@@ -112,6 +112,9 @@ CPlotter::CPlotter(QWidget *parent) :
 	m_Size = QSize(0,0);
 	m_GrabPosition = 0;
 	m_Percent2DScreen = 50;	//percent of screen used for 2D display
+	m_RdsCall[0] = 0;
+	m_RdsText[0] = 0;
+
 }
 
 CPlotter::~CPlotter()
@@ -504,6 +507,7 @@ QRect rect;
 	painter.setBrush(gradient);
 	painter.drawRect(0, 0, w, h);
 
+
 	//Draw demod filter box
 	ClampDemodParameters();
 	m_DemodFreqX = XfromFreq(m_DemodCenterFreq);
@@ -514,7 +518,13 @@ QRect rect;
 
 	painter.setBrush(Qt::SolidPattern);
 	painter.setOpacity(0.5);
-	painter.fillRect(m_DemodLowCutFreqX, 0,dw, h, Qt::gray);
+
+	int LockState;
+	m_pSdrInterface->GetStereoLock(&LockState);
+	if( LockState )
+		painter.fillRect(m_DemodLowCutFreqX, 0,dw, h, Qt::green);
+	else
+		painter.fillRect(m_DemodLowCutFreqX, 0,dw, h, Qt::gray);
 
 	painter.setPen(QPen(Qt::magenta, 2,Qt::DotLine));
 	painter.drawLine(m_DemodLowCutFreqX, 0, m_DemodLowCutFreqX, h);
@@ -533,6 +543,7 @@ QRect rect;
 		Font.setPixelSize(y);
 	Font.setWeight(QFont::Normal);
 	painter.setFont(Font);
+
 
 	//draw vertical grids
 	pixperdiv = (float)w / (float)HORZ_DIVS;
@@ -574,6 +585,7 @@ QRect rect;
 		}
 	}
 
+
 	//draw horizontal grids
 	pixperdiv = (float)h / (float)VERT_DIVS;
 	painter.setPen(QPen(Qt::white, 1,Qt::DotLine));
@@ -595,6 +607,32 @@ QRect rect;
 		dB -= m_dBStepSize;
 	}
 	m_MindB = m_MaxdB - (VERT_DIVS)*m_dBStepSize;
+
+	if( 0 != m_RdsCall[0] )
+	{
+		painter.setPen(Qt::yellow);
+		Font.setWeight(QFont::Bold);
+		Font.setPointSize(20);
+		painter.setFont(Font);
+		rect.setTop(0);
+                rect.setLeft(0);
+                rect.setRight(w);
+		rect.setHeight(m_OverlayPixmap.height());
+		painter.drawText(rect,Qt::AlignHCenter|Qt::AlignTop, m_RdsCall);
+		if( 0 != m_RdsText[0] )
+		{
+			QFontMetrics metrics2(Font);
+			//
+			painter.setPen(Qt::white);
+                        Font.setWeight(QFont::DemiBold);
+                        Font.setPointSize(12);
+			painter.setFont(Font);
+			rect.setLeft(0);
+			rect.setRight(w);
+			rect.setTop(metrics2.height());
+			painter.drawText(rect,Qt::AlignHCenter|Qt::AlignTop, m_RdsText);
+		}
+	}
 
 	if(!m_Running)
 	{	//if not running so is no data updates to draw to screen

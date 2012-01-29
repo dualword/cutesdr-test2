@@ -21,12 +21,14 @@ public:
 	int ProcessData(int InLength, TYPEREAL FmBW, TYPECPX* pInData, TYPECPX* pOutData);
 	int ProcessData(int InLength, TYPEREAL FmBW, TYPECPX* pInData, TYPEREAL* pOutData);
 
+	void SetSampleRate(TYPEREAL samplerate);
 	void SetSquelch(int Value);		//call with range of 0 to 99 to set squelch threshold
 
 private:
 	void PerformNoiseSquelch(int InLength, TYPECPX* pOutData);
 	void PerformNoiseSquelch(int InLength, TYPEREAL* pOutData);
 	void InitNoiseSquelch();
+	void ProcessDeemphasisFilter(int InLength, TYPEREAL* InBuf, TYPEREAL* OutBuf);
 
 	bool m_SquelchState;
 	TYPEREAL m_SampleRate;
@@ -48,8 +50,11 @@ private:
 
 	TYPEREAL m_OutBuf[MAX_SQBUF_SIZE];
 
+	TYPEREAL m_DeemphasisAve;
+	TYPEREAL m_DeemphasisAlpha;
+
 	CFir m_HpFir;
-	CIir m_LpIir;
+	CFir m_LpFir;
 
 };
 

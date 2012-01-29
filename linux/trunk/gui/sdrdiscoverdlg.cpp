@@ -7,6 +7,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-05-26  Added support for In Use Status
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -40,9 +41,6 @@
 #include "gui/sdrdiscoverdlg.h"
 #include <QDebug>
 
-
-extern QUdpSocket g_UdpDiscoverSocket;
-
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -56,6 +54,10 @@ extern QUdpSocket g_UdpDiscoverSocket;
 #define MSG_RESP 1
 #define MSG_SET 2
 
+//?????Global hack to get around Qt UDP socket bug that doesnt allow
+//re binding a socket after closing it
+extern QUdpSocket* g_pUdpDiscoverSocket;
+
 //////////////////////////////////////////////////////////////////////////////
 //Constructor/Destructor
 //////////////////////////////////////////////////////////////////////////////
@@ -65,14 +67,15 @@ CSdrDiscoverDlg::CSdrDiscoverDlg(QWidget *parent) :
 {
     ui->setupUi(this);
 	ui->listWidget->clear();
-	m_Name = "";
+    m_Name = "";
 	m_NameFilter = "";
+	connect(g_pUdpDiscoverSocket, SIGNAL(readyRead()), this, SLOT(ReadUDPMessages()));
+	m_UdpOpen = false;
 }
 
 CSdrDiscoverDlg::~CSdrDiscoverDlg()
 {
-	m_Timer.stop();
-	delete ui;
+    delete ui;
 }
 
 //Fill in initial data
@@ -86,29 +89,40 @@ void CSdrDiscoverDlg::InitDlg()
 //////////////////////////////////////////////////////////////////////////////
 void CSdrDiscoverDlg::OnFind()
 {
-qint64 length;
-//QT bug, can only bind once and socket cannot be deleted and re-instantiated
-// so make global and bind just once
-//	if(!g_UdpDiscoverSocket.bind(DISCOVER_CLIENT_PORT) )
-//		return;
-	ui->listWidget->clear();	//clear screen then delay so user sees it clear before getting new data
-	length = sizeof(tDiscover_COMMONMSG);
-	memset((void*)&m_DiscovermsgCommon[0], 0, length);
-	m_DiscovermsgCommon[0].length[0] = length&0xFF; m_DiscovermsgCommon[0].length[1] = (length>>8)&0xFF;
-	m_DiscovermsgCommon[0].key[0] = KEY0; m_DiscovermsgCommon[0].key[1] = KEY1;
-	m_DiscovermsgCommon[0].op = MSG_REQ;
-	for(int i=0; i<m_NameFilter.length(); i++)
-		 m_DiscovermsgCommon[0].name[i] = m_NameFilter[i].toAscii();
-	g_UdpDiscoverSocket.flush();
-	g_UdpDiscoverSocket.writeDatagram( (const char*)&m_DiscovermsgCommon[0], length, QHostAddress::Broadcast, DISCOVER_SERVER_PORT);
-	m_Timer.singleShot(250, this, SLOT( OnTimerRead()) );	//delay some time before trying to read responses
+	ui->listWidget->clear();	//clear screen then delay sending to create visible clear
+	m_Timer.singleShot(250, this, SLOT( SendDiscoverRequest()) );
 }
 
-//Called by timer to read any broadcast messages then close rx port
-void CSdrDiscoverDlg::OnTimerRead()
+void CSdrDiscoverDlg::CloseUdp()
 {
-	if(g_UdpDiscoverSocket.hasPendingDatagrams())
-		ReadUDPMessages();
+	if(m_UdpOpen)
+	{
+//?????Global hack to get around Qt UDP socket bug that doesnt allow
+//re binding a socket after closing it
+//		g_pUdpDiscoverSocket->close();
+//		m_UdpOpen = false;
+//		qDebug("UDP Close");
+	}
+}
+
+void CSdrDiscoverDlg::SendDiscoverRequest()
+{
+tDiscover_COMMONMSG reqmsg;
+	//bind UDP socket with receive port value
+	if(!m_UdpOpen)
+		g_pUdpDiscoverSocket->bind(DISCOVER_CLIENT_PORT);
+	m_UdpOpen = true;
+	qint64 length = sizeof(tDiscover_COMMONMSG);
+	memset((void*)&reqmsg, 0, length);
+	reqmsg.length[0] = length&0xFF;
+	reqmsg.length[1] = (length>>8)&0xFF;
+	reqmsg.key[0] = KEY0;
+	reqmsg.key[1] = KEY1;
+	reqmsg.op = MSG_REQ;
+	for(int i=0; i<m_NameFilter.length(); i++)
+		reqmsg.name[i] = m_NameFilter[i].toAscii();
+	g_pUdpDiscoverSocket->writeDatagram( (const char*)&reqmsg, length, QHostAddress::Broadcast, DISCOVER_SERVER_PORT);
+	m_CloseTimer.singleShot(250, this, SLOT( CloseUdp()) );
 }
 
 //Called when UDP messages are received on the client port for parsing
@@ -117,17 +131,48 @@ void CSdrDiscoverDlg::ReadUDPMessages()
 qint64 totallength;
 qint64 length;
 int index=0;
+bool InUse;
+tDiscover_COMMONMSG tmpmsg;
 char Buf[2048];	//buffer to hold received UDP packet
-	do
+	while( g_pUdpDiscoverSocket->hasPendingDatagrams() )
 	{	//loop and get all UDP packets availaable
-		index = ui->listWidget->count();
-		totallength = g_UdpDiscoverSocket.pendingDatagramSize();
-		g_UdpDiscoverSocket.readDatagram( Buf, totallength);	//read entire UDP packet
-		//copy just the common fixed size block into m_DiscovermsgCommon
+		totallength = g_pUdpDiscoverSocket->pendingDatagramSize();
+		g_pUdpDiscoverSocket->readDatagram( Buf, totallength);	//read entire UDP packet
+
+		//see if msg cam from same device that is already in the list
+		//if so then delete old one so new one will get added
+		index = ui->listWidget->count();	//get index to next free position in list
 		length = sizeof(tDiscover_COMMONMSG);
+		memcpy((void*)&tmpmsg, (void*)Buf, length );	//get tmp copy of new message
+		for(int i=0; i<index; i++)
+		{
+			if( 0==strcmp(m_DiscovermsgCommon[i].sn, tmpmsg.sn) )
+			{
+				ui->listWidget->takeItem(i);	//remove old duplicate
+				break;
+			}
+		}
+		index = ui->listWidget->count();	//get index to next free position in list
+
+		//copy just the common fixed size block into m_DiscovermsgCommon
 		memcpy((void*)&m_DiscovermsgCommon[index], (void*)Buf, length );
 		if( (KEY0 == m_DiscovermsgCommon[index].key[0]) && (KEY1 == m_DiscovermsgCommon[index].key[1]) && (index<MAX_DEVICES) )
 		{
+			InUse = FALSE;
+			if( (QString(m_DiscovermsgCommon[index].name ) == "SDR-IP" ) ||
+				(QString(m_DiscovermsgCommon[index].name ) == "NetSDR" ) )
+			{	//get all information from SDR-IP and NetSDR
+				memcpy((void*)&m_DiscovermsgNetSDR[index], (void*)Buf, sizeof(tDiscover_NETSDR) );
+				if(m_DiscovermsgNetSDR[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
+					InUse = TRUE;
+			}
+			else	//get info for SDR-IQ and SDR-14
+			{
+				memcpy((void*)&m_DiscovermsgSDRxx[index], (void*)Buf,  sizeof(tDiscover_NETSDR) );
+				if(m_DiscovermsgSDRxx[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
+					InUse = TRUE;
+			}
+
 			quint16 tmp16 = m_DiscovermsgCommon[index].port[1]; tmp16 <<= 8; tmp16 |= m_DiscovermsgCommon[index].port[0];
 			QString str = QString("%1   SN=%2   IP=%3.%4.%5.%6   Port=%7")
 					.arg(m_DiscovermsgCommon[index].name)
@@ -137,9 +182,11 @@ char Buf[2048];	//buffer to hold received UDP packet
 					.arg(m_DiscovermsgCommon[index].ipaddr[1])
 					.arg(m_DiscovermsgCommon[index].ipaddr[0])
 					.arg(tmp16);
+			if(InUse)
+				str.prepend("(In Use) ");
 			ui->listWidget->addItem(str);	//place formated information in listbox
 		}
-	}while( g_UdpDiscoverSocket.hasPendingDatagrams() );
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -150,7 +197,6 @@ void CSdrDiscoverDlg::OnItemDoubleClick( QListWidgetItem * item )
 	Q_UNUSED(item);
 	accept();
 }
-
 
 void CSdrDiscoverDlg::accept()
 {	//OK was pressed so get all data from edit controls

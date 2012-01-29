@@ -5,6 +5,7 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-04-16  Added Frequency range logic for optional down converter modules
+//	2011-08-07  Added WFM Support
 /////////////////////////////////////////////////////////////////////
 #ifndef SDRINTERFACE_H
 #define SDRINTERFACE_H
@@ -121,11 +122,18 @@ public:
 	double GetSMeterPeak(){return m_Demodulator.GetSMeterPeak() + m_GainCalibrationOffset - m_RfGain;}
 	double GetSMeterAve(){return m_Demodulator.GetSMeterAve() + m_GainCalibrationOffset - m_RfGain;}
 
+	void SetSpectrumInversion(bool Invert){m_InvertSpectrum = Invert;}
+	void SetUSFmVersion(bool USFm){m_USFm = USFm;}
+	bool GetUSFmVersion(){return m_USFm;}
+
+	//access to WFM mode status/data
+	int GetStereoLock(int* pPilotLock){ return m_Demodulator.GetStereoLock(pPilotLock);}
+	int GetNextRdsGroupData(tRDS_GROUPS* pGroupData){return m_Demodulator.GetNextRdsGroupData(pGroupData);}
 
 signals:
-	void NewStatus(int status);		//emitted when sdr status changes
-	void NewInfoData();				//emitted when sdr information is received after GetSdrInfo()
-	void NewFftData();				//emitted when new FFT data is available
+	void NewStatus(int status);	//emitted when sdr status changes
+	void NewInfoData();			//emitted when sdr information is received after GetSdrInfo()
+	void NewFftData();			//emitted when new FFT data is available
 	void FreqChange(int freq);	//emitted if requested frequency has been clamped by radio
 
 private:
@@ -137,6 +145,8 @@ private:
 	bool m_Running;
 	bool m_ScreenUpateFinished;
 	bool m_StereoOut;
+	bool m_InvertSpectrum;
+	bool m_USFm;
 	qint32 m_BandwidthIndex;
 	qint32 m_DisplaySkipCounter;
 	qint32 m_DisplaySkipValue;

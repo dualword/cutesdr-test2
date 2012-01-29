@@ -7,6 +7,7 @@
 // History:
 //	2010-12-18  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-08-07  Added WFM test generator
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -42,18 +43,23 @@
 #include <QDebug>
 
 CTestBench* g_pTestBench = NULL;		//pointer to this class is global so everybody can access
+double g_TestValue= 0.0;
 
 #define USE_FILE 0
 //#define FILE_NAME "SSB-7210000Hz_001.wav"
-#define FILE_NAME "sim5.wav"
-#define USE_SVFILE 0
-#define USE_PERSEUSFILE 1
+#define FILE_NAME "fmstereo250Khz.wav"
+#define USE_SVFILE 1
+#define USE_PERSEUSFILE 0
 
 //////////////////////////////////////////////////////////////////////
 // Local Defines
 //////////////////////////////////////////////////////////////////////
+#define TB_VERT_DIVS 14 //18	//specify grid screen divisions
+#define TB_TIMEVERT_DIVS 10	//specify time display grid screen divisions
+
 #define MAX_AMPLITUDE 32767.0
-#define TESTFFT_SIZE 2048
+
+#define FFT_AVE 2
 
 #define TRIG_OFF 0
 #define TRIG_PNORM 1
@@ -93,7 +99,7 @@ CTestBench::CTestBench(QWidget *parent) :
 	m_Size = QSize(0,0);
 	m_Rect = QRect(0,0,100,100);
 
-	m_MaxdB = 10;
+	m_MaxdB = 0;
 	m_MindB = -120;
 	m_dBStepSize = 10;
 	m_FreqUnits = 1;
@@ -120,6 +126,8 @@ CTestBench::CTestBench(QWidget *parent) :
 	m_PulsePeriod = .5;
 	m_PulseTimer = 0.0;
 
+	m_pWFmMod = NULL;
+
 	connect(this, SIGNAL(ResetSignal()), this,  SLOT( Reset() ) );
 	connect(this, SIGNAL(NewFftData()), this,  SLOT( DrawFftPlot() ) );
 	connect(this, SIGNAL(NewTimeData()), this,  SLOT( DrawTimePlot() ) );
@@ -129,7 +137,7 @@ CTestBench::CTestBench(QWidget *parent) :
 						FALSE,
 						0.0,
 						m_GenSampleRate);
-	m_Fft.SetFFTAve(0);
+	m_Fft.SetFFTAve(FFT_AVE);
 	ui->setupUi(this);
 	setWindowTitle("CuteSDR Test Bench");
 	ui->textEdit->clear();
@@ -150,12 +158,17 @@ CTestBench::CTestBench(QWidget *parent) :
 	else
 		qDebug()<<"file Failed to Open";
 #endif
+
+	m_pWFmMod = new CWFmMod();
+
 }
 
 CTestBench::~CTestBench()
 {
 	if(m_File.isOpen())
 		m_File.close();
+	if(m_pWFmMod)
+		delete m_pWFmMod;
     delete ui;
 }
 
@@ -174,6 +187,12 @@ void CTestBench::showEvent(QShowEvent *event)
 	Q_UNUSED(event);
 	m_Active = true;
 	m_pTimer->start(500);		//start up timer
+}
+
+void CTestBench::OnTestSlider1(int val)
+{
+	g_TestValue = (double)val/100.0;
+qDebug()<<"Test Val = "<<g_TestValue;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -210,6 +229,7 @@ void CTestBench::Init()
 	ui->spinBoxRate->setValue(m_DisplayRate);
 
 	ui->checkBoxGen->setChecked(m_GenOn);
+	ui->checkBoxFm->setChecked(m_UseFmGen);
 	ui->checkBoxPeak->setChecked(m_PeakOn);
 	ui->spinBoxAmp->setValue((int)m_SignalPower);
 	ui->spinBoxNoise->setValue((int)m_NoisePower);
@@ -227,6 +247,8 @@ void CTestBench::OnSweepStart(int start)
 	m_SweepStartFrequency = (double)start*1000.0;
 	m_SweepFrequency = m_SweepStartFrequency;
 	m_SweepAcc = 0.0;
+	if(m_UseFmGen)
+		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
 }
 
 void CTestBench::OnSweepStop(int stop)
@@ -234,6 +256,8 @@ void CTestBench::OnSweepStop(int stop)
 	m_SweepStopFrequency = (double)stop*1000.0;
 	m_SweepFrequency = m_SweepStartFrequency;
 	m_SweepAcc = 0.0;
+	if(m_UseFmGen)
+		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
 }
 
 void CTestBench::OnSweepRate(int rate)
@@ -241,6 +265,9 @@ void CTestBench::OnSweepRate(int rate)
 	m_SweepRate = (double)rate; // Hz/sec
 	m_SweepAcc = 0.0;
 	m_SweepRateInc = m_SweepRate/m_GenSampleRate;
+	if(m_UseFmGen)
+		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
+
 }
 
 
@@ -309,6 +336,12 @@ void CTestBench::OnGenOn(bool On)
 	m_GenOn = On;
 }
 
+void CTestBench::OnFmGen(bool On)
+{
+	m_UseFmGen = On;
+}
+
+
 void CTestBench::OnPulseWidth(int pwidth)
 {
 	m_PulseWidth = (double)pwidth * .001;
@@ -361,6 +394,11 @@ double u2;
 	if(m_GenSampleRate != samplerate)
 	{	//reset things if sample rate changes on the fly
 		m_GenSampleRate = samplerate;
+		if(m_UseFmGen)
+		{
+			m_pWFmMod->SetSampleRate(m_GenSampleRate);
+			m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
+		}
 		emit ResetSignal();
 	}
 
@@ -374,6 +412,7 @@ double u2;
 			m_File.seek(0x7A);		//perseus
 		return;
 	}
+#if 1	//24 bit data
 	if(m_File.read(buf,6*length)<=0)
 
 		return;
@@ -391,8 +430,31 @@ double u2;
 		tmp.bytes.b3 = buf[j++];
 		pBuf[i].im = (TYPEREAL)tmp.all/65536;
 	}
+#else	//16 bit data
+	if(m_File.read(buf,4*length)<=0)
+
+		return;
+	int j=0;
+	for(i=0; i<length; i++)
+	{
+		tBtoL2 tmp;
+		tmp.bytes.b0 = 0;
+		tmp.bytes.b1 = 0;
+		tmp.bytes.b2 = buf[j++];
+		tmp.bytes.b3 = buf[j++];
+		pBuf[i].re = (TYPEREAL)tmp.all/65536;
+		tmp.bytes.b1 =0;
+		tmp.bytes.b2 = buf[j++];
+		tmp.bytes.b3 = buf[j++];
+		pBuf[i].im = (TYPEREAL)tmp.all/65536;
+	}
+#endif
 	return;
 #endif
+
+	if(m_UseFmGen)
+		m_pWFmMod->GenerateData(length, m_SignalAmplitude, pBuf);
+
 	for(i=0; i<length; i++)
 	{
 		double amp = m_SignalAmplitude;
@@ -415,6 +477,8 @@ if( (m_SweepFrequency>-31250) && (m_SweepFrequency<31250) )
 }
 #endif
 
+	if(!m_UseFmGen)
+	{
 		//create complex sin/cos signal
 		pBuf[i].re = amp*cos(m_SweepAcc);
 		pBuf[i].im = amp*sin(m_SweepAcc);
@@ -426,6 +490,7 @@ if( (m_SweepFrequency>-31250) && (m_SweepFrequency<31250) )
 		if(m_SweepFrequency >= m_SweepStopFrequency)	//reached end of sweep?
 			m_SweepRateInc = 0.0;						//stop sweep when end is reached
 //			m_SweepFrequency = m_SweepStartFrequency;	//restart sweep when end is reached
+	}
 
 		//////////////////  Gaussian Noise generator
 		// Generate two uniform random numbers between -1 and +1
@@ -528,6 +593,8 @@ int i;
 	m_SweepFreqNorm = K_2PI/m_GenSampleRate;
 	m_SweepAcc = 0.0;
 	m_SweepRateInc = m_SweepRate/m_GenSampleRate;
+	if(m_UseFmGen)
+		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
 	m_SignalAmplitude = MAX_AMPLITUDE*pow(10.0, m_SignalPower/20.0);
 	m_NoiseAmplitude = MAX_AMPLITUDE*pow(10.0, m_NoisePower/20.0);
 
@@ -603,7 +670,7 @@ void CTestBench::DisplayData(int length, TYPECPX* pBuf, double samplerate, int p
 				if(++m_DisplaySkipCounter >= m_DisplaySkipValue )
 				{
 					m_DisplaySkipCounter = 0;
-					m_Fft.PutInDisplayFFT( TESTFFT_SIZE, m_FftInBuf);
+					m_Fft.PutInDisplayFFT( TEST_FFTSIZE, m_FftInBuf);
 					emit NewFftData();
 				}
 			}
@@ -664,7 +731,7 @@ void CTestBench::DisplayData(int length, TYPEREAL* pBuf, double samplerate, int 
 				if(++m_DisplaySkipCounter >= m_DisplaySkipValue )
 				{
 					m_DisplaySkipCounter = 0;
-					m_Fft.PutInDisplayFFT( TESTFFT_SIZE, m_FftInBuf);
+					m_Fft.PutInDisplayFFT( TEST_FFTSIZE, m_FftInBuf);
 					emit NewFftData();
 				}
 			}
@@ -723,7 +790,7 @@ void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, double samplerate, in
 				if(++m_DisplaySkipCounter >= m_DisplaySkipValue )
 				{
 					m_DisplaySkipCounter = 0;
-					m_Fft.PutInDisplayFFT( TESTFFT_SIZE, m_FftInBuf);
+					m_Fft.PutInDisplayFFT( TEST_FFTSIZE, m_FftInBuf);
 					emit NewFftData();
 				}
 			}
@@ -782,7 +849,7 @@ void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, double samplerate, 
 				if(++m_DisplaySkipCounter >= m_DisplaySkipValue )
 				{
 					m_DisplaySkipCounter = 0;
-					m_Fft.PutInDisplayFFT( TESTFFT_SIZE, m_FftInBuf);
+					m_Fft.PutInDisplayFFT( TEST_FFTSIZE, m_FftInBuf);
 					emit NewFftData();
 				}
 			}

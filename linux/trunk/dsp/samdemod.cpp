@@ -6,6 +6,7 @@
 // History:
 //	2010-09-22  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-08-07  Modified FIR filter initialization to force fixed size
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -66,7 +67,7 @@ CSamDemod::CSamDemod(TYPEREAL samplerate) : m_SampleRate(samplerate)
 
 	//create complex lowpass filter pair with LP cuttoff of 5000Hz and transition width of 1000Hz
 	// 40dB stop band attenuation
-	m_Fir.InitLPFilter(1.0, 40.0, 4500, 5500,m_SampleRate);
+	m_Fir.InitLPFilter(0, 1.0, 40.0, 4500, 5500,m_SampleRate);
 	//apply transform to shift the LP filter 5000Hz so now the filter is
 	// a 0 to 10000Hz Hilbert bandpass filter with 90 degree phase shift
 	m_Fir.GenerateHBFilter(5000.0);
