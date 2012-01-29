@@ -6,7 +6,8 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
-/////////////////////////////////////////////////////////////////////
+//	2011-08-07  Added WFM Support
+	/////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -98,6 +99,12 @@ void CDemodSetupDlg::OnHangOn(bool On)
 	}
 }
 
+void CDemodSetupDlg::OnUSFm(bool Us)
+{
+	Q_UNUSED(Us);
+	((MainWindow*)this->parent())->SetupDemod(m_DemodMode);
+}
+
 //Fill in initial data
 void CDemodSetupDlg::InitDlg()
 {
@@ -111,6 +118,9 @@ void CDemodSetupDlg::InitDlg()
 		break;
 	case DEMOD_FM:
 		ui->FMradioButton->setChecked(TRUE);
+		break;
+	case DEMOD_WFM:
+		ui->WFMradioButton->setChecked(TRUE);
 		break;
 	case DEMOD_USB:
 		ui->USBradioButton->setChecked(TRUE);
@@ -191,6 +201,8 @@ void CDemodSetupDlg::ModeChanged()
 		m_DemodMode = DEMOD_SAM;
 	else if(ui->FMradioButton->isChecked())
 		m_DemodMode = DEMOD_FM;
+	else if(ui->WFMradioButton->isChecked())
+		m_DemodMode = DEMOD_WFM;
 	else if(ui->USBradioButton->isChecked())
 		m_DemodMode = DEMOD_USB;
 	else if(ui->LSBradioButton->isChecked())

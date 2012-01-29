@@ -11,6 +11,7 @@
 // History:
 //	2011-01-29  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-08-07  Modified FIR filter initialization to force fixed size
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -50,6 +51,8 @@
 //////////////////////////////////////////////////////////////////////
 // Local Defines
 //////////////////////////////////////////////////////////////////////
+#define MAX_HALF_BAND_BUFSIZE 8192
+
 
 /////////////////////////////////////////////////////////////////////////////////
 //	Construct CFir object
@@ -126,13 +129,52 @@ TYPEREAL* HQptr;
 	m_Mutex.unlock();
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
+//	Process InLength InBuf[] samples and place in OutBuf[]
+//  Note the Coefficient array is twice the length and has a duplicated set
+// in order to eliminate testing for buffer wrap in the inner loop
+//  ex: if 3 tap FIR with coefficients{21,-43,15} is mae into a array of 6 entries
+//   {21, -43, 15, 21, -43, 15 }
+//REAL in COMPLEX out version (for Hilbert filter pair)
+/////////////////////////////////////////////////////////////////////////////////
+void CFir::ProcessFilter(int InLength, TYPEREAL* InBuf, TYPECPX* OutBuf)
+{
+TYPECPX acc;
+TYPECPX* Zptr;
+TYPEREAL* HIptr;
+TYPEREAL* HQptr;
+
+	m_Mutex.lock();
+	for(int i=0; i<InLength; i++)
+	{
+		m_cZBuf[m_State].re = InBuf[i];
+		m_cZBuf[m_State].im = InBuf[i];
+		HIptr = m_ICoef + m_NumTaps - m_State;
+		HQptr = m_QCoef + m_NumTaps - m_State;
+		Zptr = m_cZBuf;
+		acc.re = (*HIptr++ * (*Zptr).re);		//do the first MAC
+		acc.im = (*HQptr++ * (*Zptr++).im);
+		for(int j=1; j<m_NumTaps; j++)
+		{
+			acc.re += (*HIptr++ * (*Zptr).re);		//do the remaining MACs
+			acc.im += (*HQptr++ * (*Zptr++).im);
+		}
+		if(--m_State < 0)
+			m_State += m_NumTaps;
+		OutBuf[i] = acc;
+	}
+	m_Mutex.unlock();
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 //  Initializes a pre-designed FIR filter with fixed coefficients
 //	Iniitalize FIR variables and clear out buffers.
 /////////////////////////////////////////////////////////////////////////////////
-void CFir::InitConstFir( int NumTaps, const double* pCoef)
+void CFir::InitConstFir( int NumTaps, const double* pCoef, TYPEREAL Fsamprate)
 {
 	m_Mutex.lock();
+	m_SampleRate = Fsamprate;
 	if(NumTaps>MAX_NUMCOEF)
 		m_NumTaps = MAX_NUMCOEF;
 	else
@@ -152,9 +194,38 @@ void CFir::InitConstFir( int NumTaps, const double* pCoef)
 	m_Mutex.unlock();
 }
 
+/////////////////////////////////////////////////////////////////////////////////
+//  Initializes a pre-designed complex FIR filter with fixed coefficients
+//	Iniitalize FIR variables and clear out buffers.
+/////////////////////////////////////////////////////////////////////////////////
+void CFir::InitConstFir( int NumTaps, const double* pICoef, const double* pQCoef, TYPEREAL Fsamprate)
+{
+	m_Mutex.lock();
+	m_SampleRate = Fsamprate;
+	if(NumTaps>MAX_NUMCOEF)
+		m_NumTaps = MAX_NUMCOEF;
+	else
+		m_NumTaps = NumTaps;
+	for(int i=0; i<m_NumTaps; i++)
+	{
+		m_ICoef[i] = pICoef[i];
+		m_ICoef[m_NumTaps+i] = pICoef[i];	//create duplicate for calculation efficiency
+		m_QCoef[i] = pQCoef[i];
+		m_QCoef[m_NumTaps+i] = pQCoef[i];	//create duplicate for calculation efficiency
+	}
+	for(int i=0; i<m_NumTaps; i++)
+	{	//zero input buffers
+		m_rZBuf[i] = 0.0;
+		m_cZBuf[i].re = 0.0;
+		m_cZBuf[i].im = 0.0;
+	}
+	m_State = 0;	//zero filter state variable
+	m_Mutex.unlock();
+}
 
 ////////////////////////////////////////////////////////////////////
 // Create a FIR Low Pass filter with scaled amplitude 'Scale'
+// NumTaps if non-zero, forces filter design to be this number of taps
 // Scale is linear amplitude scale factor.
 // Astop = Stopband Atenuation in dB (ie 40dB is 40dB stopband attenuation)
 // Fpass = Lowpass passband frequency in Hz
@@ -170,10 +241,10 @@ void CFir::InitConstFir( int NumTaps, const double* pCoef)
 //                    Fpass   Fstop
 //
 ////////////////////////////////////////////////////////////////////
-	int CFir::InitLPFilter(TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate)
-	{
-	int n;
-	TYPEREAL Beta;
+int CFir::InitLPFilter(int NumTaps, TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate)
+{
+int n;
+TYPEREAL Beta;
 	m_Mutex.lock();
 	m_SampleRate = Fsamprate;
 	//create normalized frequency parameters
@@ -197,6 +268,9 @@ void CFir::InitConstFir( int NumTaps, const double* pCoef)
 		m_NumTaps = MAX_NUMCOEF;
 	if(m_NumTaps < 3)
 		m_NumTaps = 3;
+
+	if(NumTaps)	//if need to force to to a number of taps
+		m_NumTaps = NumTaps;
 
 	TYPEREAL fCenter = .5*(TYPEREAL)(m_NumTaps-1);
 	TYPEREAL izb = Izero(Beta);		//precalculate denominator since is same for all points
@@ -262,6 +336,7 @@ void CFir::InitConstFir( int NumTaps, const double* pCoef)
 
 ////////////////////////////////////////////////////////////////////
 // Create a FIR high Pass filter with scaled amplitude 'Scale'
+// NumTaps if non-zero, forces filter design to be this number of taps
 // Astop = Stopband Atenuation in dB (ie 40dB is 40dB stopband attenuation)
 // Fpass = Highpass passband frequency in Hz
 // Fstop = Highpass stopband frequency in Hz
@@ -275,7 +350,7 @@ void CFir::InitConstFir( int NumTaps, const double* pCoef)
 //  Astop ---------
 //            Fstop   Fpass
 ////////////////////////////////////////////////////////////////////
-int CFir::InitHPFilter(TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate)
+int CFir::InitHPFilter(int NumTaps, TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate)
 {
 int n;
 TYPEREAL Beta;
@@ -304,6 +379,9 @@ TYPEREAL Beta;
 		m_NumTaps = 3;
 
 	m_NumTaps |= 1;		//force to next odd number
+
+	if(NumTaps)	//if need to force to to a number of taps
+		m_NumTaps = NumTaps;
 
 	TYPEREAL izb = Izero(Beta);		//precalculate denominator since is same for all points
 	TYPEREAL fCenter = .5*(TYPEREAL)(m_NumTaps-1);
@@ -429,4 +507,108 @@ TYPEREAL tmp;
 	}while(ds >= errorlimit*sum);
 //qDebug()<<"x="<<x<<" I0="<<sum;
 	return(sum);
+}
+
+
+// *&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*
+//						Class to do decimation by 2
+// *&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*
+
+//////////////////////////////////////////////////////////////////////
+//Decimate by 2 Halfband filter class implementation
+//////////////////////////////////////////////////////////////////////
+CDecimateBy2::CDecimateBy2(int len,const TYPEREAL* pCoef )
+	: m_FirLength(len), m_pCoef(pCoef)
+{
+	//create buffer for FIR implementation
+	m_pHBFirRBuf = new TYPEREAL[MAX_HALF_BAND_BUFSIZE];
+	m_pHBFirCBuf = new TYPECPX[MAX_HALF_BAND_BUFSIZE];
+	TYPECPX CPXZERO = {0.0,0.0};
+	for(int i=0; i<MAX_HALF_BAND_BUFSIZE ;i++)
+	{
+		m_pHBFirRBuf[i] = 0.0;
+		m_pHBFirCBuf[i] = CPXZERO;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
+// Half band filter and decimate by 2 function.
+// Two restrictions on this routine:
+// InLength must be larger or equal to the Number of Halfband Taps
+// InLength must be an even number
+//Mono version
+//////////////////////////////////////////////////////////////////////
+int CDecimateBy2::DecBy2(int InLength, TYPEREAL* pInData, TYPEREAL* pOutData)
+{
+int i;
+int j;
+int numoutsamples = 0;
+	if(InLength<m_FirLength)	//safety net to make sure InLength is large enough to process
+	{
+		qDebug()<<"InLength = "<<InLength;
+		return InLength/2;
+	}
+	//copy input samples into buffer starting at position m_FirLength-1
+	for(i=0,j = m_FirLength - 1; i<InLength; i++)
+		m_pHBFirRBuf[j++] = pInData[i];
+	//perform decimation FIR filter on even samples
+	for(i=0; i<InLength; i+=2)
+	{
+		TYPEREAL acc;
+		acc = ( m_pHBFirRBuf[i] * m_pCoef[0] );
+		for(j=2; j<m_FirLength; j+=2)	//only use even coefficients since odd are zero(except center point)
+			acc += ( m_pHBFirRBuf[i+j] * m_pCoef[j] );
+		//now multiply the center coefficient
+		acc += ( m_pHBFirRBuf[i+(m_FirLength-1)/2] * m_pCoef[(m_FirLength-1)/2] );
+		pOutData[numoutsamples++] = acc;	//put output buffer
+	}
+	//need to copy last m_FirLength - 1 input samples in buffer to beginning of buffer
+	// for FIR wrap around management
+	for(i=0,j = InLength-m_FirLength+1; i<m_FirLength - 1; i++)
+		m_pHBFirRBuf[i] = pInData[j++];
+	return numoutsamples;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Half band filter and decimate by 2 function.
+// Two restrictions on this routine:
+// InLength must be larger or equal to the Number of Halfband Taps
+// InLength must be an even number  ~37nS
+// complex or stereo version
+//////////////////////////////////////////////////////////////////////
+int CDecimateBy2::DecBy2(int InLength, TYPECPX* pInData, TYPECPX* pOutData)
+{
+int i;
+int j;
+int numoutsamples = 0;
+	if( InLength<m_FirLength)	//safety net to make sure InLength is large enough to process
+	{
+qDebug()<<"InLength = "<<InLength;
+		return InLength/2;
+	}
+	//copy input samples into buffer starting at position m_FirLength-1
+	for(i=0,j = m_FirLength - 1; i<InLength; i++)
+		m_pHBFirCBuf[j++] = pInData[i];
+	//perform decimation FIR filter on even samples
+	for(i=0; i<InLength; i+=2)
+	{
+		TYPECPX acc;
+		acc.re = ( m_pHBFirCBuf[i].re * m_pCoef[0] );
+		acc.im = ( m_pHBFirCBuf[i].im * m_pCoef[0] );
+		for(j=2; j<m_FirLength; j+=2)	//only use even coefficients since odd are zero(except center point)
+		{
+			acc.re += ( m_pHBFirCBuf[i+j].re * m_pCoef[j] );
+			acc.im += ( m_pHBFirCBuf[i+j].im * m_pCoef[j] );
+		}
+		//now multiply the center coefficient
+		acc.re += ( m_pHBFirCBuf[i+(m_FirLength-1)/2].re * m_pCoef[(m_FirLength-1)/2] );
+		acc.im += ( m_pHBFirCBuf[i+(m_FirLength-1)/2].im * m_pCoef[(m_FirLength-1)/2] );
+		pOutData[numoutsamples++] = acc;	//put output buffer
+
+	}
+	//need to copy last m_FirLength - 1 input samples in buffer to beginning of buffer
+	// for FIR wrap around management
+	for(i=0,j = InLength-m_FirLength+1; i<m_FirLength - 1; i++)
+		m_pHBFirCBuf[i] = pInData[j++];
+	return numoutsamples;
 }

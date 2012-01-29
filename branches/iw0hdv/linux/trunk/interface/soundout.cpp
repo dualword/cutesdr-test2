@@ -9,6 +9,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-08-07  Changed some debug output
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -158,7 +159,6 @@ void CSoundOut::ChangeUserDataRate(double UsrDataRate)
 	if(m_UserDataRate != UsrDataRate)
 	{
 		m_UserDataRate = UsrDataRate;
-//qDebug()<<"SoundOutRatio"<<(1.0/m_OutRatio);
 		for(int i=0; i<OUTQSIZE ;i++)	//zero buffer for data output
 		{
 			m_OutQueueMono[i] = 0;
@@ -172,6 +172,7 @@ void CSoundOut::ChangeUserDataRate(double UsrDataRate)
 		m_AveOutQLevel = OUTQSIZE/2;
 		m_Startup = true;
 	}
+qDebug()<<"SoundOutRatio  Rate"<<(1.0/m_OutRatio) << m_UserDataRate;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -462,8 +463,8 @@ double error;
 	m_PpmError = (int)( m_RateCorrection*1e6 );
 	if( abs(m_PpmError) > 500)
 	{
-		qDebug()<<"SoundOut "<<m_PpmError << m_AveOutQLevel;
-		g_pTestBench->SendDebugTxt("Snd error>500ppm");
+//		qDebug()<<"SoundOut "<<m_PpmError << m_AveOutQLevel;
+//		g_pTestBench->SendDebugTxt("Snd error>500ppm");
 	}
 }
 

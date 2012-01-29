@@ -7,6 +7,7 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-04-26  Added types.h include(Thanks Ben AA7AS)
+//	2011-08-07  Fixed some issues with the UDP thread mutex
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -59,8 +60,7 @@
 #define PKT_LENGTH_24 1444
 #define PKT_LENGTH_16 1028
 
-#define RXQUEUE_SIZE 256		//queue size(keep power of 2)
-
+#define RXQUEUE_SIZE 1024		//queue size(keep power of 2)
 
 
 /*---------------------------------------------------------------------------*/
@@ -159,7 +159,6 @@ qDebug()<<"Start I/O";
 	m_pTcpThread = new CTcpThread(this);
 	m_pTcpThread->start();
 
-
 	m_IQDataThreadQuit = FALSE;
 	if(NULL != m_pIQDataThread)
 	{
@@ -167,7 +166,7 @@ qDebug()<<"Start I/O";
 		m_pIQDataThread = NULL;
 	}
 	m_pIQDataThread = new CIQDataThread(this);
-	m_pIQDataThread->start(QThread::HighestPriority);	//this thread does all the DSP processing
+	m_pIQDataThread->start(QThread::TimeCriticalPriority);	//this thread does all the DSP processing
 	m_MissedPackets = 0;
 }
 
@@ -464,7 +463,7 @@ CNetIOBase* pParent = (CNetIOBase*)m_pParent;
 //////////////////////////////////////////////////////////////////////////
 void CUdpThread::OnreadyRead()
 {
-char Buf[2048];
+char Buf[8192];
 tBtoL data;
 qint64 size;
 int i,j;
@@ -474,13 +473,13 @@ CNetIOBase* pParent = (CNetIOBase*)m_pParent;
 	data.all = 0;
 	seq.all = 0;
 	pParent->m_UdpRxMutex.lock();
-	while( m_pUdpSocket->hasPendingDatagrams() )
+	while( m_pUdpSocket->hasPendingDatagrams() && !pParent->m_UdpThreadQuit)
 	{
 		size = m_pUdpSocket->pendingDatagramSize();
 		if(PKT_LENGTH_24 == size)
 		{	//24 bit I/Q data
 			pParent->m_SampleSize24 = TRUE;
-			m_pUdpSocket->readDatagram( Buf, 2048, 0, 0 );
+			m_pUdpSocket->readDatagram( Buf, 8192, 0, 0 );
 			seq.bytes.b0 = Buf[2];
 			seq.bytes.b1 = Buf[3];
 			if(0==seq.all)	//is first packet after started
@@ -528,6 +527,8 @@ CNetIOBase* pParent = (CNetIOBase*)m_pParent;
 		}
 		pParent->m_RxQueueHead++;
 		pParent->m_RxQueueHead &= (RXQUEUE_SIZE-1);
+//if(pParent->m_RxQueueHead==pParent->m_RxQueueTail)
+//	qDebug()<<"Overflo";
 	}
 	pParent->m_QWaitFifoData.wakeAll();
 	pParent->m_UdpRxMutex.unlock();
@@ -576,6 +577,7 @@ CNetIOBase* pParent;
 	{
 		pParent->m_UdpRxMutex.lock();
 		pParent->m_QWaitFifoData.wait( &pParent->m_UdpRxMutex, 100);
+		pParent->m_UdpRxMutex.unlock();
 		if(pParent->m_SampleSize24)
 		{
 			while(pParent->m_RxQueueHead != pParent->m_RxQueueTail)
@@ -595,7 +597,7 @@ CNetIOBase* pParent;
 				pParent->m_RxQueueTail &= (RXQUEUE_SIZE-1);
 			}
 		}
-		pParent->m_UdpRxMutex.unlock();
+//		pParent->m_UdpRxMutex.unlock();
 	}
 }
 

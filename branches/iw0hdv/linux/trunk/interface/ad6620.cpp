@@ -7,6 +7,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2011-06-16  Fixed bug in AD6620 gain scaling
 ////////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -520,6 +521,8 @@ unsigned int tmp = 0;
 			break;
 	}
 
+	m_CIC2Scale = CIC2_SCALE_TBL[m_CIC2Rate];
+	m_CIC5Scale = CIC5_SCALE_TBL[m_CIC5Rate];
 	//create all the msgs needed to load the AD6620 registers in the radio
 	//The messages are placed in m_MsgBuffer
 	PutInMsgBuffer(ADR_MODECTRL, MODECTRL_SREAL|MODECTRL_RESET|MODECTRL_SYNCMASTER);

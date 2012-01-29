@@ -6,7 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 # Versions
 set(cutesdr_VERSION_MAJOR 1)
 set(cutesdr_VERSION_MINOR 0)
-set(cutesdr_VERSION_PATCH 1)
+set(cutesdr_VERSION_PATCH 4)
 set(cutesdr_VERSION ${cutesdr_VERSION_MAJOR}.${cutesdr_VERSION_MINOR}.${cutesdr_VERSION_PATCH})
 
 
@@ -37,6 +37,7 @@ set(CuteSDR_SRCS
 	gui/sliderctrl.cpp 
 	gui/noiseprocdlg.cpp 
 	gui/aboutdlg.cpp 
+    gui/rdsdecode.cpp
 	interface/soundout.cpp 
     interface/sdrinterface.cpp 
     interface/netiobase.cpp 
@@ -56,6 +57,8 @@ set(CuteSDR_SRCS
 	dsp/fir.cpp 
     dsp/iir.cpp 
 	dsp/noiseproc.cpp
+    dsp/wfmdemod.cpp
+    dsp/wfmmod.cpp
 )
 
 set(CuteSDR_INC
@@ -74,6 +77,7 @@ set(CuteSDR_INC
 	gui/meter.h 
 	gui/noiseprocdlg.h 
 	gui/aboutdlg.h 
+    gui/rdsdecode.h
 	interface/soundout.h 
     interface/sdrinterface.h 
     interface/protocoldefs.h 
@@ -97,6 +101,9 @@ set(CuteSDR_INC
 	dsp/fir.h 
     dsp/iir.h 
 	dsp/noiseproc.h
+    dsp/wfmdemod.h 
+    dsp/wfmmod.h
+    dsp/rbdsconstants.h
 )
 
 set (CuteSDR_UIS

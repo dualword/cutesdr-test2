@@ -15,6 +15,7 @@
 #include "dsp/amdemod.h"
 #include "dsp/samdemod.h"
 #include "dsp/fmdemod.h"
+#include "dsp/wfmdemod.h"
 #include "dsp/ssbdemod.h"
 
 #define DEMOD_AM 0		//defines for supported demod modes
@@ -24,8 +25,9 @@
 #define DEMOD_LSB 4
 #define DEMOD_CWU 5
 #define DEMOD_CWL 6
+#define DEMOD_WFM 7
 
-#define NUM_DEMODS 7	//manually update if modify number of demod types
+#define NUM_DEMODS 8	//manually update if modify number of demod types
 
 #define MAX_INBUFSIZE 250000	//maximum size of demod input buffer
 								//pick so that worst case decimation leaves
@@ -60,7 +62,7 @@ public:
 	virtual ~CDemodulator();
 
 	void SetInputSampleRate(TYPEREAL InputRate);
-	double GetOutputRate(){return m_OutputRate;}
+	double GetOutputRate(){return m_DemodOutputRate;}
 	double GetSMeterPeak(){return m_SMeter.GetPeak();}
 	double GetSMeterAve(){return m_SMeter.GetAve();}
 
@@ -72,6 +74,16 @@ public:
 	int ProcessData(int InLength, TYPECPX* pInData, TYPEREAL* pOutData);
 	int ProcessData(int InLength, TYPECPX* pInData, TYPECPX* pOutData);
 
+	void SetUSFmVersion(bool USFm){m_USFm = USFm;}
+	bool GetUSFmVersion(){return m_USFm;}
+
+	//access to WFM mode status
+	int GetStereoLock(int* pPilotLock){ if(m_pWFmDemod) return m_pWFmDemod->GetStereoLock(pPilotLock); else return false;}
+	int GetNextRdsGroupData(tRDS_GROUPS* pGroupData)
+	{
+		if(m_pWFmDemod) return m_pWFmDemod->GetNextRdsGroupData(pGroupData); else return false;
+	}
+
 private:
 	void DeleteAllDemods();
 	CDownConvert m_DownConvert;
@@ -81,11 +93,13 @@ private:
 	QMutex m_Mutex;		//for keeping threads from stomping on each other
 	tDemodInfo m_DemodInfo;
 	TYPEREAL m_InputRate;
-	TYPEREAL m_OutputRate;
+	TYPEREAL m_DownConverterOutputRate;
+	TYPEREAL m_DemodOutputRate;
 	TYPEREAL m_DesiredMaxOutputBandwidth;
 	TYPECPX* m_pDemodInBuf;
 	TYPECPX* m_pDemodTmpBuf;
 	TYPEREAL m_CW_Offset;
+	bool m_USFm;
 	int m_DemodMode;
 	int m_InBufPos;
 	int m_InBufLimit;
@@ -96,6 +110,7 @@ private:
 	CAmDemod* m_pAmDemod;
 	CSamDemod* m_pSamDemod;
 	CFmDemod* m_pFmDemod;
+	CWFmDemod* m_pWFmDemod;
 	CSsbDemod* m_pSsbDemod;	//includes CW modes
 };
 
