@@ -93,13 +93,13 @@ void dump (unsigned char*buf, int len)
 
 
 
-    static const int LENGTH_MASK = 0x1FFF;
+static const int LENGTH_MASK = 0x1FFF;
     
-    enum MsgState {
-           MSGSTATE_HDR1 = 0,
-           MSGSTATE_HDR2 = 1,
-           MSGSTATE_DATA = 2
-    } msgState;
+enum MsgState {
+      MSGSTATE_HDR1 = 0,
+      MSGSTATE_HDR2 = 1,
+      MSGSTATE_DATA = 2
+}; // msgState;
     
     
 
@@ -145,6 +145,8 @@ private:
 
     pthread_t thread_id;
 
+    enum MsgState msgState;
+
     // timing variables
     timespec  time_start, time_end, time_diff;
 
@@ -159,7 +161,7 @@ Radio::Radio (int s, struct ftdi_context *f): sock(s), ftdi(f)
     udpSocket = -1;
     seqNumber = 0;
 
-    fprintf (stderr, "Radio::Radio: %d %d\n", sock, usb_fd);
+    fprintf (stderr, "Radio::Radio: %d %p\n", sock, ftdi);
 
     socklen_t addrlen = sizeof(clientTCPAddr);
     if (getpeername(sock, &clientTCPAddr, &addrlen)) {
@@ -377,6 +379,7 @@ private:
     int msgLen;
     int msgIndex;
     int seqNumber;
+    enum MsgState msgState;
 
     Radio *pRadio;
     string name_serial;
