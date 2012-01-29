@@ -27,7 +27,7 @@ sudo rpm install libftdi-devel cmake subversion    # RH/Fedora/OpenSuse
 
 After that you can extract the 
 
-svn co https://cutesdr.svn.sourceforge.net/svnroot/cutesdr/branches/iw0hdv/linux/ cutesdr-lx
+svn co https://cutesdr.svn.sourceforge.net/svnroot/cutesdr/branches/iw0hdv/linux/trunk/ cutesdr-lx
 
 Next compile with the following command:
 
