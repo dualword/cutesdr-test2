@@ -34,6 +34,7 @@
 #include <string.h>
 
 
+#include "logger.h"
 #include "minithread.h"
 
 
@@ -93,8 +94,8 @@ public:
             if((sock=accept(s,(struct sockaddr*)&address, (socklen_t *)&address_length)) < 0) {
                 throw SysException(errno, strerror(errno), "Command accept failed");
             } else {
-                fprintf(stderr,"client socket %d\n",sock);
-                fprintf(stderr,"client connected: %s:%d\n",inet_ntoa(address.sin_addr),ntohs(address.sin_port));
+                DEBUG(DBG_WARN, "client socket " << sock);
+                DEBUG(DBG_WARN, "client connected: " << inet_ntoa(address.sin_addr) << ":" << ntohs(address.sin_port));
 
                 //
                 // allow for one only instance at time

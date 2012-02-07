@@ -25,6 +25,7 @@
 #include <values.h>
 #include <errno.h>
 #include <ftdi.h>
+#include <getopt.h>
 
 
 
@@ -36,6 +37,7 @@ using namespace std;
 #include "minithread.h"
 #include "netsupport.h"
 #include "discover.h"
+#include "logger.h"
 
 
 struct ftdi_context * open_ftdi ()
@@ -99,7 +101,7 @@ enum MsgState {
       MSGSTATE_HDR1 = 0,
       MSGSTATE_HDR2 = 1,
       MSGSTATE_DATA = 2
-}; // msgState;
+};
     
     
 
@@ -450,13 +452,10 @@ int Cute :: process (unsigned char ch)
            if(2 == msgLen)  {//if msg has no parameters then we are done
               msgState = MSGSTATE_HDR1; //go back to first statewrite
 
-              #ifdef DEBUG
-              fprintf (stderr, "%s: writing in SERIAL(2) %d bytes: ", __FUNCTION__, msgLen);
-              dump (ascpMsg, msgLen);
-              #endif
-
-              //write ( usb_fd, ascpMsg, msgLen ); 
-
+              XDEBUG (DBG_DEBUG,
+                      fprintf (stderr, "%s: writing in SERIAL(2) %d bytes: ", __FUNCTION__, msgLen);
+                      dump (ascpMsg, msgLen);
+              );
               rc = ftdi_write_data (ftdi, ascpMsg, msgLen );
 
               msgLen = 0;
@@ -479,10 +478,10 @@ int Cute :: process (unsigned char ch)
                   //udp_write ( ascpMsg, msgLen );
               }
               else {
-                  #ifdef DEBUG
-                  fprintf (stderr, "%s: writing in SERIAL %d bytes: ", __FUNCTION__, msgLen);
-                  dump (ascpMsg, msgLen);
-                  #endif
+                  XDEBUG (DBG_DEBUG,
+                          fprintf (stderr, "%s: writing in SERIAL %d bytes: ", __FUNCTION__, msgLen);
+                          dump (ascpMsg, msgLen);
+                  );
 
                   //write (usb_fd, ascpMsg, msgLen );
                   rc = ftdi_write_data (ftdi, ascpMsg, msgLen );
@@ -506,17 +505,17 @@ int Cute::threadproc ()
     msgIndex = 0;
     seqNumber = 0;
 
-    fprintf (stderr, "TTT Entering in execute, reading from TCP socket\n");
+    DEBUG(DBG_WARN, "TTT Entering in execute, reading from TCP socket");
     while (1) {
         int nr;
         unsigned char buf[1024];
 
         nr = read (sock, buf, sizeof(buf));
         if (nr > 0) {
-            #ifdef  DEBUG
-            fprintf (stderr, "%s: %d bytes read from socket: ", __FUNCTION__, nr);
-            dump (buf, nr);
-            #endif
+            XDEBUG (DBG_DEBUG,
+                    fprintf (stderr, "%s: %d bytes read from socket: ", __FUNCTION__, nr);
+                    dump (buf, nr);
+            );
             for (int j=0; j<nr; ++j) {
                 //
                 // write to receiver
@@ -524,7 +523,7 @@ int Cute::threadproc ()
                 process (buf[j]);
             }
         } else {
-            fprintf (stderr, "TTT exiting reading from TCP socket failed\n");
+            DEBUG(DBG_WARN, "TTT exiting reading from TCP socket failed");
             
             ftdi_usb_close(ftdi);
             ftdi_free(ftdi);
@@ -539,7 +538,7 @@ int Cute::threadproc ()
 
 
 
-const char *name = "/dev/ttyUSB0";
+char *name = "/dev/ttyUSB0";
 
 int scan_ftdi ()
 {
@@ -549,11 +548,7 @@ int scan_ftdi ()
     char manufacturer[128], description[128];
     int retval = EXIT_SUCCESS;
 
-    if ((ftdi = ftdi_new()) == 0)
-    {
-        fprintf(stderr, "ftdi_new failed\n");
-        return EXIT_FAILURE;
-    }
+    if ((ftdi = ftdi_new()) == 0) throw "ftdi_new failed";
 
     if ((ret = ftdi_usb_find_all(ftdi, &devlist, 0, 0)) < 0)
     {
@@ -562,19 +557,19 @@ int scan_ftdi ()
         goto do_deinit;
     }
 
-    printf("Number of FTDI devices found: %d\n", ret);
+    DEBUG(DBG_DEBUG, "Number of FTDI devices found: " << ret);
 
     i = 0;
     for (curdev = devlist; curdev != NULL; i++)
     {
-        printf("Checking device: %d\n", i);
+        DEBUG(DBG_ERROR, "Checking device: " << i);
         if ((ret = ftdi_usb_get_strings(ftdi, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0)
         {
-            fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
+            DEBUG (DBG_ERROR, "ftdi_usb_get_strings failed: " << ret << " (" << ftdi_get_error_string(ftdi) << ")" );
             retval = EXIT_FAILURE;
             goto done;
         }
-        printf("Manufacturer: %s, Description: %s\n\n", manufacturer, description);
+        DEBUG(DBG_WARN, "Manufacturer: " << manufacturer <<", Description: " << description );
         curdev = curdev->next;
     }
 done:
@@ -586,11 +581,10 @@ do_deinit:
 }
 
 
-int main ()
-{
-    //struct ftdi_context *ftdi;
-    //char *descstring = NULL;
+int debug_level = 0;
 
+void print_banner ()
+{
     fprintf (stderr, "------ \n");
     fprintf (stderr, "------ SDR-IQ server for Cute SDR\n");
     fprintf (stderr, "------ \n");
@@ -598,12 +592,90 @@ int main ()
     fprintf (stderr, "------ \n");
     fprintf (stderr, "------ (C) 2012, Ken N9VV && Andrea IW0HDV\n");
     fprintf (stderr, "\n");
+}
+void print_help()
+{
+    print_banner();
+    cerr << 
+    "    Allowed options:                                               " << std::endl <<
+    "      -i [ --interface ] arg (=/dev/ttyUSB0) interface name        " << std::endl <<
+    "      -h [ --help ]                    print usage message         " << std::endl <<
+    "      -d [ --debug ] arg (=0) 0|1|2    debug level                 " << std::endl <<
+    std::endl;
+}
+
+int parseOptions (int argc, char **argv)
+{
+  int c;
+  int rc = 0;
+
+  while (1) {
+      static struct option long_options[] =
+        {
+          /* These options set a flag. */
+          {"help",       no_argument,       0,  1 },
+          {"interface",  optional_argument, 0, 'i'},
+          {"debug",      required_argument, 0, 'd'},
+          {0, 0, 0, 0}
+        };
+      /* getopt_long stores the option index here. */
+      int option_index = 0;
+
+      c = getopt_long (argc, argv, "hi:d:",
+                       long_options, &option_index);
+
+      /* Detect the end of the options. */
+      if (c == -1)
+        break;
+
+      switch (c) {
+        case 'd':
+          debug_level = atoi(optarg);
+          break;
+
+        case 'i':
+          name = optarg;
+          break;
+
+        case 1:
+        case '?':
+        case 'h':
+        default:
+          /* getopt_long already printed an error message. */
+          print_help();
+          return -1;
+          break;
+        }
+  }
+  return rc;
+}
+
+int main (int argc, char **argv)
+{
+    if (parseOptions (argc, argv)) return 255;
+
+    switch (debug_level) {
+    case 0:
+        DEBUG_CONF("outputfile", Logger::file_off|Logger::screen_on, DBG_ERROR, DBG_ERROR);
+        break;
+    case 1:
+        DEBUG_CONF("outputfile", Logger::file_off|Logger::screen_on, DBG_WARN, DBG_WARN);
+        break;
+    case 2:
+        DEBUG_CONF("outputfile", Logger::file_off|Logger::screen_on, DBG_DEBUG, DBG_DEBUG);
+        break;
+    }
+
+
+    //struct ftdi_context *ftdi;
+    //char *descstring = NULL;
+
+    print_banner(); 
 
     string buf;
-    
-    //scan_ftdi();
+    XDEBUG (DBG_DEBUG, scan_ftdi());
 
-    try {
+     try {
        DiscoverSdrxx sd;
        sd.run();
 

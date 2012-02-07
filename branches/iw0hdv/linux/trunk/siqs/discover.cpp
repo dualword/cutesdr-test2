@@ -17,7 +17,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-
+#include "logger.h"
 #include "discover.h"
 
 
@@ -75,7 +75,7 @@
       if (ioctl(s, SIOCGIFCONF, &ifc) == -1) throw SysException (errno, strerror(errno), "Socket failed to IOCTL");
 
       ifs = ifc.ifc_len / sizeof(ifr[0]);
-      printf("interfaces = %d:\n", ifs);
+      DEBUG(DBG_DEBUG, "interfaces = " << ifs);
       for (i = 0; i < ifs; i++) {
         char ip[INET_ADDRSTRLEN];
         struct sockaddr_in *s_in = (struct sockaddr_in *) &ifr[i].ifr_addr;
@@ -83,7 +83,7 @@
         if (!inet_ntop(domain, &s_in->sin_addr, ip, sizeof(ip))) {
             throw SysException (errno, strerror(errno), "inet_ntop: converting IP address");
         } else {
-            printf("%s - %s\n", ifr[i].ifr_name, ip);
+            DEBUG(DBG_DEBUG, ifr[i].ifr_name << " - " << ip);
 
             if (strcmp(if_name, ifr[i].ifr_name)==0) {
                 return s_in->sin_addr.s_addr;
@@ -103,7 +103,9 @@
 
         myIP = get_addresses ( AF_INET , "eth0" );
 
-        fprintf (stderr, "SRXXX STARTED: size %d\n", sizeof(COMMON_DISCOVER_MSG_SDRXX) );
+        XDEBUG(DBG_WARN, 
+               fprintf (stderr, "SRXXX STARTED: size %d\n", sizeof(COMMON_DISCOVER_MSG_SDRXX) );
+        );
         while (1) {
             int rc = read (sock, buf, sizeof(buf));
 
@@ -119,14 +121,15 @@
                 if ( p->key[0] == KEY0 &&  p->key[1] == KEY1 ) {
                     int len = p->length[0] | p->length[1] << 8;
 
-                    fprintf (stderr, "GOT SRXX message: %d\n", len);
-
-                    if (strlen(p->name)) {
-                        fprintf (stderr, "Destination name: [%s]\n", p->name);
-                    }
-                    if (strlen(p->sn)) {
-                        fprintf (stderr, "Destination /N: [%s]\n", p->sn);
-                    }
+                    XDEBUG(DBG_WARN, 
+                           fprintf (stderr, "GOT SRXX message: %d\n", len);
+                           if (strlen(p->name)) {
+                               fprintf (stderr, "Destination name: [%s]\n", p->name);
+                           }
+                           if (strlen(p->sn)) {
+                               fprintf (stderr, "Destination /N: [%s]\n", p->sn);
+                           }
+                    );
 
 
                     //
@@ -187,14 +190,15 @@
                         satx.sin_port = htons(discover_client_port);
 
                         int ns = sendto (sock, (const char*)&emsg, length, 0, (sockaddr *)&satx, sizeof(satx) );
-                        if( ns != length)
-                        	printf("Send Failed\n");
-                        else
-                        	printf("Send Msg\n");
+                        if( ns != length ) {
+                        	DEBUG(DBG_ERROR, "Send Failed");
+                        } else {
+                        	DEBUG(DBG_ERROR, "Send Msg");
+                        }
                     }
 
                 } else {
-                    fprintf (stderr, "Invalid key in discover message: %02X %02X\n", p->key[0], p->key[1]);
+                    DEBUG(DBG_ERROR, "Invalid key in discover message: " << p->key[0] << p->key[1]);
                 }
             }
         }

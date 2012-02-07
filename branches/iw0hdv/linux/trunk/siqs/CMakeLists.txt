@@ -5,12 +5,14 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 set (siqs_ftdi_SRCS
      siqs_ftdi.cpp
      discover.cpp
+     logger.cpp
 )
 
 set (siqs_ftdi_INC
      netsupport.h
      minithread.h
      discover.h
+     logger.h
 )
 
 
