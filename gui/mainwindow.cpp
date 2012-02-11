@@ -67,10 +67,6 @@
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
 
-//?????Global hack to get around Qt UDP socket bug that doesnt allow
-//re binding a socket after closing it on some WinXP machines
-QUdpSocket* g_pUdpDiscoverSocket=0;
-
 
 /////////////////////////////////////////////////////////////////////
 // Constructor/Destructor
@@ -229,9 +225,6 @@ MainWindow::MainWindow(QWidget *parent) :
 		g_pTestBench->show();
 		g_pTestBench->Init();
 	}
-	//?????Global hack to get around Qt UDP socket bug that doesnt allow
-	//re binding a socket after closing it
-	g_pUdpDiscoverSocket = new QUdpSocket(this);
 }
 
 MainWindow::~MainWindow()
@@ -246,10 +239,7 @@ MainWindow::~MainWindow()
 	if(m_pDemodSetupDlg)
 		delete m_pDemodSetupDlg;
 	delete ui;
-	//?????Global hack to get around Qt UDP socket bug that doesnt allow
-	//re binding a socket after closing it
-	if(g_pUdpDiscoverSocket)
-		delete g_pUdpDiscoverSocket;
+
 }
 
 /////////////////////////////////////////////////////////////////////
