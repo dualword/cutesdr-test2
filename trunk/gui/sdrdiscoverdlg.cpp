@@ -8,6 +8,7 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-05-26  Added support for In Use Status
+//	2012-02-11  Qt 4.8 finally fixed UDP socket close rebind bug
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -54,10 +55,6 @@
 #define MSG_RESP 1
 #define MSG_SET 2
 
-//?????Global hack to get around Qt UDP socket bug that doesnt allow
-//re binding a socket after closing it
-extern QUdpSocket* g_pUdpDiscoverSocket;
-
 //////////////////////////////////////////////////////////////////////////////
 //Constructor/Destructor
 //////////////////////////////////////////////////////////////////////////////
@@ -69,12 +66,15 @@ CSdrDiscoverDlg::CSdrDiscoverDlg(QWidget *parent) :
 	ui->listWidget->clear();
     m_Name = "";
 	m_NameFilter = "";
-	connect(g_pUdpDiscoverSocket, SIGNAL(readyRead()), this, SLOT(ReadUDPMessages()));
+	m_pUdpDiscoverSocket = new QUdpSocket(this);
+	connect(m_pUdpDiscoverSocket, SIGNAL(readyRead()), this, SLOT(ReadUDPMessages()));
 	m_UdpOpen = false;
 }
 
 CSdrDiscoverDlg::~CSdrDiscoverDlg()
 {
+	if(m_pUdpDiscoverSocket)
+		delete m_pUdpDiscoverSocket;
     delete ui;
 }
 
@@ -97,11 +97,9 @@ void CSdrDiscoverDlg::CloseUdp()
 {
 	if(m_UdpOpen)
 	{
-//?????Global hack to get around Qt UDP socket bug that doesnt allow
-//re binding a socket after closing it
-//		g_pUdpDiscoverSocket->close();
-//		m_UdpOpen = false;
-//		qDebug("UDP Close");
+		m_pUdpDiscoverSocket->close();
+		m_UdpOpen = false;
+qDebug("UDP Close");
 	}
 }
 
@@ -110,7 +108,7 @@ void CSdrDiscoverDlg::SendDiscoverRequest()
 tDiscover_COMMONMSG reqmsg;
 	//bind UDP socket with receive port value
 	if(!m_UdpOpen)
-		g_pUdpDiscoverSocket->bind(DISCOVER_CLIENT_PORT);
+		m_pUdpDiscoverSocket->bind(DISCOVER_CLIENT_PORT);
 	m_UdpOpen = true;
 	qint64 length = sizeof(tDiscover_COMMONMSG);
 	memset((void*)&reqmsg, 0, length);
@@ -121,7 +119,7 @@ tDiscover_COMMONMSG reqmsg;
 	reqmsg.op = MSG_REQ;
 	for(int i=0; i<m_NameFilter.length(); i++)
 		reqmsg.name[i] = m_NameFilter[i].toAscii();
-	g_pUdpDiscoverSocket->writeDatagram( (const char*)&reqmsg, length, QHostAddress::Broadcast, DISCOVER_SERVER_PORT);
+	m_pUdpDiscoverSocket->writeDatagram( (const char*)&reqmsg, length, QHostAddress::Broadcast, DISCOVER_SERVER_PORT);
 	m_CloseTimer.singleShot(250, this, SLOT( CloseUdp()) );
 }
 
@@ -134,10 +132,10 @@ int index=0;
 bool InUse;
 tDiscover_COMMONMSG tmpmsg;
 char Buf[2048];	//buffer to hold received UDP packet
-	while( g_pUdpDiscoverSocket->hasPendingDatagrams() )
+	while( m_pUdpDiscoverSocket->hasPendingDatagrams() )
 	{	//loop and get all UDP packets availaable
-		totallength = g_pUdpDiscoverSocket->pendingDatagramSize();
-		g_pUdpDiscoverSocket->readDatagram( Buf, totallength);	//read entire UDP packet
+		totallength = m_pUdpDiscoverSocket->pendingDatagramSize();
+		m_pUdpDiscoverSocket->readDatagram( Buf, totallength);	//read entire UDP packet
 
 		//see if msg cam from same device that is already in the list
 		//if so then delete old one so new one will get added
