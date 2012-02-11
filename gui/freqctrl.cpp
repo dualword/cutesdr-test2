@@ -8,6 +8,7 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-04-17  Fixed bug with m_Oldfreq being set after emit instead of before
+//	2012-02-11  Fixed compiler warning
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -633,7 +634,6 @@ int sepwidth = (SEPRATIO_N*cellwidth)/(100*SEPRATIO_D);
 //////////////////////////////////////////////////////////////////////////////
 void CFreqCtrl::DrawDigits(QPainter &Painter)
 {
-char digchar;
 	Painter.setFont(m_DigitFont );
 	m_FirstEditableDigit = m_DigStart;
 //qDebug() <<m_DigStart <<m_LeadZeroPos;
@@ -651,7 +651,6 @@ char digchar;
 				Painter.setPen(m_BkColor);
 			else
 				Painter.setPen(m_DigitColor);
-			digchar = '0' + m_DigitInfo[i].val;
 			Painter.drawText(m_DigitInfo[i].dQRect, Qt::AlignHCenter|Qt::AlignVCenter, QString().number( m_DigitInfo[i].val ) );
 			m_DigitInfo[i].modified = FALSE;
 		}
