@@ -246,7 +246,6 @@ void CSdrInterface::SendIOStatus(int iostatus)
 void CSdrInterface::ParseAscpMsg(CAscpMsg *pMsg)
 {
 quint16 Length;
-quint32 tmp32;
 	pMsg->InitRxMsg();	//initialize receive msg object for read back
 	if( pMsg->GetType() == TYPE_TARG_RESP_CITEM )
 	{	// Is a message from SDR in response to a request
@@ -311,7 +310,7 @@ quint32 tmp32;
 				break;
 			case CI_RX_FREQUENCY:
 				pMsg->GetParm8();
-				tmp32 = pMsg->GetParm32();
+//				tmp32 = pMsg->GetParm32();
 				break;
 			case CI_RX_OUT_SAMPLE_RATE:
 				pMsg->GetParm8();

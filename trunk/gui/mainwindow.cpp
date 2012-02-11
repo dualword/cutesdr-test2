@@ -11,6 +11,8 @@
 //	2011-04-16  Added Frequency range logic
 //	2011-05-26  Added support for In Use Status allowed wider sideband filters
 //	2011-08-07  Added WFM Support and spectrum inversion
+//	2012-01-05  Changed CW offset limits, changed scope resolution operators in downconverter module
+//	2012-02-11  ver 1.05 Updated to QT 4.8 and fixed issue with not remembering the span setting
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -60,7 +62,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION "CuteSdr 1.04"
+#define PROGRAM_TITLE_VERSION "CuteSdr 1.05"
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -122,8 +124,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	connect(ui->framePlot, SIGNAL(NewDemodFreq(qint64)), this,  SLOT( OnNewScreenDemodFreq(qint64) ) );
 	connect(ui->framePlot, SIGNAL(NewCenterFreq(qint64)), this,  SLOT( OnNewScreenCenterFreq(qint64) ) );
-	connect(ui->framePlot, SIGNAL(NewLowCutFreq(int)), this,  SLOT( OnNewLowCutFreq(int) ) );
-	connect(ui->framePlot, SIGNAL(NewHighCutFreq(int)), this,  SLOT( OnNewHighCutFreq(int) ) );
+    connect(ui->framePlot, SIGNAL(NewLowCutFreq(int)), this,  SLOT( OnNewLowCutFreq(int) ) );
+    connect(ui->framePlot, SIGNAL(NewHighCutFreq(int)), this,  SLOT( OnNewHighCutFreq(int) ) );
 
 	m_pTimer->start(200);		//start up status timer
 
@@ -133,7 +135,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->framePlot->SetPercent2DScreen(m_Percent2DScreen);
 
 	//initialize controls and limits
+	qint32 tmpspan = m_SpanFrequency;	//save since setting range triggers control to update
 	ui->SpanspinBox->setMaximum(maxspan/1000);
+	m_SpanFrequency = tmpspan;
 	if(m_SpanFrequency>maxspan)
 		m_SpanFrequency = maxspan;
 	ui->SpanspinBox->setValue(m_SpanFrequency/1000);
@@ -955,7 +959,8 @@ void MainWindow::OnSpanChanged(int spanKhz)
 	{	//if going lower and is 10KHz
 		//change stepsize to 1KHz
 		ui->SpanspinBox->setSingleStep(1);
-	}
+}
+
 	m_LastSpanKhz = spanKhz;
 	m_SpanFrequency = spanKhz*1000;
 	ui->framePlot->SetSpanFreq(m_SpanFrequency);

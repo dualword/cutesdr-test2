@@ -138,10 +138,10 @@
     <string>CW Offset </string>
    </property>
    <property name="minimum">
-    <number>-1000</number>
+    <number>-1500</number>
    </property>
    <property name="maximum">
-    <number>1000</number>
+    <number>1500</number>
    </property>
    <property name="singleStep">
     <number>100</number>
