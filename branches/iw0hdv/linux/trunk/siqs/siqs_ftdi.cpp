@@ -290,11 +290,10 @@ int Radio :: process (unsigned char ch)
            if(2 == msgLen)  {//if msg has no parameters then we are done
               msgState = MSGSTATE_HDR1; //go back to first statewrite ( sock, ascpMsg, msgLen );
 
-              #ifdef  DEBUG
-              fprintf (stderr, "%s: writing in TCP socket %d bytes: ", __FUNCTION__, msgLen);
-              dump (ascpMsg, msgLen);
-              #endif
-
+              XDEBUG (DBG_DEBUG,
+                      fprintf (stderr, "%s: writing in TCP socket %d bytes: ", __FUNCTION__, msgLen);
+                      dump (ascpMsg, msgLen);
+              );
               rc = write ( sock, ascpMsg, msgLen ); 
               msgLen = 0;
               msgIndex = 0;
@@ -316,10 +315,10 @@ int Radio :: process (unsigned char ch)
                   udp_write ( ascpMsg, msgLen );
               }
               else {
-                  #ifdef  DEBUG
-                  fprintf (stderr, "%s: writing in TCP socket %d bytes: ", __FUNCTION__, msgLen);
-                  dump (ascpMsg, msgLen);
-                  #endif
+                  XDEBUG (DBG_DEBUG,
+                          fprintf (stderr, "%s: writing in TCP socket %d bytes: ", __FUNCTION__, msgLen);
+                          dump (ascpMsg, msgLen);
+                  );
                   rc = write (sock, ascpMsg, msgLen );
               }
               msgIndex = 0;
@@ -346,10 +345,10 @@ int Radio :: threadproc ()
         int len = ftdi_read_data (ftdi, buf, sizeof(buf) );
         if (len > 0) {
 
-            #ifdef  DEBUG
-            fprintf (stderr, "%s: read from serial: %d: ", __FUNCTION__, len);
-            dump (buf, len);
-            #endif
+            XDEBUG (DBG_DEBUG,
+                    fprintf (stderr, "%s: read from serial: %d: ", __FUNCTION__, len);
+                    dump (buf, len);
+            );
             for (int i=0; i<len; ++i) process(buf[i]);
         } else if (len < 0) {
             fprintf (stderr, "TTT %s, exiting because read failed.\n", __FUNCTION__);

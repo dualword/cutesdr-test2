@@ -161,7 +161,7 @@ public:
 			const int		fileVerbosityLevel,
 			const int		screenVerbosityLevel);
 
-    bool enabled (unsigned int lev) { return lev <= screenVerbosityLevel_; }
+	bool enabled (unsigned int lev) { return lev <= screenVerbosityLevel_; }
 };
 
 inline Logger::loggerConf operator|
