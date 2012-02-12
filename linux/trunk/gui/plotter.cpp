@@ -7,6 +7,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2012-02-11  Fixed compiler warning
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -332,7 +333,7 @@ QPoint pt = event->pos();
 //////////////////////////////////////////////////////////////////////
 void CPlotter::wheelEvent( QWheelEvent * event )
 {
-QPoint pt = event->pos();
+Q_UNUSED(event);
 int numDegrees = event->delta() / 8;
 int numSteps = numDegrees / 15;
 	if(event->buttons()==Qt::RightButton)
