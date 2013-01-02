@@ -1,0 +1,153 @@
+1. Introduction
+===============
+
+This is the CuteSDR SE CAT branch: it has been derived from a previous fork that Andrus Aaslaid did from original code in order to support his SDR MK1.5 'Andrus' radio.
+
+The original fork is called CuteSDR 'Special Edition' for SDR MK1.5 'Andrus' Radios and can be found in
+
+    http://code.google.com/p/cutesdr-se/
+
+That development was from CuteSdr 1.05 code created by Moe Wheatley. 
+That version incorporates extras to support SDR MK1.5 'Andrus' radios more effectively than a standard version does.
+
+Andrea IW0HDV added support for a minimalistic CAT protocol in order to synchronize Mk1.5 with I0CG SDT 2011 digital transmitter.
+
+
+The rest of the code base is kept the same way as original, so its functionality for RFSpace radios is intact.
+The project is migrated to Visual Studio 2008, but you will need additional tools to be able to build it.
+
+
+
+In order to be able to compile the source code on VC2008 the open source version of the Qt, the cross-platform application framework, has to be installed.
+
+Three components need to be installed:
+
+    Qt libraries 4.8.3 for Windows (VS 2008, 234 MB)
+    Qt Visual Studio Add-in (does not work with the Express edition) 
+    ext 
+
+Check the Qt-Project site for latest versions (http://qt-project.org/downloads). 
+
+
+
+2. Build on Linux
+=================
+
+First of all, you have to install 
+
+Next we need to setup our environment to the correct location.
+If you installed the Qt4 libraries from the standard repositories, qmake should on PATH:
+
+qmake -v
+QMake version 2.01a
+Using Qt version 4.7.3 in /opt/QtSDK/Desktop/Qt/473/gcc/lib
+
+in the case above I was using the following command 
+
+export PATH=/opt/QtSDK/Desktop/Qt/473/gcc/bin/:$PATH 
+
+in order to make the Qt available into the current session.
+
+
+Now we can proceed to build the prerequisite library we need for serial interfaces management:
+
+git clone https://code.google.com/p/qextserialport/
+cd qextserialport
+qmake qextserialport.pro
+make
+make install
+
+Please note that, if the "make install" fails with 
+
+Permission denied
+
+error, you have to submit again the command with root privileges (sudo make install).
+
+
+Next the CuteSDR sources have to be extracted:
+
+svn co https://cutesdr.svn.sourceforge.net/svnroot//cutesdr/branches/iw0hdv/cutesdr-se/
+cd cutesdr-se/
+qmake CuteSdrSeCat.pro
+
+make
+
+if everything goes well, the executable is found in release subdirectory:
+
+release/CuteSdrSeCat
+
+
+
+3. Build on Windows
+===================
+
+
+3.1 Install Visual C++
+======================
+
+
+Install the free evaluation Visual C++ Express package from Microsoft:
+
+Windows XP:
+
+   http://www.microsoft.com/en-us/download/details.aspx?id=20682
+
+Windows 8:
+
+    http://www.microsoft.com/visualstudio/eng/downloads#d-2010-express
+
+
+Install the Qt 4.8, accordingly to the compiler above, from:
+
+   http://releases.qt-project.org/qt4/source/qt-win-opensource-4.8.4-vs2008.exe
+
+or
+
+   http://releases.qt-project.org/qt4/source/qt-win-opensource-4.8.4-vs2010.exe
+
+
+
+3.2 Install WinSvn
+==================
+
+Download and install WinSVN
+
+https://downloads.sourceforge.net/project/win32svn/1.7.8/apache22/Setup-Subversion-1.7.8.msi
+
+
+3.3 Change the environment
+==========================
+
+Next we need to modify the environment for the current user, in order to find Qt utilities and libraries
+
+setx QTDIR   C:\Qt\4.8.4\
+setx QTPATH  C:\Qt\4.8.4\
+
+In WindowsXP setx command is not available so, you have to access the the My Computer context menu, Properties and,
+from there, in TAB "Advanced", press the button "Environment Variables": now add the two env vars above to the USER environment
+(New Push button).
+
+
+3.4 Extract and build CuteSDR SE
+================================
+
+Open a shell, go into a convenient directory (in Windows the user home i sstrongly suggested, e.g. C:/Users/andrew) and submit the following command:
+
+   svn co https://cutesdr.svn.sourceforge.net/svnroot/cutesdr/branches/iw0hdv/cutesdr-se  
+
+Next, make current the cuteSDR directory
+
+   cd cutesdr-se
+
+and create the makfile:
+
+   qmake -spec win32-msvc2008 -tp vc CuteSdrSeCat.pro
+
+
+Now you can build the package at the command line, issuing the following command:
+
+nmake
+
+or you can start the VC++ GUI, open the project file and press F7 in order to build the program.
+
+
