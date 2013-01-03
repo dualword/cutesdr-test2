@@ -80,22 +80,7 @@ release/CuteSdrSeCat
 
 3. Build on Windows
 ===================
-C:\Qt\4.8.4\;
-C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\;
-C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\BIN;
-C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\Tools;
-C:\Windows\Microsoft.NET\Framework\v4.0.30319;
-C:\Windows\Microsoft.NET\Framework\v3.5;
-C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\VCPackages;
-C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools;
-C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin;
-C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;
-C:\Windows\System32\WindowsPowerShell\v1.0\;
-C:\Program Files (x86)\Subversion\bin;
-C:\Qt\4.8.4\bin;C:\Windows\system32;
-C:\Windows;C:\Windows\System32\Wbem;
-C:\Windows\System32\WindowsPowerShell\v1.0\;
-C:\Program Files (x86)\Subversion\bin
+
 
 3.1 Install Visual C++ and Qt libraries
 =======================================
