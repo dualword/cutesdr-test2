@@ -295,7 +295,6 @@ MainWindow::~MainWindow()
 /////////////////////////////////////////////////////////////////////
 void MainWindow::closeEvent(QCloseEvent *)
  {
-	qDebug() << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" ;
 	writeSettings();
 	if(m_pSdrInterface)
 		m_pSdrInterface->StopIO();
@@ -597,7 +596,8 @@ CAboutDlg dlg(this,PROGRAM_TITLE_VERSION);
 /////////////////////////////////////////////////////////////////////
 void MainWindow::OnExit()
 {
-	qApp->exit(0);
+	close(); // close this window, triggers a closeEvent() that stores
+	         // the settings
 }
 
 /////////////////////////////////////////////////////////////////////
