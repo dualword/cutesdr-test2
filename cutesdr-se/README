@@ -80,10 +80,25 @@ release/CuteSdrSeCat
 
 3. Build on Windows
 ===================
+C:\Qt\4.8.4\;
+C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\;
+C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\BIN;
+C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\Tools;
+C:\Windows\Microsoft.NET\Framework\v4.0.30319;
+C:\Windows\Microsoft.NET\Framework\v3.5;
+C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\VCPackages;
+C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools;
+C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin;
+C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;
+C:\Windows\System32\WindowsPowerShell\v1.0\;
+C:\Program Files (x86)\Subversion\bin;
+C:\Qt\4.8.4\bin;C:\Windows\system32;
+C:\Windows;C:\Windows\System32\Wbem;
+C:\Windows\System32\WindowsPowerShell\v1.0\;
+C:\Program Files (x86)\Subversion\bin
 
-
-3.1 Install Visual C++
-======================
+3.1 Install Visual C++ and Qt libraries
+=======================================
 
 
 Install the free evaluation Visual C++ Express package from Microsoft:
@@ -110,7 +125,7 @@ or
 3.2 Install WinSvn
 ==================
 
-Download and install WinSVN
+Download and install WinSVN:
 
 https://downloads.sourceforge.net/project/win32svn/1.7.8/apache22/Setup-Subversion-1.7.8.msi
 
@@ -121,33 +136,51 @@ https://downloads.sourceforge.net/project/win32svn/1.7.8/apache22/Setup-Subversi
 Next we need to modify the environment for the current user, in order to find Qt utilities and libraries
 
 setx QTDIR   C:\Qt\4.8.4\
-setx QTPATH  C:\Qt\4.8.4\
+setx QTPATH  C:\Qt\4.8.4\bin
+setx PATH    "%QTPATH%;%PATH%"
 
-In WindowsXP setx command is not available so, you have to access the the My Computer context menu, Properties and,
-from there, in TAB "Advanced", press the button "Environment Variables": now add the two env vars above to the USER environment
-(New Push button).
+In Windows XP setx command is not available so, you have to access the the 
+My Computer context menu, Properties and, from there, in TAB "Advanced", 
+press the button "Environment Variables": now add the two env vars above to 
+the USER environment ("New" push button).
 
 
-3.4 Extract and build CuteSDR SE
+3.4 Extract and build qextserialport library
+============================================
+
+Download it at 
+
+http://qextserialport.googlecode.com/files/qextserialport-1.2rc.zip
+
+unzip it in your home directory, e.g. C:\Users\andrew\qextserialport-1.2rc .
+Next open the shell you find in Visual C++ menu, and submit the following commands:
+
+cd %HOMEDRIVE%\%HOMEPATH%\qextserialport-1.2rc
+qmake
+nmake
+nmake install
+
+
+3.5 Extract and build CuteSDR SE
 ================================
 
-Open a shell, go into a convenient directory (in Windows the user home i sstrongly suggested, e.g. C:/Users/andrew) and submit the following command:
+Open a shell, go into a convenient directory (in Windows7/8 the user home)
+I strongly suggested, "%HOMEDRIVE%\%HOMEPATH%" e.g. C:\Users\andrew) and submit the following commands:
 
-   svn co https://cutesdr.svn.sourceforge.net/svnroot/cutesdr/branches/iw0hdv/cutesdr-se  
+cd %HOMEDRIVE%\%HOMEPATH%
+svn co https://cutesdr.svn.sourceforge.net/svnroot/cutesdr/branches/iw0hdv/cutesdr-se  
+cd cutesdr-se
+qmake CuteSdrSeCat.pro
+nmake debug
+nmake release
 
-Next, make current the cuteSDR directory
+In order to compile using the VC++ GUI, create the project file for VC++:
 
-   cd cutesdr-se
+cd %HOMEDRIVE%\%HOMEPATH%\cutesdr-se
+qmake -spec win32-msvc2008 -tp vc CuteSdrSeCat.pro
 
-and create the makfile:
-
-   qmake -spec win32-msvc2008 -tp vc CuteSdrSeCat.pro
-
-
-Now you can build the package at the command line, issuing the following command:
-
-nmake
-
-or you can start the VC++ GUI, open the project file and press F7 in order to build the program.
+next open the project file and press F7 in order to build the program.
 
 
+----------------------------------
+IW0HDV Andrea

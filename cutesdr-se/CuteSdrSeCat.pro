@@ -1,13 +1,17 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2010-09-15T13:53:54
-# patched for U10.10, Andrea IW0HDV, Ken N9VV
+# Project for CuteSdrSECat
+#
+# Andrea IW0HDV
 #
 #-------------------------------------------------
 
+# In order to create a VC++ project the following command is needed:
 #
-# qmake -spec win32-msvc2008 -tp vc  CuteSdr.pro
-# http://stackoverflow.com/questions/2339832/how-to-generate-sln-vcproj-using-qmake
+# qmake -spec win32-msvc2008 -tp vc  CuteSdrSeCat.pro
+# qmake -spec win32-msvc2010 -tp vc  CuteSdrSeCat.pro
+#
+# from: http://stackoverflow.com/questions/2339832/how-to-generate-sln-vcproj-using-qmake
 #
 
 # check Qt version, 4.7is mandatory due to usage of some class introduced in Qt library only since release 4.7
@@ -190,8 +194,8 @@ CONFIG(debug, debug|release) {
 	RCC_DIR = debug/
 
 	win32 {
-		LIBS += qextserialport-1.2d.lib
-		CONFIG += qextserialport-1.2d
+		LIBS += qextserialportd1.lib
+		CONFIG += qextserialportd1
    		CONFIG += console
 	}
 	unix {
@@ -204,8 +208,8 @@ CONFIG(debug, debug|release) {
 	OBJECTS_DIR = release/
 	RCC_DIR = release/
 	win32 {
-		LIBS += qextserialport-1.2.lib
-		CONFIG += qextserialport-1.2
+		LIBS += qextserialport1.lib
+		CONFIG += qextserialport1
 	}
 	unix {
 		LIBS += -lqextserialport
