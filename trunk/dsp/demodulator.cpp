@@ -297,7 +297,7 @@ g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1)
 
 				//perform AGC
 				m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
-//				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
+//g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
 			}
 			else
 			{

@@ -15,35 +15,6 @@
 #define ASCP_INTERFACE_VERSION 9
 
 /*---------------------------------------------------------------------------*/
-/*---------------------> Message Header Defines <----------------------------*/
-/*---------------------------------------------------------------------------*/
-#define LENGTH_MASK 0x1FFF			/* mask for message length               */
-#define TYPE_MASK 0xE0				/* mask for upper byte of header         */
-
-#define TYPE_HOST_SET_CITEM (0<<5)
-#define TYPE_HOST_REQ_CITEM (1<<5)
-#define TYPE_HOST_REQ_CITEM_RANGE (2<<5)
-#define TYPE_HOST_DATA_ITEM0 (4<<5)
-#define TYPE_HOST_DATA_ITEM1 (5<<5)
-#define TYPE_HOST_DATA_ITEM2 (6<<5)
-#define TYPE_HOST_DATA_ITEM3 (7<<5)
-
-#define TYPE_TARG_RESP_CITEM (0<<5)
-#define TYPE_TARG_UNSOLICITED_CITEM (1<<5)
-#define TYPE_TARG_RESP_CITEM_RANGE (2<<5)
-#define TYPE_TARG_DATA_ITEM0 (4<<5)
-#define TYPE_TARG_DATA_ITEM1 (5<<5)
-#define TYPE_TARG_DATA_ITEM2 (6<<5)
-#define TYPE_TARG_DATA_ITEM3 (7<<5)
-
-#define TYPE_DATA_ITEM_ACK (3<<5)
- #define DATA_ITEM_ACK_LENGTH (3)
-
-/*  2 byte NAK response to any unimplemented messages */
-#define TARG_RESP_NAK (0x0002)
-
-#define MAX_MSG_LENGTH (8192+2)
-/*---------------------------------------------------------------------------*/
 /*----------------------> Control Item Defines <-----------------------------*/
 /*---------------------------------------------------------------------------*/
 

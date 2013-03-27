@@ -28,8 +28,8 @@
 //////////////////////////////////////////////////////////////////////
 CFft::CFft()
 {
-	m_Overload = FALSE;
-	m_Invert = FALSE;
+	m_Overload = false;
+	m_Invert = false;
 	m_AveSize = 1;
 	m_LastFFTSize = 0;
 	m_AveCount = 0;
@@ -44,7 +44,7 @@ CFft::CFft()
 	m_pFFTSumBuf = NULL;
 	m_pTranslateTbl = NULL;
 	m_dBCompensation = K_MAXDB;
-	SetFFTParams( 2048, FALSE ,0.0, 1000);
+	SetFFTParams( 2048, false ,0.0, 1000);
 	SetFFTAve( 1);
 }
 
@@ -267,13 +267,13 @@ void CFft::ResetFFT()
 qint32 CFft::PutInDisplayFFT(qint32 n, TYPECPX* InBuf)
 {
 qint32 i;
- 	m_Overload = FALSE;
+	m_Overload = false;
 	m_Mutex.lock();
 	double dtmp1;
 	for(i=0; i<n; i++)
 	{
 		if( InBuf[i].re > OVER_LIMIT )	//flag overload if within OVLimit of max
-			m_Overload = TRUE;
+			m_Overload = true;
 		dtmp1 = m_pWindowTbl[i];
 		//NOTE: For some reason I and Q are swapped(demod I/Q does not apear to be swapped)
 		//possibly an issue with the FFT ?
@@ -293,7 +293,7 @@ qint32 i;
 // plot screen size so the users buffer will be filled with an array
 // of integers whos value is the pixel height and the index of the
 //  array is the x pixel coordinate.
-// The function returns TRUE if the input is overloaded
+// The function returns true if the input is overloaded
 //   This routine converts the data to 32 bit integers and is useful
 //   when displaying fft data on the screen. 
 //		MaxHeight = Plot height in pixels(zero is top and increases down)
@@ -317,11 +317,14 @@ qint32 i;
 qint32 y;
 qint32 x;
 qint32 m;
-qint32 ymax = 10000;
+qint32 ymax = -10000;
 qint32 xprev = -1;
 qint32 maxbin;
 double dBmaxOffset = MaxdB/10.0;
 double dBGainFactor = -10.0/(MaxdB-MindB);
+
+//qDebug()<<"maxoffset dbgaindfact "<<dBmaxOffset << dBGainFactor;
+
 	m_Mutex.lock();
 	if( (m_StartFreq != StartFreq) ||
 		(m_StopFreq != StopFreq) ||

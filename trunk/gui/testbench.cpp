@@ -93,7 +93,7 @@ CTestBench::CTestBench(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CTestBench)
 {
-	m_Active = false;
+    m_Active = false;
 	m_2DPixmap = QPixmap(0,0);
 	m_OverlayPixmap = QPixmap(0,0);
 	m_Size = QSize(0,0);
@@ -109,11 +109,11 @@ CTestBench::CTestBench(QWidget *parent) :
 	m_Span = m_DisplaySampleRate/2;
 	m_FftBufPos = 0;
 
-	m_GenOn = false;
-	m_PeakOn = false;
-	m_NewDataIsCpx = false;
+    m_GenOn = false;
+    m_PeakOn = false;
+    m_NewDataIsCpx = false;
 	m_CurrentDataIsCpx = true;
-	m_TimeDisplay = false;
+    m_TimeDisplay = false;
 	m_DisplayRate = 10;
 	m_HorzSpan = 100;
 	m_VertRange = 65000;
@@ -134,7 +134,7 @@ CTestBench::CTestBench(QWidget *parent) :
 	connect( this, SIGNAL( SendTxt(QString)), this, SLOT( GotTxt(QString) ) );
 
 	m_Fft.SetFFTParams( 2048,
-						FALSE,
+                        false,
 						0.0,
 						m_GenSampleRate);
 	m_Fft.SetFFTAve(FFT_AVE);
@@ -178,7 +178,7 @@ CTestBench::~CTestBench()
 void CTestBench::closeEvent(QCloseEvent *event)
 {
 	Q_UNUSED(event);
-	m_Active = false;
+    m_Active = false;
 	m_pTimer->stop();		//stop timer
 }
 
@@ -599,7 +599,7 @@ int i;
 	m_NoiseAmplitude = MAX_AMPLITUDE*pow(10.0, m_NoisePower/20.0);
 
 	//init FFT values
-	m_Fft.SetFFTParams(  TEST_FFTSIZE, FALSE, 0.0,	m_DisplaySampleRate);
+    m_Fft.SetFFTParams(  TEST_FFTSIZE, false, 0.0,	m_DisplaySampleRate);
 	m_FftBufPos = 0;
 	m_Span = m_DisplaySampleRate;
 	m_Span = ( m_Span - (m_Span+5)%10 + 5);
@@ -717,7 +717,7 @@ void CTestBench::DisplayData(int length, TYPEREAL* pBuf, double samplerate, int 
 		emit ResetSignal();
 		return;
 	}
-	m_NewDataIsCpx = false;
+    m_NewDataIsCpx = false;
 	if(!m_TimeDisplay)
 	{	//if displaying frequency domain data
 		//accumulate samples into m_FftInBuf until have enough to perform an FFT
@@ -776,7 +776,7 @@ void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, double samplerate, in
 		emit ResetSignal();
 		return;
 	}
-	m_NewDataIsCpx = false;
+    m_NewDataIsCpx = false;
 	if(!m_TimeDisplay)
 	{	//if displaying frequency domain data
 		//accumulate samples into m_FftInBuf until have enough to perform an FFT

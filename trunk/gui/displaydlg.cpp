@@ -77,6 +77,7 @@ void CDisplayDlg::InitDlg()
 	ui->MaxDisplayRatespinBox->setValue(m_MaxDisplayRate);
 	ui->Screen2DSizespinBox->setValue(m_Percent2DScreen);
 	ui->checkBoxTestBench->setChecked(m_UseTestBench);
+	ui->checkBoxEnableCurTxt->setChecked(m_UseCursorText);
 	m_NeedToStop = false;
 }
 
@@ -94,6 +95,7 @@ void CDisplayDlg::accept()
 	m_ClickResolution = ui->ClickResolutionspinBox->value();
 	m_MaxDisplayRate = ui->MaxDisplayRatespinBox->value();
 	m_UseTestBench = ui->checkBoxTestBench->isChecked();
+	m_UseCursorText = ui->checkBoxEnableCurTxt->isChecked();
 	QDialog::accept();	//need to call base class
 }
 

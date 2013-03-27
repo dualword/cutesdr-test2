@@ -41,6 +41,7 @@
 #include "gui/plotter.h"
 #include <stdlib.h>
 #include <QDebug>
+#include <QToolTip>
 #include "interface/perform.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -143,8 +144,8 @@ QSize CPlotter::sizeHint() const
 //////////////////////////////////////////////////////////////////////
 void CPlotter::mouseMoveEvent(QMouseEvent* event)
 {
-
-	QPoint pt = event->pos();
+QPoint pt = event->pos();
+QPoint gpt = event->globalPos();
 	if( m_OverlayPixmap.rect().contains(pt) )
 	{	//is in Overlay bitmap region
 		if( event->buttons()==Qt::NoButton)
@@ -155,18 +156,21 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 				if(CENTER!=m_CursorCaptured)
 					setCursor(QCursor(Qt::CrossCursor));
 				m_CursorCaptured = CENTER;
+				DisplayCursorFreq(gpt, FreqfromX( pt.x() ));
 			}
 			else if( IsPointCloseTo( pt.x(),m_DemodHiCutFreqX, m_CursorCaptureDelta) )
 			{	//in move demod hicut region
 				if(RIGHT!=m_CursorCaptured)
 					setCursor(QCursor(Qt::SizeFDiagCursor));
 				m_CursorCaptured = RIGHT;
+				DisplayCursorFreq(gpt, m_DemodHiCutFreq );
 			}
 			else if( IsPointCloseTo( pt.x(),m_DemodLowCutFreqX, m_CursorCaptureDelta) )
 			{	//in move demod lowcut region
 				if(LEFT!=m_CursorCaptured)
 					setCursor(QCursor(Qt::SizeBDiagCursor));
 				m_CursorCaptured = LEFT;
+				DisplayCursorFreq(gpt, m_DemodLowCutFreq);
 			}
 			else
 			{	//if not near any grab boundaries
@@ -175,6 +179,7 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 					setCursor(QCursor(Qt::ArrowCursor));
 					m_CursorCaptured = NONE;
 				}
+				DisplayCursorFreq(gpt, RoundFreq( FreqfromX( pt.x() ), m_ClickResolution) );
 			}
 			m_GrabPosition = 0;
 		}
@@ -187,6 +192,7 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 				setCursor(QCursor(Qt::ArrowCursor));
 			m_CursorCaptured = NONE;
 			m_GrabPosition = 0;
+			DisplayCursorFreq(gpt, RoundFreq(FreqfromX( pt.x() ), m_ClickResolution) );
 		}
 	}
 	//process mouse moves while in cursor capture modes
@@ -210,6 +216,7 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 			{	//save initial grab postion from m_DemodFreqX
 				m_GrabPosition = pt.x()-m_DemodLowCutFreqX;
 			}
+			DisplayCursorFreq(gpt, m_DemodLowCutFreq);
 		}
 		else if(event->buttons() & ~Qt::NoButton)
 		{
@@ -237,6 +244,7 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 			{	//save initial grab postion from m_DemodFreqX
 				m_GrabPosition = pt.x()-m_DemodHiCutFreqX;
 			}
+			DisplayCursorFreq(gpt, m_DemodHiCutFreq);
 		}
 		else if(event->buttons() & ~Qt::NoButton)
 		{
@@ -257,6 +265,7 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 			{	//save initial grab postion from m_DemodFreqX
 				m_GrabPosition = pt.x()-m_DemodFreqX;
 			}
+			DisplayCursorFreq(gpt, m_DemodCenterFreq);
 		}
 		else if(event->buttons() & ~Qt::NoButton)
 		{
@@ -273,6 +282,7 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 		if(NONE != m_CursorCaptured)
 			setCursor(QCursor(Qt::ArrowCursor));
 		m_CursorCaptured = NONE;
+		QToolTip::hideText();
 	}
 }
 
@@ -282,6 +292,7 @@ void CPlotter::mouseMoveEvent(QMouseEvent* event)
 void CPlotter::mousePressEvent(QMouseEvent * event)
 {
 QPoint pt = event->pos();
+QPoint gpt = event->globalPos();
 	if(event->buttons()==Qt::LeftButton)
 	{
 		if( IsPointCloseTo( pt.x(),(m_DemodHiCutFreqX+m_DemodLowCutFreqX)/2,
@@ -301,6 +312,7 @@ QPoint pt = event->pos();
 			m_CursorCaptured = CENTER;
 			m_GrabPosition = 1;
 		}
+		DisplayCursorFreq(gpt, m_DemodCenterFreq);
 	}
 	else if(event->buttons()==Qt::MiddleButton)
 	{
@@ -309,6 +321,22 @@ QPoint pt = event->pos();
 			m_CenterFreq = RoundFreq(FreqfromX(pt.x()),m_ClickResolution );
 			m_DemodCenterFreq = m_CenterFreq;
 			emit NewCenterFreq(m_CenterFreq);
+			DisplayCursorFreq(gpt, m_CenterFreq);
+		}
+	}
+	else if(event->buttons()==Qt::RightButton)
+	{
+		if( NONE==m_CursorCaptured)
+		{
+			DisplayCursorFreq(gpt, FreqfromX( pt.x() ));
+		}
+		else if( IsPointCloseTo( pt.x(),m_DemodHiCutFreqX, m_CursorCaptureDelta) )
+		{	//in move demod hicut region
+			DisplayCursorFreq(gpt, m_DemodHiCutFreq );
+		}
+		else if( IsPointCloseTo( pt.x(),m_DemodLowCutFreqX, m_CursorCaptureDelta) )
+		{	//in move demod lowcut region
+			DisplayCursorFreq(gpt, m_DemodLowCutFreq);
 		}
 	}
 }
@@ -319,13 +347,27 @@ QPoint pt = event->pos();
 void CPlotter::mouseReleaseEvent(QMouseEvent * event)
 {
 QPoint pt = event->pos();
+QPoint gpt = event->globalPos();
 	if( !m_OverlayPixmap.rect().contains(pt) )
 	{	//not in Overlay region
 		if(NONE!=m_CursorCaptured)
 			setCursor(QCursor(Qt::ArrowCursor));
 		m_CursorCaptured = NONE;
 		m_GrabPosition = 0;
+		DisplayCursorFreq(gpt, m_DemodCenterFreq);
 	}
+	else
+	{
+		if( IsPointCloseTo( pt.x(),m_DemodHiCutFreqX, m_CursorCaptureDelta) )
+		{	//in move demod hicut region
+			DisplayCursorFreq(gpt, m_DemodHiCutFreq );
+		}
+		else if( IsPointCloseTo( pt.x(),m_DemodLowCutFreqX, m_CursorCaptureDelta) )
+		{	//in move demod lowcut region
+			DisplayCursorFreq(gpt, m_DemodLowCutFreq);
+		}
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -333,7 +375,7 @@ QPoint pt = event->pos();
 //////////////////////////////////////////////////////////////////////
 void CPlotter::wheelEvent( QWheelEvent * event )
 {
-Q_UNUSED(event);
+QPoint gpt = event->globalPos();
 int numDegrees = event->delta() / 8;
 int numSteps = numDegrees / 15;
 	if(event->buttons()==Qt::RightButton)
@@ -349,6 +391,7 @@ int numSteps = numDegrees / 15;
 				emit NewLowCutFreq(m_DemodLowCutFreq);
 			}
 			emit NewHighCutFreq(m_DemodHiCutFreq);
+			DisplayCursorFreq(gpt, m_DemodHiCutFreq );
 		}
 		else if(LEFT==m_CursorCaptured)
 		{	//change demod low cut
@@ -361,7 +404,7 @@ int numSteps = numDegrees / 15;
 				emit NewHighCutFreq(m_DemodHiCutFreq);
 			}
 			emit NewLowCutFreq(m_DemodLowCutFreq);
-
+			DisplayCursorFreq(gpt, m_DemodLowCutFreq );
 		}
 	}
 	else
@@ -369,6 +412,7 @@ int numSteps = numDegrees / 15;
 		m_DemodCenterFreq += (numSteps*m_ClickResolution);
 		m_DemodCenterFreq = RoundFreq(m_DemodCenterFreq, m_ClickResolution );
 		emit NewDemodFreq(m_DemodCenterFreq);
+		DisplayCursorFreq(gpt, m_DemodCenterFreq );
 	}
 }
 
@@ -537,15 +581,26 @@ QRect rect;
 
 	//create Font to use for scales
 	QFont Font("Arial");
-	Font.setPointSize(12);
 	QFontMetrics metrics(Font);
 	y = h/VERT_DIVS;
-	if(y<metrics.height())
+	int vskip;
+	if(y>15)
+	{
+		vskip = 1;
+		Font.setPointSize(10);
+	}
+	else if(y>8)
+	{
+		vskip = 2;
 		Font.setPixelSize(y);
-	Font.setWeight(QFont::Normal);
+	}
+	else
+	{
+		vskip = 20;
+		Font.setPointSize(6);
+	}
+	Font.setWeight(QFont::DemiBold);
 	painter.setFont(Font);
-
-
 	//draw vertical grids
 	pixperdiv = (float)w / (float)HORZ_DIVS;
 	y = h - h/VERT_DIVS;
@@ -562,27 +617,46 @@ QRect rect;
 
 	//draw frequency values
 	MakeFrequencyStrs();
-	painter.setPen(Qt::cyan);
+	Font.setWeight(QFont::DemiBold);
+	painter.setPen(Qt::white);
 	y = h - (h/VERT_DIVS);
+//qDebug()<<"pixperxdiv = "<<pixperdiv;
+	int hskip;
+	if(pixperdiv>90.)
+		hskip=1;
+	else if(pixperdiv>65.)
+		hskip = 2;
+	else
+		hskip = 3;
 	for( int i=0; i<=HORZ_DIVS; i++)
 	{
-		if(0==i)
-		{	//left justify the leftmost text
-			x = (int)( (float)i*pixperdiv);
-			rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);
-			painter.drawText(rect, Qt::AlignLeft|Qt::AlignVCenter, m_HDivText[i]);
+		if( 0==i )
+		{
+			if((hskip==1) )
+			{	//left justify the leftmost text
+				x = (int)( (float)i*pixperdiv);
+				rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);
+				painter.drawText(rect, Qt::AlignLeft|Qt::AlignVCenter, m_HDivText[i]);
+			}
 		}
 		else if(HORZ_DIVS == i)
-		{	//right justify the rightmost text
-			x = (int)( (float)i*pixperdiv - pixperdiv);
-			rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);
-			painter.drawText(rect, Qt::AlignRight|Qt::AlignVCenter, m_HDivText[i]);
+		{
+			if((hskip==1) )
+			{	//right justify the rightmost text
+				x = (int)( (float)i*pixperdiv - pixperdiv);
+				rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);
+				painter.drawText(rect, Qt::AlignRight|Qt::AlignVCenter, m_HDivText[i]);
+			}
 		}
 		else
-		{	//center justify the rest of the text
-			x = (int)( (float)i*pixperdiv - pixperdiv/2);
-			rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);
-			painter.drawText(rect, Qt::AlignHCenter|Qt::AlignVCenter, m_HDivText[i]);
+		{
+			if((hskip<=2) || (i&1) )
+			{
+				//center justify the rest of the text
+				x = (int)( (float)i*pixperdiv - pixperdiv/2);
+				rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);
+				painter.drawText(rect, Qt::AlignHCenter|Qt::AlignVCenter, m_HDivText[i]);
+			}
 		}
 	}
 
@@ -601,11 +675,11 @@ QRect rect;
 	Font.setWeight(QFont::Light);
 	painter.setFont(Font);
 	int dB = m_MaxdB;
-	for( int i=0; i<VERT_DIVS-1; i++)
+	for( int i=0; i<VERT_DIVS-1; i+=vskip)
 	{
 		y = (int)( (float)i*pixperdiv );
 		painter.drawStaticText(5, y-1, QString::number(dB)+" dB");
-		dB -= m_dBStepSize;
+		dB -= (m_dBStepSize*vskip);
 	}
 	m_MindB = m_MaxdB - (VERT_DIVS)*m_dBStepSize;
 
@@ -615,8 +689,8 @@ QRect rect;
 		Font.setWeight(QFont::Bold);
 		Font.setPointSize(20);
 		painter.setFont(Font);
-		rect.setTop(0);
-                rect.setLeft(0);
+        rect.setTop(0);
+rect.setLeft(0);
                 rect.setRight(w);
 		rect.setHeight(m_OverlayPixmap.height());
 		painter.drawText(rect,Qt::AlignHCenter|Qt::AlignTop, m_RdsCall);
@@ -737,6 +811,22 @@ qint64 delta_2 = delta/2;
 }
 
 //////////////////////////////////////////////////////////////////////
+// Helper function called to display frequency text with cursor tooltip
+//////////////////////////////////////////////////////////////////////
+void CPlotter::DisplayCursorFreq(QPoint pt, qint64 freq)
+{
+	if(!m_UseCursorText)
+		return;
+	if(freq<100000)
+		m_Str = QString::number(freq) + " Hz";
+	else if(freq<1000000)
+		m_Str = QString::number((double)freq/1000.0) + " kHz";
+	else
+		m_Str = QString::number((double)freq/1000000.0,'g', 8) + " MHz";
+	QToolTip::showText(pt, m_Str, this, rect() );
+}
+
+//////////////////////////////////////////////////////////////////////
 // Helper function clamps demod freqeuency limits of
 // m_DemodCenterFreq
 //////////////////////////////////////////////////////////////////////
@@ -764,3 +854,4 @@ void CPlotter::SetDemodRanges(int FLowCmin, int FLowCmax, int FHiCmin, int FHiCm
 	m_symetric=symetric;
 	ClampDemodParameters();
 }
+

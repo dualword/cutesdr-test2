@@ -1,172 +1,126 @@
 //////////////////////////////////////////////////////////////////////
-// netiobase.h: interface for the CNetIOBase,
-// CAscpMsg, CUdpThread, CTcpThread, and CIQDataThread classes.
+// netio.h: interface for the CNetio class.
 //
 // History:
-//	2010-09-15  Initial creation MSW
-//	2011-03-27  Initial release
+//	2012-12-12  Initial creation MSW
+//	2013-02-05  Modified for CuteSDR
 /////////////////////////////////////////////////////////////////////
-#ifndef NETIOBASE_H
-#define NETIOBASE_H
+//==========================================================================================
+// + + +   This Software is released under the "Simplified BSD License"  + + +
+//Copyright 2010 Moe Wheatley. All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without modification, are
+//permitted provided that the following conditions are met:
+//
+//   1. Redistributions of source code must retain the above copyright notice, this list of
+//	  conditions and the following disclaimer.
+//
+//   2. Redistributions in binary form must reproduce the above copyright notice, this list
+//	  of conditions and the following disclaimer in the documentation and/or other materials
+//	  provided with the distribution.
+//
+//THIS SOFTWARE IS PROVIDED BY Moe Wheatley ``AS IS'' AND ANY EXPRESS OR IMPLIED
+//WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+//FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Moe Wheatley OR
+//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+//CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+//SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+//ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+//NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+//ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//The views and conclusions contained in the software and documentation are those of the
+//authors and should not be interpreted as representing official policies, either expressed
+//or implied, of Moe Wheatley.
+//=============================================================================
+#ifndef NETIO_H
+#define NETIO_H
 
-#include <QThread>
-#include <QIODevice>
-#include <QMutex>
-#include <QWaitCondition>
+#include "threadwrapper.h"
+#include "ascpmsg.h"
+#include <QTcpServer>
+#include <QUdpSocket>
 #include <QHostAddress>
-#include <QtNetwork>
-#include "interface/ascpmsg.h"
 
-#include <QFile>
-#include <QDir>
-
-
-typedef union
-{
-	struct bs
-	{
-		unsigned char b0;
-		unsigned char b1;
-		unsigned char b2;
-		unsigned char b3;
-	}bytes;
-	int all;
-}tBtoL4;
-
-
-//////////////////////////////////////////////////////////////////////
-// Low level thread for reading received data bytes from
-// UDP Rx Thread class
-//////////////////////////////////////////////////////////////////////
-class CUdpThread : public QThread
+/////////////////////////////////////////////////////
+// ************     C U d p     *********************
+/////////////////////////////////////////////////////
+class CUdp : public CThreadWrapper
 {
 	Q_OBJECT
 public:
-
-	CUdpThread(QObject* pParent = 0);
-protected:
-	void run();
-
-private:
-	void OnreadyRead();
-
-	quint16 m_LastSeqNum;
-	QUdpSocket* m_pUdpSocket;
-	QObject* m_pParent;
-};
-
-//////////////////////////////////////////////////////////////////////
-// Low level TCP Client thread for connecting, and reading received
-// data bytes.
-//////////////////////////////////////////////////////////////////////
-class CTcpThread : public QThread
-{
-	Q_OBJECT
-public:
-	CTcpThread(QObject* pParent = 0);
-	QTcpSocket* m_pTcpSocket;
-	enum eTcpStates {
-		TCP_NOT_CONNECTED,
-		TCP_CONNECTED,
-		TCP_DISCONNECT
-	};
-	enum eMsgStates {//ASCP msg assembly states
-		MSGSTATE_HDR1,
-		MSGSTATE_HDR2,
-		MSGSTATE_DATA
-	};
-	eTcpStates m_TcpState;
+	CUdp(QObject *parent = 0);
+	~CUdp();
+	void ThreadInit();	//overrided function is called by new thread when started
+	void SendUdpData(char* pBuf, qint32 Length);
 
 signals:
 
-protected:
-	void run();
+private slots:
+	void StartUdpSlot(quint32 ServerAdr, quint32 ClientAdr, quint16 ServerPort);
+	void StopUdpSlot();
+	void GotUdpData();
 
 private:
-	void ManageTcpClientConnection();
-	void AssembleAscpMsg(char* pBuf, int length);
-	void StartUdp();
-	void StopUdp();
-
-	int m_RxMsgLength;
-	int m_RxMsgIndex;
-	eMsgStates m_MsgState;
-	CAscpMsg m_RxAscpMsg;
-	CUdpThread* m_pUdpThread;
 	QObject* m_pParent;
+	QUdpSocket* m_pUdpSocket;
+	QHostAddress m_ServerIPAdr;
+	quint16 m_ServerPort;
 };
 
-
-
-//////////////////////////////////////////////////////////////////////
-// Low level thread for reading received data bytes from
-// UDP data FIFO and calling IQ processing routine
-// This thread performs all the I/Q data DSP processing.
-//////////////////////////////////////////////////////////////////////
-class CIQDataThread : public QThread
+/////////////////////////////////////////////////////
+// ************   C N e t i o   *********************
+/////////////////////////////////////////////////////
+class CNetio : public QObject
 {
 	Q_OBJECT
 public:
-	CIQDataThread(QObject* pParent = 0);
-	~CIQDataThread();
-protected:
-	void run();
-private:
-	QObject* m_pParent;
-	void FileTest();
-	QFile m_File;
-};
-
-//////////////////////////////////////////////////////////////////////
-//Base Class to derive from a radio specific interface.  Provides only
-// low level message assembly and I/Q data message buffering.
-// User would derive from this class to process all the radio messages
-//////////////////////////////////////////////////////////////////////
-class CNetIOBase : public QObject
-{
-	Q_OBJECT
-public:
-	CNetIOBase();
-	virtual ~CNetIOBase();
+	explicit CNetio();
+	~CNetio();
 
 	enum eStatus {
 		NOT_CONNECTED,
+		CONNECTING,
 		CONNECTED,
 		RUNNING,
-		ERROR
+		ADOVR,
+		ERR
 	};
 
-	//stub virtual function gets implemented by specific device sub class implementation
-	virtual void ParseAscpMsg( CAscpMsg*){}	//implement to decode all the command/status messages
-	virtual void SendIOStatus(int ){}		//implement to process IO status/error changes
-	virtual void ProcessIQData( double* , int ){}//implement to process the IQ data messages from the radio
+	void ConnectToServer(QHostAddress IPAdr, quint16 Port);
+	void DisconnectFromServer();
+	void SendStatus(eStatus status);
+	virtual void ParseAscpMsg( CAscpRxMsg* pMsg){Q_UNUSED(pMsg)}
+	virtual void ProcessUdpData(char* pBuf, qint64 Length){Q_UNUSED(pBuf);Q_UNUSED(Length)}
+	void SendAscpMsg(CAscpTxMsg* pMsg);
+	void SendUdpData(char* pBuf, qint32 Length);
 
-	void StartIO();	//starts IO threads
-	void StopIO();	//stops IO threads
+	eStatus m_Status;
 
-	void SendAscpMsg(CAscpMsg* pMsg);	//sends msg to radio
-	void SetupNetwork(QHostAddress ip4Addr, quint16 port);	//set network parameters
+signals:
+	void StartUdp(quint32 ServerAdr, quint32 ClientAdr, quint16 ServerPort);
+	void StopUdp();
+	void NewStatus(int status);	//emitted when sdr status changes
 
-public:
-	bool m_TcpThreadQuit;
-	bool m_UdpThreadQuit;
-	bool m_IQDataThreadQuit;
-	bool m_SampleSize24;
-	int m_RxQueueHead;
-	int m_RxQueueTail;
-	int m_MissedPackets;
-	quint16 m_Port;
-	double **m_pUdpRxQueue;
-	QHostAddress m_IPAdr;
-	QWaitCondition m_QWaitFifoData;
-	QMutex m_TcpMutex;
-	QMutex m_UdpRxMutex;
-	CTcpThread* m_pTcpThread;
-	CIQDataThread* m_pIQDataThread;
+public slots:
 
-protected:
-
+private slots:
+	void ReadTcpData();
+	void TcpStateChanged(QAbstractSocket::SocketState State);
 private:
+	void AssembleAscpMsg(quint8* Buf, int Len);
+
+	CAscpRxMsg m_RxAscpMsg;
+	int m_RxMsgLength;
+	int m_RxMsgIndex;
+	int m_MsgState;
+
+	QHostAddress m_ServerIPAdr;
+	quint16 m_ServerPort;
+	QHostAddress m_ClientIPAdr;
+	quint16 m_ClientPort;
+	CUdp* m_pUdpIo;
+	QTcpSocket* m_pTcpClient;
 };
 
-#endif // NETIOBASE_H
+#endif // NETIO_H

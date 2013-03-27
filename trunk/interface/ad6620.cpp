@@ -567,7 +567,7 @@ void Cad6620::PutInMsgBuffer(int adr, quint32 data)
 // to the radio for loading the AD6620 tegisters
 // returns false when end of all msgs is reached and load is done
 /////////////////////////////////////////////////////////////////////////////////////
-bool Cad6620::GetNext6620Msg(CAscpMsg &pAscpMsg)
+bool Cad6620::GetNext6620Msg(CAscpTxMsg &pAscpMsg)
 {
 	if(m_BufIndx < m_BufLength)
 	{

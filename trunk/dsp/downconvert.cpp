@@ -8,6 +8,7 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-04-20  Changed some scope resolution operators to allow compiling with different compilers
+//	2013-02-01  Fixed issue with missing first coef of HB calculation
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -326,7 +327,7 @@ int numoutsamples = 0;
 		TYPECPX acc;
 		acc.re = ( m_pHBFirBuf[i].re * m_pCoef[0] );
 		acc.im = ( m_pHBFirBuf[i].im * m_pCoef[0] );
-		for(j=2; j<m_FirLength; j+=2)	//only use even coefficients since odd are zero(except center point)
+		for(j=0; j<m_FirLength; j+=2)	//only use even coefficients since odd are zero(except center point)
 		{
 			acc.re += ( m_pHBFirBuf[i+j].re * m_pCoef[j] );
 			acc.im += ( m_pHBFirBuf[i+j].im * m_pCoef[j] );

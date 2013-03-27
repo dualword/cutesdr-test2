@@ -118,7 +118,7 @@ tDiscover_COMMONMSG reqmsg;
 	reqmsg.key[1] = KEY1;
 	reqmsg.op = MSG_REQ;
 	for(int i=0; i<m_NameFilter.length(); i++)
-		reqmsg.name[i] = m_NameFilter[i].toAscii();
+		reqmsg.name[i] = m_NameFilter[i].toLatin1();
 	m_pUdpDiscoverSocket->writeDatagram( (const char*)&reqmsg, length, QHostAddress::Broadcast, DISCOVER_SERVER_PORT);
 	m_CloseTimer.singleShot(250, this, SLOT( CloseUdp()) );
 }
@@ -156,19 +156,19 @@ char Buf[2048];	//buffer to hold received UDP packet
 		memcpy((void*)&m_DiscovermsgCommon[index], (void*)Buf, length );
 		if( (KEY0 == m_DiscovermsgCommon[index].key[0]) && (KEY1 == m_DiscovermsgCommon[index].key[1]) && (index<MAX_DEVICES) )
 		{
-			InUse = FALSE;
+			InUse = false;
 			if( (QString(m_DiscovermsgCommon[index].name ) == "SDR-IP" ) ||
 				(QString(m_DiscovermsgCommon[index].name ) == "NetSDR" ) )
 			{	//get all information from SDR-IP and NetSDR
 				memcpy((void*)&m_DiscovermsgNetSDR[index], (void*)Buf, sizeof(tDiscover_NETSDR) );
 				if(m_DiscovermsgNetSDR[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
-					InUse = TRUE;
+					InUse = true;
 			}
 			else	//get info for SDR-IQ and SDR-14
 			{
 				memcpy((void*)&m_DiscovermsgSDRxx[index], (void*)Buf,  sizeof(tDiscover_NETSDR) );
 				if(m_DiscovermsgSDRxx[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
-					InUse = TRUE;
+					InUse = true;
 			}
 
 			quint16 tmp16 = m_DiscovermsgCommon[index].port[1]; tmp16 <<= 8; tmp16 |= m_DiscovermsgCommon[index].port[0];

@@ -50,7 +50,7 @@ CIPEditWidget::CIPEditWidget(QWidget *parent) :
 	ui.lineEdit_B1->setValidator(m_pIPAddressValidator);
 	ui.lineEdit_B2->setValidator(m_pIPAddressValidator);
 	ui.lineEdit_B3->setValidator(m_pIPAddressValidator);
-	m_Dirty = FALSE;
+	m_Dirty = false;
 	m_ip = 0;
 }
 
@@ -112,22 +112,22 @@ void CIPEditWidget::GetControlValues()
 {
 	if(ui.lineEdit_B3->isModified() && ui.lineEdit_B3->hasAcceptableInput() )
 	{
-		m_Dirty = TRUE;
+		m_Dirty = true;
 		m_ip3 = ui.lineEdit_B3->text().toUInt();
 	}
 	if(ui.lineEdit_B2->isModified() && ui.lineEdit_B2->hasAcceptableInput() )
 	{
-		m_Dirty = TRUE;
+		m_Dirty = true;
 		m_ip2 = ui.lineEdit_B2->text().toUInt();
 	}
 	if(ui.lineEdit_B1->isModified() && ui.lineEdit_B1->hasAcceptableInput() )
 	{
-		m_Dirty = TRUE;
+		m_Dirty = true;
 		m_ip1 = ui.lineEdit_B1->text().toUInt();
 	}
 	if(ui.lineEdit_B0->isModified() && ui.lineEdit_B0->hasAcceptableInput() )
 	{
-		m_Dirty = TRUE;
+		m_Dirty = true;
 		m_ip0 = ui.lineEdit_B0->text().toUInt();
 	}
 	m_ip = m_ip3; m_ip<<=8;
