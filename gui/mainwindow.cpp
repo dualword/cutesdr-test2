@@ -13,8 +13,9 @@
 //	2011-08-07  Added WFM Support and spectrum inversion
 //	2012-01-05  Changed CW offset limits, changed scope resolution operators in downconverter module
 //	2012-02-11  ver 1.05 Updated to QT 4.8 and fixed issue with not remembering the span setting
+//	2012-06-01  ver 1.06 fixed threading issue with txmsg
+//	2013-03-25  ver 1.10 Updated to QT 5.01 changed threading methods, split GUI forms by OS
 /////////////////////////////////////////////////////////////////////
-
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
 //Copyright 2010 Moe Wheatley. All rights reserved.
@@ -56,13 +57,10 @@
 #include "gui/aboutdlg.h"
 #include "interface/perform.h"
 
-
-#define DISCOVER_CLIENT_PORT 48322	/* PC client Rx port, SDR Server Tx Port */
-
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION "CuteSdr 1.05"
+#define PROGRAM_TITLE_VERSION tr(" 1.10")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -76,7 +74,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
-	setWindowTitle(PROGRAM_TITLE_VERSION);
+	m_ProgramExeName = QFileInfo(QApplication::applicationFilePath()).fileName();
+	m_ProgramExeName.remove(".exe", Qt::CaseInsensitive);
+	setWindowTitle(m_ProgramExeName + PROGRAM_TITLE_VERSION);
 
 	//create SDR interface class
 	m_pSdrInterface = new CSdrInterface;
@@ -165,15 +165,16 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->framePlot->SetSpanFreq( m_SpanFrequency );
 	ui->framePlot->SetCenterFreq( m_CenterFrequency );
 	ui->framePlot->SetClickResolution(m_ClickResolution);
+	ui->framePlot->EnableCurText(m_UseCursorText);
 	m_FreqChanged = false;
 
 	ui->horizontalSliderVol->setValue(m_Volume);
 	m_pSdrInterface->SetVolume(m_Volume);
 
-	ui->ScalecomboBox->addItem("10 dB/Div", 10);
-	ui->ScalecomboBox->addItem("5 dB/Div", 5);
-	ui->ScalecomboBox->addItem("3 dB/Div", 3);
-	ui->ScalecomboBox->addItem("1 dB/Div", 1);
+	ui->ScalecomboBox->addItem(tr("10 dB/Div"), 10);
+	ui->ScalecomboBox->addItem(tr("5 dB/Div"), 5);
+	ui->ScalecomboBox->addItem(tr("3 dB/Div"), 3);
+	ui->ScalecomboBox->addItem(tr("1 dB/Div"), 1);
 	m_dBStepSize = (int)ui->ScalecomboBox->itemData(m_VertScaleIndex).toInt();
 	ui->ScalecomboBox->setCurrentIndex(m_VertScaleIndex);
 	ui->framePlot->SetdBStepSize(m_dBStepSize);
@@ -182,6 +183,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->MaxdBspinBox->setSingleStep(m_dBStepSize);
 	ui->MaxdBspinBox->setMinimum(MIN_FFTDB+VERT_DIVS*m_dBStepSize);
 	ui->MaxdBspinBox->setMaximum(MAX_FFTDB);
+
 	ui->framePlot->SetMaxdB(m_MaxdB);
 
 
@@ -207,14 +209,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	UpdateInfoBox();
 
-	m_ActiveDevice = "";
-	m_pSdrInterface->SetupNetwork(m_IPAdr,m_Port);
+	m_ActiveDevice = tr("");
 	m_Status = CSdrInterface::NOT_CONNECTED;
 	m_LastStatus = m_Status;
-	m_pSdrInterface->StartIO();
 
 	m_KeepAliveTimer = 0;
-
 
 	if(m_UseTestBench)
 	{
@@ -276,192 +275,194 @@ void MainWindow::AlwaysOnTop()
 /////////////////////////////////////////////////////////////////////
 void MainWindow::writeSettings()
 {
-	QSettings settings( QSettings::UserScope,"MoeTronix", "CuteSdr");
-	settings.beginGroup("MainWindow");
+	QSettings settings( QSettings::UserScope,tr("MoeTronix"), m_ProgramExeName);
+	settings.beginGroup(tr("MainWindow"));
 
-	settings.setValue("geometry", saveGeometry());
-	settings.setValue("minstate",isMinimized());
+	settings.setValue(tr("geometry"), saveGeometry());
+	settings.setValue(tr("minstate"),isMinimized());
 
 	if(g_pTestBench->isVisible())
 	{
 		m_TestBenchRect = g_pTestBench->geometry();
-		settings.setValue("TestBenchRect",m_TestBenchRect);
+		settings.setValue(tr("TestBenchRect"),m_TestBenchRect);
 	}
 
 	settings.endGroup();
 
-	settings.beginGroup("Common");
+	settings.beginGroup(tr("Common"));
 
-	settings.setValue("RadioType", m_RadioType);
-	settings.setValue("CenterFrequency",(int)m_CenterFrequency);
-	settings.setValue("SpanFrequency",(int)m_SpanFrequency);
-	settings.setValue("IPAdr",m_IPAdr.toIPv4Address());
-	settings.setValue("Port",m_Port);
-	settings.setValue("RfGain",m_RfGain);
-	settings.setValue("BandwidthIndex", m_BandwidthIndex );
-	settings.setValue("SoundInIndex",m_SoundInIndex);
-	settings.setValue("SoundOutIndex",m_SoundOutIndex);
-	settings.setValue("StereoOut",m_StereoOut);
-	settings.setValue("VertScaleIndex",m_VertScaleIndex);
-	settings.setValue("MaxdB",m_MaxdB);
-	settings.setValue("FftSize",m_FftSize);
-	settings.setValue("FftAve",m_FftAve);
-	settings.setValue("MaxDisplayRate",m_MaxDisplayRate);
-	settings.setValue("ClickResolution",m_ClickResolution);
-	settings.setValue("UseTestBench",m_UseTestBench);
-	settings.setValue("AlwaysOnTop",m_AlwaysOnTop);
-	settings.setValue("Volume",m_Volume);
-	settings.setValue("Percent2DScreen",m_Percent2DScreen);
-	settings.setValue("InvertSpectrum",m_InvertSpectrum);
-	settings.setValue("USFm",m_USFm);
+	settings.setValue(tr("RadioType"), m_RadioType);
+	settings.setValue(tr("CenterFrequency"),(int)m_CenterFrequency);
+	settings.setValue(tr("SpanFrequency"),(int)m_SpanFrequency);
+	settings.setValue(tr("IPAdr"),m_IPAdr.toIPv4Address());
+	settings.setValue(tr("Port"),m_Port);
+	settings.setValue(tr("RfGain"),m_RfGain);
+	settings.setValue(tr("BandwidthIndex"), m_BandwidthIndex );
+	settings.setValue(tr("SoundInIndex"),m_SoundInIndex);
+	settings.setValue(tr("SoundOutIndex"),m_SoundOutIndex);
+	settings.setValue(tr("StereoOut"),m_StereoOut);
+	settings.setValue(tr("VertScaleIndex"),m_VertScaleIndex);
+	settings.setValue(tr("MaxdB"),m_MaxdB);
+	settings.setValue(tr("FftSize"),m_FftSize);
+	settings.setValue(tr("FftAve"),m_FftAve);
+	settings.setValue(tr("MaxDisplayRate"),m_MaxDisplayRate);
+	settings.setValue(tr("ClickResolution"),m_ClickResolution);
+	settings.setValue(tr("UseTestBench"),m_UseTestBench);
+	settings.setValue(tr("AlwaysOnTop"),m_AlwaysOnTop);
+	settings.setValue(tr("Volume"),m_Volume);
+	settings.setValue(tr("Percent2DScreen"),m_Percent2DScreen);
+	settings.setValue(tr("InvertSpectrum"),m_InvertSpectrum);
+	settings.setValue(tr("USFm"),m_USFm);
+	settings.setValue(tr("UseCursorText"),m_UseCursorText);
 
 
 	//Get NCO spur offsets and save
 	m_pSdrInterface->ManageNCOSpurOffsets(CSdrInterface::NCOSPUR_CMD_READ,
 										  &m_NCOSpurOffsetI,
 										  &m_NCOSpurOffsetQ);
-	settings.setValue("NCOSpurOffsetI",m_NCOSpurOffsetI);
-	settings.setValue("NCOSpurOffsetQ",m_NCOSpurOffsetQ);
+	settings.setValue(tr("NCOSpurOffsetI"),m_NCOSpurOffsetI);
+	settings.setValue(tr("NCOSpurOffsetQ"),m_NCOSpurOffsetQ);
 
-	settings.setValue("DemodFrequency",(int)m_DemodFrequency);
-	settings.setValue("DemodMode",m_DemodMode);
+	settings.setValue(tr("DemodFrequency"),(int)m_DemodFrequency);
+	settings.setValue(tr("DemodMode"),m_DemodMode);
 
-	settings.setValue("NBOn",m_NoiseProcSettings.NBOn);
-	settings.setValue("NBThreshold",m_NoiseProcSettings.NBThreshold);
-	settings.setValue("NBWidth",m_NoiseProcSettings.NBWidth);
-
-	settings.endGroup();
-
-	settings.beginGroup("Testbench");
-
-	settings.setValue("SweepStartFrequency",g_pTestBench->m_SweepStartFrequency);
-	settings.setValue("SweepStopFrequency",g_pTestBench->m_SweepStopFrequency);
-	settings.setValue("SweepRate",g_pTestBench->m_SweepRate);
-	settings.setValue("DisplayRate",g_pTestBench->m_DisplayRate);
-	settings.setValue("VertRange",g_pTestBench->m_VertRange);
-	settings.setValue("TrigIndex",g_pTestBench->m_TrigIndex);
-	settings.setValue("TimeDisplay",g_pTestBench->m_TimeDisplay);
-	settings.setValue("HorzSpan",g_pTestBench->m_HorzSpan);
-	settings.setValue("TrigLevel",g_pTestBench->m_TrigLevel);
-	settings.setValue("Profile",g_pTestBench->m_Profile);
-	settings.setValue("GenOn",g_pTestBench->m_GenOn);
-	settings.setValue("PeakOn",g_pTestBench->m_PeakOn);
-	settings.setValue("PulseWidth",g_pTestBench->m_PulseWidth);
-	settings.setValue("PulsePeriod",g_pTestBench->m_PulsePeriod);
-	settings.setValue("SignalPower",g_pTestBench->m_SignalPower);
-	settings.setValue("NoisePower",g_pTestBench->m_NoisePower);
-	settings.setValue("UseFmGen",g_pTestBench->m_UseFmGen);
+	settings.setValue(tr("NBOn"),m_NoiseProcSettings.NBOn);
+	settings.setValue(tr("NBThreshold"),m_NoiseProcSettings.NBThreshold);
+	settings.setValue(tr("NBWidth"),m_NoiseProcSettings.NBWidth);
 
 	settings.endGroup();
 
-	settings.beginWriteArray("Demod");
+	settings.beginGroup(tr("Testbench"));
+
+	settings.setValue(tr("SweepStartFrequency"),g_pTestBench->m_SweepStartFrequency);
+	settings.setValue(tr("SweepStopFrequency"),g_pTestBench->m_SweepStopFrequency);
+	settings.setValue(tr("SweepRate"),g_pTestBench->m_SweepRate);
+	settings.setValue(tr("DisplayRate"),g_pTestBench->m_DisplayRate);
+	settings.setValue(tr("VertRange"),g_pTestBench->m_VertRange);
+	settings.setValue(tr("TrigIndex"),g_pTestBench->m_TrigIndex);
+	settings.setValue(tr("TimeDisplay"),g_pTestBench->m_TimeDisplay);
+	settings.setValue(tr("HorzSpan"),g_pTestBench->m_HorzSpan);
+	settings.setValue(tr("TrigLevel"),g_pTestBench->m_TrigLevel);
+	settings.setValue(tr("Profile"),g_pTestBench->m_Profile);
+	settings.setValue(tr("GenOn"),g_pTestBench->m_GenOn);
+	settings.setValue(tr("PeakOn"),g_pTestBench->m_PeakOn);
+	settings.setValue(tr("PulseWidth"),g_pTestBench->m_PulseWidth);
+	settings.setValue(tr("PulsePeriod"),g_pTestBench->m_PulsePeriod);
+	settings.setValue(tr("SignalPower"),g_pTestBench->m_SignalPower);
+	settings.setValue(tr("NoisePower"),g_pTestBench->m_NoisePower);
+	settings.setValue(tr("UseFmGen"),g_pTestBench->m_UseFmGen);
+
+	settings.endGroup();
+
+	settings.beginWriteArray(tr("Demod"));
 	//save demod settings
 	for (int i = 0; i < NUM_DEMODS; i++)
 	{
 		settings.setArrayIndex(i);
-		settings.setValue("HiCut", m_DemodSettings[i].HiCut);
-		settings.setValue("LowCut", m_DemodSettings[i].LowCut);
-		settings.setValue("FilterClickResolution", m_DemodSettings[i].FilterClickResolution);
-		settings.setValue("Offset", m_DemodSettings[i].Offset);
-		settings.setValue("SquelchValue", m_DemodSettings[i].SquelchValue);
-		settings.setValue("AgcSlope", m_DemodSettings[i].AgcSlope);
-		settings.setValue("AgcThresh", m_DemodSettings[i].AgcThresh);
-		settings.setValue("AgcManualGain", m_DemodSettings[i].AgcManualGain);
-		settings.setValue("AgcDecay", m_DemodSettings[i].AgcDecay);
-		settings.setValue("AgcOn", m_DemodSettings[i].AgcOn);
-		settings.setValue("AgcHangOn", m_DemodSettings[i].AgcHangOn);
+		settings.setValue(tr("HiCut"), m_DemodSettings[i].HiCut);
+		settings.setValue(tr("LowCut"), m_DemodSettings[i].LowCut);
+		settings.setValue(tr("FilterClickResolution"), m_DemodSettings[i].FilterClickResolution);
+		settings.setValue(tr("Offset"), m_DemodSettings[i].Offset);
+		settings.setValue(tr("SquelchValue"), m_DemodSettings[i].SquelchValue);
+		settings.setValue(tr("AgcSlope"), m_DemodSettings[i].AgcSlope);
+		settings.setValue(tr("AgcThresh"), m_DemodSettings[i].AgcThresh);
+		settings.setValue(tr("AgcManualGain"), m_DemodSettings[i].AgcManualGain);
+		settings.setValue(tr("AgcDecay"), m_DemodSettings[i].AgcDecay);
+		settings.setValue(tr("AgcOn"), m_DemodSettings[i].AgcOn);
+		settings.setValue(tr("AgcHangOn"), m_DemodSettings[i].AgcHangOn);
 	}
 	settings.endArray();
 }
 
 void MainWindow::readSettings()
 {
-	QSettings settings(QSettings::UserScope,"MoeTronix", "CuteSdr");
-	settings.beginGroup("MainWindow");
+	QSettings settings(QSettings::UserScope,tr("MoeTronix"), m_ProgramExeName);
+	settings.beginGroup(tr("MainWindow"));
 
-	restoreGeometry(settings.value("geometry").toByteArray());
-	bool ismin = settings.value("minstate", false).toBool();
-	m_TestBenchRect = settings.value("TestBenchRect", QRect(0,0,500,200)).toRect();
-
-	settings.endGroup();
-
-	settings.beginGroup("Common");
-
-	m_CenterFrequency = (qint64)settings.value("CenterFrequency", 15000000).toUInt();
-	m_SpanFrequency = settings.value("SpanFrequency", 100000).toUInt();
-	m_IPAdr.setAddress(settings.value("IPAdr", 0xC0A80164).toInt() );
-	m_Port = settings.value("Port", 50000).toUInt();
-	m_RfGain = settings.value("RfGain", 0).toInt();
-	m_BandwidthIndex = settings.value("BandwidthIndex", 0).toInt();
-	m_SoundInIndex = settings.value("SoundInIndex", 0).toInt();
-	m_SoundOutIndex = settings.value("SoundOutIndex", 0).toInt();
-	m_StereoOut = settings.value("StereoOut", false).toBool();
-	m_VertScaleIndex = settings.value("VertScaleIndex", 0).toInt();
-	m_MaxdB = settings.value("MaxdB", 0).toInt();
-	m_FftAve = settings.value("FftAve", 0).toInt();
-	m_FftSize = settings.value("FftSize", 4096).toInt();
-	m_MaxDisplayRate = settings.value("MaxDisplayRate", 10).toInt();
-	m_RadioType = settings.value("RadioType", 0).toInt();
-	m_ClickResolution = settings.value("ClickResolution",100).toInt();
-	m_Volume = settings.value("Volume",100).toInt();
-	m_Percent2DScreen = settings.value("Percent2DScreen",50).toInt();
-
-	m_NCOSpurOffsetI = settings.value("NCOSpurOffsetI",0.0).toDouble();
-	m_NCOSpurOffsetQ = settings.value("NCOSpurOffsetQ",0.0).toDouble();
-
-	m_UseTestBench = settings.value("UseTestBench", false).toBool();
-	m_AlwaysOnTop = settings.value("AlwaysOnTop", false).toBool();
-
-	m_InvertSpectrum = settings.value("InvertSpectrum", false).toBool();
-	m_USFm = settings.value("USFm", true).toBool();
-
-	m_NoiseProcSettings.NBOn = settings.value("NBOn", false).toBool();
-	m_NoiseProcSettings.NBThreshold = settings.value("NBThreshold",0).toInt();
-	m_NoiseProcSettings.NBWidth = settings.value("NBWidth",50).toInt();
-
-	m_DemodMode = settings.value("DemodMode", DEMOD_AM).toInt();
-	m_DemodFrequency = (qint64)settings.value("DemodFrequency", 15000000).toUInt();
+	restoreGeometry(settings.value(tr("geometry")).toByteArray());
+	bool ismin = settings.value(tr("minstate"), false).toBool();
+	m_TestBenchRect = settings.value(tr("TestBenchRect"), QRect(0,0,500,200)).toRect();
 
 	settings.endGroup();
 
-	settings.beginGroup("Testbench");
+	settings.beginGroup(tr("Common"));
 
-	g_pTestBench->m_SweepStartFrequency = settings.value("SweepStartFrequency",0.0).toDouble();
-	g_pTestBench->m_SweepStopFrequency = settings.value("SweepStopFrequency",1.0).toDouble();
-	g_pTestBench->m_SweepRate = settings.value("SweepRate",0.0).toDouble();
-	g_pTestBench->m_DisplayRate = settings.value("DisplayRate",10).toInt();
-	g_pTestBench->m_VertRange = settings.value("VertRange",10000).toInt();
-	g_pTestBench->m_TrigIndex = settings.value("TrigIndex",0).toInt();
-	g_pTestBench->m_TrigLevel = settings.value("TrigLevel",100).toInt();
-	g_pTestBench->m_HorzSpan = settings.value("HorzSpan",100).toInt();
-	g_pTestBench->m_Profile = settings.value("Profile",0).toInt();
-	g_pTestBench->m_TimeDisplay = settings.value("TimeDisplay",false).toBool();
-	g_pTestBench->m_GenOn = settings.value("GenOn",false).toBool();
-	g_pTestBench->m_PeakOn = settings.value("PeakOn",false).toBool();
-	g_pTestBench->m_PulseWidth = settings.value("PulseWidth",0.0).toDouble();
-	g_pTestBench->m_PulsePeriod = settings.value("PulsePeriod",0.0).toDouble();
-	g_pTestBench->m_SignalPower = settings.value("SignalPower",0.0).toDouble();
-	g_pTestBench->m_NoisePower = settings.value("NoisePower",0.0).toDouble();
-	g_pTestBench->m_UseFmGen = settings.value("UseFmGen",false).toBool();
+	m_CenterFrequency = (qint64)settings.value(tr("CenterFrequency"), 15000000).toUInt();
+	m_SpanFrequency = settings.value(tr("SpanFrequency"), 100000).toUInt();
+	m_IPAdr.setAddress(settings.value(tr("IPAdr"), 0xC0A80164).toInt() );
+	m_Port = settings.value(tr("Port"), 50000).toUInt();
+	m_RfGain = settings.value(tr("RfGain"), 0).toInt();
+	m_BandwidthIndex = settings.value(tr("BandwidthIndex"), 0).toInt();
+	m_SoundInIndex = settings.value(tr("SoundInIndex"), 0).toInt();
+	m_SoundOutIndex = settings.value(tr("SoundOutIndex"), 0).toInt();
+	m_StereoOut = settings.value(tr("StereoOut"), false).toBool();
+	m_VertScaleIndex = settings.value(tr("VertScaleIndex"), 0).toInt();
+	m_MaxdB = settings.value(tr("MaxdB"), 0).toInt();
+	m_FftAve = settings.value(tr("FftAve"), 0).toInt();
+	m_FftSize = settings.value(tr("FftSize"), 4096).toInt();
+	m_MaxDisplayRate = settings.value(tr("MaxDisplayRate"), 10).toInt();
+	m_RadioType = settings.value(tr("RadioType"), 0).toInt();
+	m_ClickResolution = settings.value(tr("ClickResolution"),100).toInt();
+	m_Volume = settings.value(tr("Volume"),100).toInt();
+	m_Percent2DScreen = settings.value(tr("Percent2DScreen"),50).toInt();
+
+	m_NCOSpurOffsetI = settings.value(tr("NCOSpurOffsetI"),0.0).toDouble();
+	m_NCOSpurOffsetQ = settings.value(tr("NCOSpurOffsetQ"),0.0).toDouble();
+
+	m_UseTestBench = settings.value(tr("UseTestBench"), false).toBool();
+	m_AlwaysOnTop = settings.value(tr("AlwaysOnTop"), false).toBool();
+
+	m_InvertSpectrum = settings.value(tr("InvertSpectrum"), false).toBool();
+	m_USFm = settings.value(tr("USFm"), true).toBool();
+	m_UseCursorText = settings.value(tr("UseCursorText"), false).toBool();
+
+	m_NoiseProcSettings.NBOn = settings.value(tr("NBOn"), false).toBool();
+	m_NoiseProcSettings.NBThreshold = settings.value(tr("NBThreshold"),0).toInt();
+	m_NoiseProcSettings.NBWidth = settings.value(tr("NBWidth"),50).toInt();
+
+	m_DemodMode = settings.value(tr("DemodMode"), DEMOD_AM).toInt();
+	m_DemodFrequency = (qint64)settings.value(tr("DemodFrequency"), 15000000).toUInt();
 
 	settings.endGroup();
 
-	settings.beginReadArray("Demod");
+	settings.beginGroup(tr("Testbench"));
+
+	g_pTestBench->m_SweepStartFrequency = settings.value(tr("SweepStartFrequency"),0.0).toDouble();
+	g_pTestBench->m_SweepStopFrequency = settings.value(tr("SweepStopFrequency"),1.0).toDouble();
+	g_pTestBench->m_SweepRate = settings.value(tr("SweepRate"),0.0).toDouble();
+	g_pTestBench->m_DisplayRate = settings.value(tr("DisplayRate"),10).toInt();
+	g_pTestBench->m_VertRange = settings.value(tr("VertRange"),10000).toInt();
+	g_pTestBench->m_TrigIndex = settings.value(tr("TrigIndex"),0).toInt();
+	g_pTestBench->m_TrigLevel = settings.value(tr("TrigLevel"),100).toInt();
+	g_pTestBench->m_HorzSpan = settings.value(tr("HorzSpan"),100).toInt();
+	g_pTestBench->m_Profile = settings.value(tr("Profile"),0).toInt();
+	g_pTestBench->m_TimeDisplay = settings.value(tr("TimeDisplay"),false).toBool();
+	g_pTestBench->m_GenOn = settings.value(tr("GenOn"),false).toBool();
+	g_pTestBench->m_PeakOn = settings.value(tr("PeakOn"),false).toBool();
+	g_pTestBench->m_PulseWidth = settings.value(tr("PulseWidth"),0.0).toDouble();
+	g_pTestBench->m_PulsePeriod = settings.value(tr("PulsePeriod"),0.0).toDouble();
+	g_pTestBench->m_SignalPower = settings.value(tr("SignalPower"),0.0).toDouble();
+	g_pTestBench->m_NoisePower = settings.value(tr("NoisePower"),0.0).toDouble();
+	g_pTestBench->m_UseFmGen = settings.value(tr("UseFmGen"),false).toBool();
+
+	settings.endGroup();
+
+	settings.beginReadArray(tr("Demod"));
 	//get demod settings
 	for (int i = 0; i < NUM_DEMODS; i++)
 	{
 		settings.setArrayIndex(i);
-		m_DemodSettings[i].HiCut = settings.value("HiCut", 5000).toInt();
-		m_DemodSettings[i].LowCut = settings.value("LowCut", -5000).toInt();
-		m_DemodSettings[i].FilterClickResolution = settings.value("FilterClickResolution", 100).toInt();
-		m_DemodSettings[i].Offset = settings.value("Offset", 0).toInt();
-		m_DemodSettings[i].SquelchValue = settings.value("SquelchValue", 0).toInt();
-		m_DemodSettings[i].AgcSlope = settings.value("AgcSlope", 0).toInt();
-		m_DemodSettings[i].AgcThresh = settings.value("AgcThresh", -100).toInt();
-		m_DemodSettings[i].AgcManualGain = settings.value("AgcManualGain", 30).toInt();
-		m_DemodSettings[i].AgcDecay = settings.value("AgcDecay", 200).toInt();
-		m_DemodSettings[i].AgcOn = settings.value("AgcOn",true).toBool();
-		m_DemodSettings[i].AgcHangOn = settings.value("AgcHangOn",false).toBool();
+		m_DemodSettings[i].HiCut = settings.value(tr("HiCut"), 5000).toInt();
+		m_DemodSettings[i].LowCut = settings.value(tr("LowCut"), -5000).toInt();
+		m_DemodSettings[i].FilterClickResolution = settings.value(tr("FilterClickResolution"), 100).toInt();
+		m_DemodSettings[i].Offset = settings.value(tr("Offset"), 0).toInt();
+		m_DemodSettings[i].SquelchValue = settings.value(tr("SquelchValue"), 0).toInt();
+		m_DemodSettings[i].AgcSlope = settings.value(tr("AgcSlope"), 0).toInt();
+		m_DemodSettings[i].AgcThresh = settings.value(tr("AgcThresh"), -100).toInt();
+		m_DemodSettings[i].AgcManualGain = settings.value(tr("AgcManualGain"), 30).toInt();
+		m_DemodSettings[i].AgcDecay = settings.value(tr("AgcDecay"), 200).toInt();
+		m_DemodSettings[i].AgcOn = settings.value(tr("AgcOn"),true).toBool();
+		m_DemodSettings[i].AgcHangOn = settings.value(tr("AgcHangOn"),false).toBool();
 	}
 	settings.endArray();
 
@@ -480,6 +481,8 @@ void MainWindow::OnTimer()
 		m_KeepAliveTimer = 0;
 		if( (CSdrInterface::RUNNING == m_Status) || ( CSdrInterface::CONNECTED == m_Status) )
 			m_pSdrInterface->KeepAlive();
+		if( CSdrInterface::NOT_CONNECTED == m_Status )
+			m_pSdrInterface->ConnectToServer(m_IPAdr,m_Port);
 	}
 	ui->frameMeter->SetdBmLevel( m_pSdrInterface->GetSMeterAve() );
 	if(DEMOD_WFM == m_DemodMode)	//if in WFM mode manage stereo status display
@@ -564,6 +567,7 @@ CDisplayDlg dlg(this);
 	dlg.m_MaxDisplayRate = m_MaxDisplayRate;
 	dlg.m_UseTestBench = m_UseTestBench;
 	dlg.m_Percent2DScreen = m_Percent2DScreen;
+	dlg.m_UseCursorText = m_UseCursorText;
 	dlg.InitDlg();
 	if(QDialog::Accepted == dlg.exec() )
 	{
@@ -582,6 +586,7 @@ CDisplayDlg dlg(this);
 		}
 		m_FftSize = dlg.m_FftSize;
 		m_FftAve = dlg.m_FftAve;
+		m_UseCursorText = dlg.m_UseCursorText;
 		m_ClickResolution = dlg.m_ClickResolution;
 		m_MaxDisplayRate = dlg.m_MaxDisplayRate;
 		m_UseTestBench = dlg.m_UseTestBench;
@@ -589,6 +594,7 @@ CDisplayDlg dlg(this);
 		m_pSdrInterface->SetFftSize( m_FftSize);
 		m_pSdrInterface->SetMaxDisplayRate(m_MaxDisplayRate);
 		ui->framePlot->SetClickResolution(m_ClickResolution);
+		ui->framePlot->EnableCurText(m_UseCursorText);
 		if(m_UseTestBench)
 		{	//make TestBench visable if not already
 			if(!g_pTestBench->isVisible())
@@ -701,10 +707,10 @@ CEditNetDlg dlg(this);
 				m_pSdrInterface->StopSdr();
 				ui->framePlot->SetRunningState(false);
 			}
+			m_pSdrInterface->StopIO();
 			m_IPAdr = dlg.m_IPAdr;
 			m_Port = dlg.m_Port;
 			m_ActiveDevice = dlg.m_ActiveDevice;
-			m_pSdrInterface->SetupNetwork(m_IPAdr,m_Port);
 		}
 	}
 }
@@ -785,17 +791,18 @@ void MainWindow::OnNewFftData()
 void MainWindow::OnStatus(int status)
 {
 	m_Status = (CSdrInterface::eStatus)status;
-//qDebug()<<"Status"<< status;
+//qDebug()<<"Status"<< m_Status;
 	switch(status)
 	{
 		case CSdrInterface::NOT_CONNECTED:
+		case CSdrInterface::CONNECTING:
 			if(	m_LastStatus == CSdrInterface::RUNNING)
 			{
 				m_pSdrInterface->StopSdr();
 				ui->framePlot->SetRunningState(false);
 			}
 			ui->statusBar->showMessage(tr("SDR Not Connected"), 0);
-			ui->pushButtonRun->setText("Run");
+			ui->pushButtonRun->setText(tr("Run"));
 			ui->pushButtonRun->setEnabled(false);
 			break;
 		case CSdrInterface::CONNECTED:
@@ -805,29 +812,30 @@ void MainWindow::OnStatus(int status)
 				ui->framePlot->SetRunningState(false);
 			}
 			ui->statusBar->showMessage( m_ActiveDevice + tr(" Connected"), 0);
-			if(	m_LastStatus == CSdrInterface::NOT_CONNECTED)
-				m_pSdrInterface->GetSdrInfo();
-			ui->pushButtonRun->setText("Run");
+			if(	(m_LastStatus == CSdrInterface::NOT_CONNECTED) ||
+				(m_LastStatus == CSdrInterface::CONNECTING) )
+					m_pSdrInterface->GetSdrInfo();
+			ui->pushButtonRun->setText(tr("Run"));
 			ui->pushButtonRun->setEnabled(true);
 			break;
 		case CSdrInterface::RUNNING:
 			m_Str.setNum(m_pSdrInterface->GetRateError());
-			m_Str.append(" ppm  Missed Pkts=");
+			m_Str.append(tr(" ppm  Missed Pkts="));
 			m_Str2.setNum(m_pSdrInterface->m_MissedPackets);
 			m_Str.append(m_Str2);
 			ui->statusBar->showMessage(m_ActiveDevice + tr(" Running   ") + m_Str, 0);
-			ui->pushButtonRun->setText("Stop");
-			ui->pushButtonRun->setEnabled(TRUE);
+			ui->pushButtonRun->setText(tr("Stop"));
+			ui->pushButtonRun->setEnabled(true);
 			break;
-		case CSdrInterface::ERROR:
+		case CSdrInterface::ERR:
 			if(	m_LastStatus == CSdrInterface::RUNNING)
 			{
 				m_pSdrInterface->StopSdr();
 				ui->framePlot->SetRunningState(false);
 			}
 			ui->statusBar->showMessage(tr("SDR Not Connected"), 0);
-			ui->pushButtonRun->setText("Run");
-			ui->pushButtonRun->setEnabled(FALSE);
+			ui->pushButtonRun->setText(tr("Run"));
+			ui->pushButtonRun->setEnabled(false);
 			break;
 		case CSdrInterface::ADOVR:
 			if(	m_LastStatus == CSdrInterface::RUNNING)
@@ -1060,56 +1068,56 @@ void MainWindow::InitDemodSettings()
 {
 	//set filter limits based on final sample rates etc.
 	//These parameters are fixed and not saved in Settings
-	m_DemodSettings[DEMOD_AM].txt = "AM";
+	m_DemodSettings[DEMOD_AM].txt = tr("AM");
 	m_DemodSettings[DEMOD_AM].HiCutmin = 500;
 	m_DemodSettings[DEMOD_AM].HiCutmax = 10000;
 	m_DemodSettings[DEMOD_AM].LowCutmax = -500;
 	m_DemodSettings[DEMOD_AM].LowCutmin = -10000;
 	m_DemodSettings[DEMOD_AM].Symetric = true;
 
-	m_DemodSettings[DEMOD_SAM].txt = "AM";
+	m_DemodSettings[DEMOD_SAM].txt = tr("AM");
 	m_DemodSettings[DEMOD_SAM].HiCutmin = 100;
 	m_DemodSettings[DEMOD_SAM].HiCutmax = 10000;
 	m_DemodSettings[DEMOD_SAM].LowCutmax = -100;
 	m_DemodSettings[DEMOD_SAM].LowCutmin = -10000;
 	m_DemodSettings[DEMOD_SAM].Symetric = false;
 
-	m_DemodSettings[DEMOD_FM].txt = "FM";
+	m_DemodSettings[DEMOD_FM].txt = tr("FM");
 	m_DemodSettings[DEMOD_FM].HiCutmin = 5000;
 	m_DemodSettings[DEMOD_FM].HiCutmax = 15000;
 	m_DemodSettings[DEMOD_FM].LowCutmax = -5000;
 	m_DemodSettings[DEMOD_FM].LowCutmin = -15000;
 	m_DemodSettings[DEMOD_FM].Symetric = true;
 
-	m_DemodSettings[DEMOD_WFM].txt = "WFM";
+	m_DemodSettings[DEMOD_WFM].txt = tr("WFM");
 	m_DemodSettings[DEMOD_WFM].HiCutmin = 100000;
 	m_DemodSettings[DEMOD_WFM].HiCutmax = 100000;
 	m_DemodSettings[DEMOD_WFM].LowCutmax = -100000;
 	m_DemodSettings[DEMOD_WFM].LowCutmin = -100000;
 	m_DemodSettings[DEMOD_WFM].Symetric = true;
 
-	m_DemodSettings[DEMOD_USB].txt = "USB";
+	m_DemodSettings[DEMOD_USB].txt = tr("USB");
 	m_DemodSettings[DEMOD_USB].HiCutmin = 500;
 	m_DemodSettings[DEMOD_USB].HiCutmax = 20000;
 	m_DemodSettings[DEMOD_USB].LowCutmax = 200;
 	m_DemodSettings[DEMOD_USB].LowCutmin = 0;
 	m_DemodSettings[DEMOD_USB].Symetric = false;
 
-	m_DemodSettings[DEMOD_LSB].txt = "LSB";
+	m_DemodSettings[DEMOD_LSB].txt = tr("LSB");
 	m_DemodSettings[DEMOD_LSB].HiCutmin = -200;
 	m_DemodSettings[DEMOD_LSB].HiCutmax = 0;
 	m_DemodSettings[DEMOD_LSB].LowCutmax = -500;
 	m_DemodSettings[DEMOD_LSB].LowCutmin = -20000;
 	m_DemodSettings[DEMOD_LSB].Symetric = false;
 
-	m_DemodSettings[DEMOD_CWU].txt = "CWU";
+	m_DemodSettings[DEMOD_CWU].txt = tr("CWU");
 	m_DemodSettings[DEMOD_CWU].HiCutmin = 50;
 	m_DemodSettings[DEMOD_CWU].HiCutmax = 1000;
 	m_DemodSettings[DEMOD_CWU].LowCutmax = -50;
 	m_DemodSettings[DEMOD_CWU].LowCutmin = -1000;
 	m_DemodSettings[DEMOD_CWU].Symetric = false;
 
-	m_DemodSettings[DEMOD_CWL].txt = "CWL";
+	m_DemodSettings[DEMOD_CWL].txt = tr("CWL");
 	m_DemodSettings[DEMOD_CWL].HiCutmin = 50;
 	m_DemodSettings[DEMOD_CWL].HiCutmax = 1000;
 	m_DemodSettings[DEMOD_CWL].LowCutmax = -50;

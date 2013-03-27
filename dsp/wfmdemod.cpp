@@ -110,7 +110,7 @@ CWFmDemod::CWFmDemod(TYPEREAL samplerate) : m_SampleRate(samplerate)
 	m_CurrentBlock = BLOCK_A;
 	m_DecodeState = STATE_BITSYNC;
 	m_BGroupOffset = 0;
-	m_PilotLocked = false;
+    m_PilotLocked = false;
 	m_LastPilotLocked = !m_PilotLocked;
 	m_BlockErrors = 0;
 }
@@ -196,7 +196,7 @@ qDebug()<<"PhaseAdj = "<< m_PilotPhaseAdjust;
 qDebug()<<"RDS Rate = "<< m_RdsOutputRate;
 
 	InitRds(m_RdsOutputRate);
-	m_PilotLocked = false;
+    m_PilotLocked = false;
 	m_LastPilotLocked = !m_PilotLocked;
 	return m_OutRate;
 }
@@ -233,7 +233,7 @@ g_pTestBench->DisplayData(InLength, pInData, m_SampleRate,PROFILE_2);
 	m_LPFilter.ProcessFilter( InLength, pOutData, pOutData);	//rolloff audio above 15KHz
 	ProcessDeemphasisFilter(InLength, pOutData, pOutData);		//50 or 75uSec de-emphasis one pole filter
 	m_NotchFilter.ProcessFilter( InLength, pOutData, pOutData);	//notch out 19KHz pilot
-	m_PilotLocked = false;
+    m_PilotLocked = false;
 	return InLength;
 }
 
@@ -296,7 +296,7 @@ g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
 			pOutData[i].re = m_RawFm[i];
 			pOutData[i].im = m_RawFm[i];
 		}
-		m_PilotLocked = false;
+        m_PilotLocked = false;
 	}
 	//translate 57KHz RDS signal to baseband and decimate RDS complex signal
 	int length = m_RdsDownConvert.ProcessData(InLength, m_CpxRawFm, m_RdsRaw);
@@ -395,7 +395,7 @@ void CWFmDemod::InitPilotPll( TYPEREAL SampleRate )
 
 /////////////////////////////////////////////////////////////////////////////////
 //	Process IQ wide FM data to lock Pilot PLL
-//returns TRUE if Locked.  Fills m_PilotPhase[] with locked 19KHz NCO phase data
+//returns true if Locked.  Fills m_PilotPhase[] with locked 19KHz NCO phase data
 /////////////////////////////////////////////////////////////////////////////////
 bool CWFmDemod::ProcessPilotPll( int InLength, TYPECPX* pInData )
 {
@@ -434,9 +434,9 @@ TYPECPX tmp;
 	m_PilotNcoPhase = fmod(m_PilotNcoPhase, K_2PI);	//keep radian counter bounded
 //StopPerformance(InLength);
 	if(m_PhaseErrorMagAve < LOCK_MAG_THRESHOLD)
-		return TRUE;
+        return true;
 	else
-		return FALSE;
+        return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -453,7 +453,7 @@ int CWFmDemod::GetStereoLock(int* pPilotLock)
 		return true;
 	}
 	else
-		return false;
+        return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -596,7 +596,7 @@ void CWFmDemod::ProcessNewRdsBit(int bit)
 	switch(m_DecodeState)
 	{
 		case STATE_BITSYNC:		//looking at each bit position till we find a "good" block A
-			if( 0 == CheckBlock(OFFSET_SYNDROME_BLOCK_A, false) )
+            if( 0 == CheckBlock(OFFSET_SYNDROME_BLOCK_A, false) )
 			{	//got initial good chkword on Block A not using FEC
 				m_CurrentBitPosition = 0;
 				m_BGroupOffset = 0;
@@ -610,7 +610,7 @@ void CWFmDemod::ProcessNewRdsBit(int bit)
 			if(m_CurrentBitPosition >= NUMBITS_BLOCK)
 			{
 				m_CurrentBitPosition = 0;
-				if( CheckBlock(BLK_OFFSET_TBL[m_CurrentBlock+m_BGroupOffset], false ) )
+                if( CheckBlock(BLK_OFFSET_TBL[m_CurrentBlock+m_BGroupOffset], false ) )
 				{	//bad chkword so go look for bit sync again
 					m_DecodeState = STATE_BITSYNC;
 				}
@@ -791,7 +791,7 @@ int CWFmDemod::GetNextRdsGroupData(tRDS_GROUPS* pGroupData)
 		return true;
 	}
 	else
-		return false;
+        return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////

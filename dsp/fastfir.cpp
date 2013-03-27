@@ -13,6 +13,7 @@
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-11-03  Fixed m_pFFTOverlapBuf initialization bug
+//	2012-08-06	Fixed m_pWindowTbl sizing problem
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -73,7 +74,7 @@ int i;
 	m_pFFTOverlapBuf = NULL;
 	m_pFilterCoef = NULL;
 	//allocate internal buffer space on Heap
-	m_pWindowTbl = new TYPEREAL[CONV_FFT_SIZE];
+	m_pWindowTbl = new TYPEREAL[CONV_FIR_SIZE];
 	m_pFilterCoef = new TYPECPX[CONV_FFT_SIZE];
 	m_pFFTBuf = new TYPECPX[CONV_FFT_SIZE];
 	m_pFFTOverlapBuf = new TYPECPX[CONV_FIR_SIZE];

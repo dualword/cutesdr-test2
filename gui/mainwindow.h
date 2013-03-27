@@ -16,7 +16,6 @@
 #include "rdsdecode.h"
 
 
-
 namespace Ui {
     class MainWindow;
 }
@@ -80,6 +79,7 @@ private:
 	bool m_AgcOn;
 	bool m_InvertSpectrum;
 	bool m_USFm;
+	bool m_UseCursorText;
 	qint64 m_CenterFrequency;
 	qint64 m_DemodFrequency;
 	quint32 m_SpanFrequency;
@@ -110,6 +110,7 @@ private:
 	QString m_Str;
 	QString m_Str2;
 	QString m_ActiveDevice;
+	QString m_ProgramExeName;
 	CSdrInterface::eStatus m_Status;
 	CSdrInterface::eStatus m_LastStatus;
 	QTimer *m_pTimer;

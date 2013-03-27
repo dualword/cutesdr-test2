@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>351</width>
-    <height>309</height>
+    <height>344</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>280</y>
+     <y>310</y>
      <width>81</width>
      <height>23</height>
     </rect>
@@ -35,7 +35,7 @@
      <x>10</x>
      <y>10</y>
      <width>101</width>
-     <height>211</height>
+     <height>261</height>
     </rect>
    </property>
    <property name="title">
@@ -46,8 +46,8 @@
      <rect>
       <x>20</x>
       <y>21</y>
-      <width>56</width>
-      <height>181</height>
+      <width>58</width>
+      <height>231</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -114,7 +114,7 @@
    <property name="geometry">
     <rect>
      <x>110</x>
-     <y>250</y>
+     <y>280</y>
      <width>151</width>
      <height>22</height>
     </rect>
@@ -261,8 +261,8 @@
   <widget class="QSlider" name="horizontalSliderSquelch">
    <property name="geometry">
     <rect>
-     <x>150</x>
-     <y>220</y>
+     <x>140</x>
+     <y>240</y>
      <width>160</width>
      <height>21</height>
     </rect>
@@ -283,7 +283,7 @@
   <widget class="QLabel" name="labelSquelch">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>160</x>
      <y>220</y>
      <width>91</width>
      <height>20</height>

@@ -82,7 +82,7 @@ void CEditNetDlg::InitDlg()
 	ui.IPEditwidget_IP->SetIP(m_IPAdr.toIPv4Address());
 	ui.lineEdit_TCPPort->setText(QString().number( m_Port ));
 	ui.label_SDR->setText(m_ActiveDevice);
-	m_DirtyFlag = FALSE;
+	m_DirtyFlag = false;
 
 }
 
@@ -104,7 +104,7 @@ quint32 ip;
 		if( (m_IPAdr.toIPv4Address() != dlg.m_IPAdr) ||
 			(m_Port != dlg.m_Port) )
 		{
-			m_DirtyFlag = TRUE;
+			m_DirtyFlag = true;
 			m_IPAdr.setAddress(dlg.m_IPAdr);
 			ui.IPEditwidget_IP->SetIP(m_IPAdr.toIPv4Address());
 			m_Port = dlg.m_Port;
@@ -124,7 +124,7 @@ quint32 ip;
 	m_IPAdr.setAddress(ip);
 	if(ui.lineEdit_TCPPort->isModified())
 	{
-		m_DirtyFlag = TRUE;
+		m_DirtyFlag = true;
 		m_Port = ui.lineEdit_TCPPort->text().toUInt();
 	}
 	QDialog::accept();

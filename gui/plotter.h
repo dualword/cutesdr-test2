@@ -43,6 +43,7 @@ public:
 	void SetMaxdB(int max){m_MaxdB=max;}
 	void SetADOverload(bool ADOverLoad){m_ADOverLoad = ADOverLoad;m_ADOverloadOneShotCounter=0;}
 	void SetdBStepSize(int stepsz){m_dBStepSize=stepsz;}
+	void EnableCurText(bool enable){m_UseCursorText=enable;}
 	void UpdateOverlay(){DrawOverlay();}
 
 	char m_RdsCall[MAX_TXT];
@@ -79,6 +80,8 @@ private:
 	qint64 RoundFreq(qint64 freq, int resolution);
 	bool IsPointCloseTo(int x, int xr, int delta){return ((x > (xr-delta) ) && ( x<(xr+delta)) );}
 	void ClampDemodParameters();
+	void DisplayCursorFreq(QPoint pt, qint64 freq);
+
 	eCapturetype m_CursorCaptured;
 	QPixmap m_2DPixmap;
 	QPixmap m_OverlayPixmap;
@@ -89,6 +92,7 @@ private:
 	QString m_HDivText[HORZ_DIVS+1];
 	bool m_Running;
 	bool m_ADOverLoad;
+	bool m_UseCursorText;
 	qint64 m_CenterFreq;
 	qint64 m_DemodCenterFreq;
 	int m_DemodHiCutFreq;

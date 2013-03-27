@@ -112,28 +112,28 @@ void CDemodSetupDlg::InitDlg()
 	switch(m_DemodMode)
 	{
 	case DEMOD_AM:
-		ui->AMradioButton->setChecked(TRUE);
+		ui->AMradioButton->setChecked(true);
 		break;
 	case DEMOD_SAM:
-		ui->SAMradioButton->setChecked(TRUE);
+		ui->SAMradioButton->setChecked(true);
 		break;
 	case DEMOD_FM:
-		ui->FMradioButton->setChecked(TRUE);
+		ui->FMradioButton->setChecked(true);
 		break;
 	case DEMOD_WFM:
-		ui->WFMradioButton->setChecked(TRUE);
+		ui->WFMradioButton->setChecked(true);
 		break;
 	case DEMOD_USB:
-		ui->USBradioButton->setChecked(TRUE);
+		ui->USBradioButton->setChecked(true);
 		break;
 	case DEMOD_LSB:
-		ui->LSBradioButton->setChecked(TRUE);
+		ui->LSBradioButton->setChecked(true);
 		break;
 	case DEMOD_CWU:
-		ui->CWUradioButton->setChecked(TRUE);
+		ui->CWUradioButton->setChecked(true);
 		break;
 	case DEMOD_CWL:
-		ui->CWLradioButton->setChecked(TRUE);
+		ui->CWLradioButton->setChecked(true);
 		break;
 	}
 	m_pDemodInfo = &(((MainWindow*)this->parent())->m_DemodSettings[m_DemodMode]);

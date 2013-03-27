@@ -5,11 +5,11 @@
 // A fractional resampler is used to convert the users input rate to
 // the sound card rate and also perform frequency lock between the
 // two clock domains.
-//
+// Soundcard object runs in its own thread using thread event loop
+//for update notifications.
 // History:
 //	2010-09-15  Initial creation MSW
-//	2011-03-27  Initial release
-//	2011-08-07  Changed some debug output
+//	2013-01-31  Changed Threading method, removed blocking mode
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -59,96 +59,107 @@
 /////////////////////////////////////////////////////////////////////
 //   constructor/destructor
 /////////////////////////////////////////////////////////////////////
-CSoundOut::CSoundOut(QObject *parent) :
-	QThread(parent)
+CSoundOut::CSoundOut()
 {
-	m_pParent = parent;
 	m_pAudioOutput = NULL;
-	m_pOutput = NULL;
-	m_ThreadQuit = true;
+	m_pIODevice = NULL;
 	m_UserDataRate = SOUNDCARD_RATE;
 	m_OutRatio = 1.0;
-	m_OutAudioFormat.setFrequency(SOUNDCARD_RATE);
+	m_OutAudioFormat.setSampleRate(SOUNDCARD_RATE);
 	m_OutResampler.Init(8192);
 	m_RateCorrection = 0.0;
 	m_Gain = 1.0;
 	m_Startup = true;
-	m_BlockingMode = false;
+qDebug()<<"GUI Thread "<<this->thread()->currentThread();
 }
 
 CSoundOut::~CSoundOut()
 {
-	Stop();
+qDebug()<<"CSoundOut destructor";
+	disconnect();	//disconnect message connections
+}
+
+//////////////////////////////////////////////////////////////////////////
+//Called when worker thread starts to initialize things
+//////////////////////////////////////////////////////////////////////////
+void CSoundOut::ThreadInit()	//overrided funciton is called by new thread when started
+{
+	//use event loop to service external calls.
+	connect(this,SIGNAL( StartSig(int, bool, double) ), this, SLOT(StartSlot(int, bool, double) ) );
+	connect(this,SIGNAL( StopSig()), this, SLOT(StopSlot()) );
+qDebug()<<"Soundout Thread Init "<<this->thread()->currentThread();
 }
 
 /////////////////////////////////////////////////////////////////////
 // Starts up soundcard output thread using soundcard at list OutDevIndx
 /////////////////////////////////////////////////////////////////////
-bool CSoundOut::Start(int OutDevIndx, bool StereoOut, double UsrDataRate, bool BlockingMode)
+void CSoundOut::StartSlot(int OutDevIndx, bool StereoOut, double UsrDataRate)
 {
 QAudioDeviceInfo  DeviceInfo;
+//qDebug()<<"Soundout Thread "<<this->thread()->currentThread();
+	m_pThread->setPriority(QThread::HighestPriority);
 	m_StereoOut = StereoOut;
-	m_BlockingMode = BlockingMode;
 	//Get required soundcard from list
 	m_OutDevices = DeviceInfo.availableDevices(QAudio::AudioOutput);
 	m_OutDeviceInfo = m_OutDevices.at(OutDevIndx);
 
 	//Setup fixed format for sound ouput
 	m_OutAudioFormat.setCodec("audio/pcm");
-	m_OutAudioFormat.setFrequency(SOUNDCARD_RATE);
+	m_OutAudioFormat.setSampleRate(SOUNDCARD_RATE);
 	m_OutAudioFormat.setSampleSize(16);
 	m_OutAudioFormat.setSampleType(QAudioFormat::SignedInt);
 	m_OutAudioFormat.setByteOrder(QAudioFormat::LittleEndian);
 	if(m_StereoOut)
-		m_OutAudioFormat.setChannels(2);
+		m_OutAudioFormat.setChannelCount(2);
 	else
-		m_OutAudioFormat.setChannels(1);
+		m_OutAudioFormat.setChannelCount(1);
 
 	m_pAudioOutput = new QAudioOutput(m_OutDeviceInfo, m_OutAudioFormat, this);
 	if(!m_pAudioOutput)
 	{
 		qDebug()<<"Soundcard output error";
-		return false;
+		return;
 	}
 	if(QAudio::NoError == m_pAudioOutput->error() )
 	{
 		//initialize the data queue variables
 		m_UserDataRate = 1;	//force user data rate to be changed
 		ChangeUserDataRate(UsrDataRate);
-		m_pOutput = m_pAudioOutput->start(); //start QT AudioOutput
-		//determine how long to sleep between low level reads based on samplerate and period size
-		m_BlockTime = ( 250*m_pAudioOutput->periodSize() )/
-						( SOUNDCARD_RATE*m_OutAudioFormat.channels() );
-//qDebug()<<"periodSize "<<m_pAudioOutput->periodSize();
-//qDebug()<<"BlockTime "<<m_BlockTime;
-		m_ThreadQuit = FALSE;
-		start(QThread::HighestPriority);	//start worker thread and set its priority
-//		start(QThread::TimeCriticalPriority);	//start worker thread and set its priority
-		return true;
+		//operate in mode where notify() slot is called periodically to
+		// see how much data can be sent to soundcard output
+		//connect notify signal to get more soundcard output data
+		m_pAudioOutput->setBufferSize(SOUND_WRITEBUFSIZE*2);
+		//connect notify event that new output data is needed
+		connect(m_pAudioOutput,SIGNAL(notify()), this, SLOT(GetNewData()));
+		m_pIODevice = m_pAudioOutput->start(); //start Qt AudioOutput, get pointer to its QIODevice
+		m_pAudioOutput->setNotifyInterval(20);	//20mSec update interval
+		GetNewData();	//fill buffer initially with zeros
+		return;
 	}
 	else
 	{
 		qDebug()<<"Soundcard output error";
-		return false;
+		return;
 	}
 }
 
 /////////////////////////////////////////////////////////////////////
 // Closes down sound card output thread
 /////////////////////////////////////////////////////////////////////
-void CSoundOut::Stop()
+void CSoundOut::StopSlot()
 {
-	if(!m_ThreadQuit)
+	if(m_pAudioOutput)
 	{
-		m_ThreadQuit = TRUE;
-		m_pAudioOutput->stop();
-		wait(500);
+		if( ( QAudio::ActiveState==m_pAudioOutput->state() )
+				|| (QAudio::IdleState==m_pAudioOutput->state()) )
+			m_pAudioOutput->stop();
 	}
-	if(NULL != m_pAudioOutput)
+	if(m_pAudioOutput)
 	{
 		delete m_pAudioOutput;
 		m_pAudioOutput = NULL;
 	}
+//qDebug()<<"Soundcard output stopped";
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -165,14 +176,14 @@ void CSoundOut::ChangeUserDataRate(double UsrDataRate)
 			m_OutQueueStereo[i].re = 0;
 			m_OutQueueStereo[i].im = 0;
 		}
-		m_OutRatio = m_UserDataRate/m_OutAudioFormat.frequency();
+		m_OutRatio = m_UserDataRate/m_OutAudioFormat.sampleRate();
 		m_OutQHead = 0;
 		m_OutQTail = 0;
 		m_OutQLevel = 0;
 		m_AveOutQLevel = OUTQSIZE/2;
 		m_Startup = true;
 	}
-qDebug()<<"SoundOutRatio  Rate"<<(1.0/m_OutRatio) << m_UserDataRate;
+//qDebug()<<"SoundOutRatio  Rate"<<(1.0/m_OutRatio) << m_UserDataRate;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -190,6 +201,42 @@ void CSoundOut::SetVolume(qint32 vol)
 //qDebug()<<"Volume "<<vol << m_Gain;
 }
 
+/////////////////////////////////////////////////////////////////////
+//Slot called by thread every "notify()" interval
+//to write any new data into soundcard
+/////////////////////////////////////////////////////////////////////
+void CSoundOut::GetNewData()
+{
+	if(!m_pAudioOutput)
+		return;
+	if( (QAudio::IdleState == m_pAudioOutput->state() ) ||
+		(QAudio::ActiveState == m_pAudioOutput->state() ) )
+	{	//Process sound data while soundcard is active and no errors
+		int len =  m_pAudioOutput->bytesFree();	//in bytes
+		if( len>0 )
+		{	//limit size to SOUND_WRITEBUFSIZE
+			if(len > SOUND_WRITEBUFSIZE)
+				len = SOUND_WRITEBUFSIZE;
+			if(m_StereoOut)
+			{
+				len &= ~(0x03);	//keep on 4 byte chunks
+				GetOutQueue( len/4, (TYPESTEREO16*)m_pData );
+			}
+			else
+			{
+				len &= ~(0x01);	//keep on 2 byte chunks
+				GetOutQueue( len/2, (TYPEMONO16*)m_pData );
+			}
+			m_pIODevice->write((char*)m_pData,len);
+		}
+	}
+	else
+	{	//bail out if error occurs
+		emit StopSig();
+		qDebug()<<"SoundOut Error";
+	}
+}
+
 ////////////////////////////////////////////////////////////////
 //Called by application to put COMPLEX input into
 // STEREO 2 channel soundcard output queue
@@ -197,9 +244,8 @@ void CSoundOut::SetVolume(qint32 vol)
 void CSoundOut::PutOutQueue(int numsamples, TYPECPX* pData )
 {
 TYPESTEREO16 RData[OUTQSIZE];	//buffer to hold resampled data
-int i;
-bool overflow = false;
-	if(( 0==numsamples) || m_ThreadQuit)
+
+	if( 0==numsamples )
 		return;
 	//Call Resampler to match sample rates between radio and sound card
 	numsamples = m_OutResampler.Resample(numsamples, TEST_ERROR*m_OutRatio *(1.0+m_RateCorrection),
@@ -207,44 +253,29 @@ bool overflow = false;
 
 g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
 
-	if(m_BlockingMode)	//if in Blocking Mode then wait for soundcard queue to be available
+	m_Mutex.lock();
+	for( int i=0; i<numsamples; i++)
 	{
-		for( i=0; i<numsamples; i++)
-		{
-			while( ((m_OutQHead+1) & (OUTQSIZE-1)) == m_OutQTail)
-				msleep(10);	//wait if Queue is full
-			m_OutQueueStereo[m_OutQHead++] = RData[i];
-			m_OutQHead &= (OUTQSIZE-1);
-			m_OutQLevel++;
-		}
-	}
-	else
-	{	//here if non-blocking mode so need to deal with possible over/under flow
-		m_Mutex.lock();
-		for( i=0; i<numsamples; i++)
-		{
-			m_OutQueueStereo[m_OutQHead++] = RData[i];
-			m_OutQHead &= (OUTQSIZE-1);
-			m_OutQLevel++;
-			if(m_OutQHead==m_OutQTail)	//if full
-			{	//remove 1/4 a queue's worth of data
-				m_OutQTail += OUTQSIZE/4;
-				m_OutQTail &= (OUTQSIZE-1);
-				m_OutQLevel -= OUTQSIZE/4;
-				i = numsamples;		//force break out of for loop
-				overflow = true;
-			}
-		}
-		if(overflow)
-		{
+		m_OutQueueStereo[m_OutQHead++] = RData[i];
+		if(m_OutQHead >= OUTQSIZE)
+			m_OutQHead = 0;
+		m_OutQLevel++;
+		if(m_OutQHead==m_OutQTail)	//if full
+		{	//remove 1/2 a queue's worth of data
+			m_OutQLevel = OUTQSIZE/2;
+			m_AveOutQLevel = m_OutQLevel;
+			m_OutQTail += (OUTQSIZE/2);
+			if(m_OutQTail >= OUTQSIZE)
+				m_OutQTail = m_OutQTail - OUTQSIZE;
+			m_AveOutQLevel = m_OutQLevel;
 			qDebug()<<"Snd Overflow";
 			g_pTestBench->SendDebugTxt("Snd Overflow");
-			m_AveOutQLevel = m_OutQLevel;
+			i = numsamples;		//force break out of for loop
 		}
-		//calculate average Queue fill level
-		m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(double)m_OutQLevel;
-		m_Mutex.unlock();
 	}
+	//calculate average Queue fill level
+	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(double)m_OutQLevel;
+	m_Mutex.unlock();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -254,9 +285,8 @@ g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
 void CSoundOut::PutOutQueue(int numsamples, TYPEREAL* pData )
 {
 TYPEMONO16 RData[OUTQSIZE];	//buffer to hold resampled data
-int i;
-bool overflow = false;
-	if(( 0==numsamples) || m_ThreadQuit)
+
+	if( 0==numsamples )
 		return;
 
 	//Call Resampler to match sample rates between radio and sound card
@@ -265,44 +295,29 @@ bool overflow = false;
 
 g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
 
-	if(m_BlockingMode)	//if in Blocking Mode then wait for soundcard queue to be available
+	m_Mutex.lock();
+	for( int i=0; i<numsamples; i++)
 	{
-		for( i=0; i<numsamples; i++)
-		{
-			while( ((m_OutQHead+1) & (OUTQSIZE-1)) == m_OutQTail)
-				msleep(10);	//wait if Queue is full
-			m_OutQueueMono[m_OutQHead++] = RData[i];
-			m_OutQHead &= (OUTQSIZE-1);
-			m_OutQLevel++;
-		}
-	}
-	else
-	{	//here if non-blocking mode so need to deal with possible over/under flow
-		m_Mutex.lock();
-		for( i=0; i<numsamples; i++)
-		{
-			m_OutQueueMono[m_OutQHead++] = RData[i];
-			m_OutQHead &= (OUTQSIZE-1);
-			m_OutQLevel++;
-			if(m_OutQHead==m_OutQTail)	//if full
-			{	//remove 1/4 a queue's worth of data
-				m_OutQTail += OUTQSIZE/4;
-				m_OutQTail &= (OUTQSIZE-1);
-				m_OutQLevel -= OUTQSIZE/4;
-				i = numsamples;		//force break out of for loop
-				overflow = true;
-			}
-		}
-		if(overflow)
-		{
+		m_OutQueueMono[m_OutQHead++] = RData[i];
+		if(m_OutQHead >= OUTQSIZE)
+			m_OutQHead = 0;
+		m_OutQLevel++;
+		if(m_OutQHead==m_OutQTail)	//if full
+		{	//remove 1/2 a queue's worth of data
+			m_OutQLevel = OUTQSIZE/2;
+			m_AveOutQLevel = m_OutQLevel;
+			m_OutQTail += (OUTQSIZE/2);
+			if(m_OutQTail >= OUTQSIZE)
+				m_OutQTail = m_OutQTail - OUTQSIZE;
+			m_AveOutQLevel = m_OutQLevel;
 			qDebug()<<"Snd Overflow";
 			g_pTestBench->SendDebugTxt("Snd Overflow");
-			m_AveOutQLevel = m_OutQLevel;
+			i = numsamples;		//force break out of for loop
 		}
-		//calculate average Queue fill level
-		m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(double)m_OutQLevel;
-		m_Mutex.unlock();
 	}
+	//calculate average Queue fill level
+	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(double)m_OutQLevel;
+	m_Mutex.unlock();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -313,7 +328,6 @@ g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
 void CSoundOut::GetOutQueue(int numsamples, TYPEMONO16* pData )
 {
 int i;
-bool underflow = false;
 	m_Mutex.lock();
 	if(m_Startup)
 	{	//if no data in queue yet just stuff in silence until something is put in queue
@@ -339,33 +353,28 @@ bool underflow = false;
 		if(m_OutQHead!=m_OutQTail)
 		{
 			pData[i] = m_OutQueueMono[m_OutQTail++];
-			m_OutQTail &= (OUTQSIZE-1);
-			m_OutQLevel--;
+			if(m_OutQTail >= OUTQSIZE)
+				m_OutQTail = 0;
+			if(m_OutQLevel>0)
+				m_OutQLevel--;
 		}
 		else	//queue went empty
 		{	//backup queue ptr and use previous data in queue
-			m_OutQTail -= (OUTQSIZE/4);
-			m_OutQTail &= (OUTQSIZE-1);
+			m_OutQTail -= (OUTQSIZE/2);
+			if(m_OutQTail < 0)
+				m_OutQTail = m_OutQTail + OUTQSIZE;
 			pData[i] = m_OutQueueMono[m_OutQTail];
-			m_OutQLevel += (OUTQSIZE/4);
-			underflow = true;
+			if(m_OutQTail >= OUTQSIZE)
+				m_OutQTail = 0;
+			m_OutQLevel = OUTQSIZE/2;
+			m_AveOutQLevel = m_OutQLevel;
+			qDebug()<<"Snd Underflow";
+			g_pTestBench->SendDebugTxt("Snd Underflow");
 		}
-	}
-
-	if(m_BlockingMode)
-	{	//if in blocking mode just return
-		m_Mutex.unlock();
-		return;
 	}
 
 	//calculate average Queue fill level
 	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*m_OutQLevel;
-	if(underflow)
-	{
-		qDebug()<<"Snd Underflow";
-		g_pTestBench->SendDebugTxt("Snd Underflow");
-		m_AveOutQLevel = m_OutQLevel;
-	}
 
 	// See if time to update rate error calculation routine
 	m_RateUpdateCount += numsamples;
@@ -385,7 +394,6 @@ bool underflow = false;
 void CSoundOut::GetOutQueue(int numsamples, TYPESTEREO16* pData )
 {
 int i;
-bool underflow = false;
 	m_Mutex.lock();
 	if(m_Startup)
 	{	//if no data in queue yet just stuff in silence until something is put in queue
@@ -414,32 +422,28 @@ bool underflow = false;
 		if(m_OutQHead!=m_OutQTail)
 		{
 			pData[i] = m_OutQueueStereo[m_OutQTail++];
-			m_OutQTail &= (OUTQSIZE-1);
-			m_OutQLevel--;
+			if(m_OutQTail >= OUTQSIZE)
+				m_OutQTail = 0;
+			if(m_OutQLevel>0)
+				m_OutQLevel--;
 		}
 		else	//queue went empty
 		{	//backup queue ptr and use previous data in queue
-			m_OutQTail -= (OUTQSIZE/4);
-			m_OutQTail &= (OUTQSIZE-1);
-			pData[i] = m_OutQueueStereo[m_OutQTail];
-			m_OutQLevel += (OUTQSIZE/4);
-			underflow = true;
+			m_OutQTail -= (OUTQSIZE/2);
+			if(m_OutQTail < 0)
+				m_OutQTail = m_OutQTail + OUTQSIZE;
+			pData[i] = m_OutQueueStereo[m_OutQTail++];
+			if(m_OutQTail >= OUTQSIZE)
+				m_OutQTail = 0;
+			m_OutQLevel = OUTQSIZE/2;
+			m_AveOutQLevel = m_OutQLevel;
+			qDebug()<<"Snd Underflow";
+			g_pTestBench->SendDebugTxt("Snd Underflow");
 		}
-	}
-	if(m_BlockingMode)
-	{	//if in blocking mode just return
-		m_Mutex.unlock();
-		return;
 	}
 	//calculate average Queue fill level
 	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*m_OutQLevel;
 
-	if(underflow)
-	{
-		qDebug()<<"Snd Underflow";
-		g_pTestBench->SendDebugTxt("Snd Underflow");
-		m_AveOutQLevel = m_OutQLevel;
-	}
 	// See if time to update rate error calculation routine
 	m_RateUpdateCount += numsamples;
 	if(m_RateUpdateCount >= SOUNDCARD_RATE)	//every second
@@ -451,7 +455,7 @@ bool underflow = false;
 }
 
 ////////////////////////////////////////////////////////////////
-// Called alternately from the Get routines to update the
+// Called from the Get routines to update the
 // error correction process
 ////////////////////////////////////////////////////////////////
 void CSoundOut::CalcError()
@@ -466,52 +470,4 @@ double error;
 //		qDebug()<<"SoundOut "<<m_PpmError << m_AveOutQLevel;
 //		g_pTestBench->SendDebugTxt("Snd error>500ppm");
 	}
-}
-
-//////////////////////////////////////////////////////////////////////////
-// Worker thread polls QAudioOutput device to see if there is room
-// to put more data into it and then calls GetOutQueue(..) to get more data.
-// This thread was needed because the normal "pull" mechanism of Qt does
-// not work very well since it depends on the main process signal-slot event
-// queue and you get dropouts if the GUI gets busy.
-//////////////////////////////////////////////////////////////////////////
-void CSoundOut::run()
-{
-	while(!m_ThreadQuit )	//execute loop until quit flag set
-	{
-		if( (QAudio::IdleState == m_pAudioOutput->state() ) ||
-			(QAudio::ActiveState == m_pAudioOutput->state() ) )
-		{	//Process sound data while soundcard is active and no errors
-			unsigned int len =  m_pAudioOutput->bytesFree();	//in bytes
-			if( len>0 )
-			{
-				//limit size to SOUND_WRITEBUFSIZE
-				if(len > SOUND_WRITEBUFSIZE)
-					len = SOUND_WRITEBUFSIZE;
-				if(m_StereoOut)
-				{
-					len &= ~(0x03);	//keep on 4 byte chunks
-					GetOutQueue( len/4, (TYPESTEREO16*)m_pData );
-				}
-				else
-				{
-					len &= ~(0x01);	//keep on 2 byte chunks
-					GetOutQueue( len/2, (TYPEMONO16*)m_pData );
-				}
-				m_pOutput->write((char*)m_pData,len);
-			}
-			else	//no room in sound card output buffer so wait
-			{		//not good but no other wait or blocking mechanism available
-				msleep(m_BlockTime);
-			}
-		}
-		else
-		{	//bail out if error occurs
-			qDebug()<<"SoundOut Error";
-			if(m_pParent)
-				((CSdrInterface*)m_pParent)->SendIOStatus(CSdrInterface::ERROR);
-			m_ThreadQuit = true;
-		}
-	}
-	qDebug()<<"sound thread exit";
 }

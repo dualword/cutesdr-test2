@@ -33,6 +33,7 @@ public:
 	int m_Percent2DScreen;
 	bool m_NeedToStop;
 	bool m_UseTestBench;
+	bool m_UseCursorText;
 
 public slots:
 	void accept();
