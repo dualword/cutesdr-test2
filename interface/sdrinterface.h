@@ -63,7 +63,8 @@ public:
 		SDR14,
 		SDRIQ,
 		SDRIP,
-		NETSDR
+		NETSDR,
+		CLOUDSDR
 	};
 	//NCO spur management commands for ManageNCOSpurOffsets(...)
 	enum eNCOSPURCMD {
