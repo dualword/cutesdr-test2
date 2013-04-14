@@ -13,6 +13,7 @@
 //	2011-07-21  Modified Frequency range logic by adding VCO frequency and number of ranges parameters
 //	2011-08-07  Added WFM Support
 //	2012-06-01  fixed threading issue with m_TxMsg
+//	2013-04-13  Added CloudSDR support, fixed network closing bug with pending msgs
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -116,6 +117,22 @@ const double SDRIP_SAMPLERATE[MAX_SAMPLERATES] =
 	(80.0e6/40.0)
 };
 
+const quint32 CLOUDSDR_MAXBW[MAX_SAMPLERATES] =
+{
+	40000,
+	200000,
+	500000,
+	1000000
+};
+
+const double CLOUDSDR_SAMPLERATE[MAX_SAMPLERATES] =
+{
+	(122.88e6/2560.0),
+	(122.88e6/500.0),
+	(122.88e6/200.0),
+	(122.88e6/100.0)
+};
+
 
 /////////////////////////////////////////////////////////////////////
 // Constructor/Destructor
@@ -191,6 +208,9 @@ if(index >= MAX_SAMPLERATES)
 		case NETSDR:
 			ret = NETSDR_MAXBW[index];
 			break;
+		case CLOUDSDR:
+			ret = CLOUDSDR_MAXBW[index];
+			break;
 		default:
 			break;
 	}
@@ -217,6 +237,9 @@ double ret = 1.0;
 		case NETSDR:
 			ret = NETSDR_SAMPLERATE[index];
 			break;
+		case CLOUDSDR:
+			ret = CLOUDSDR_SAMPLERATE[index];
+			break;
 		default:
 			break;
 	}
@@ -229,7 +252,8 @@ double ret = 1.0;
 void CSdrInterface::StopIO()
 {
 	StopSdr();
-	CNetio::DisconnectFromServer();
+	//delay disconnect in case of pending traffic
+	QTimer::singleShot(200, this, SLOT(CNetio::DisconnectFromServer()));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -256,9 +280,11 @@ CAscpTxMsg TxMsg;
 					m_RadioType = SDRIQ;
 				else if("SDR-IP" == m_DeviceName)
 					m_RadioType = SDRIP;
-				if("NetSDR" == m_DeviceName)
+				else if("NetSDR" == m_DeviceName)
 					m_RadioType = NETSDR;
-				if( (SDRIP==m_RadioType) || (NETSDR==m_RadioType) )
+				if("CloudSDR" == m_DeviceName)
+					m_RadioType = CLOUDSDR;
+				if( (SDRIP==m_RadioType) || (NETSDR==m_RadioType) || (CLOUDSDR==m_RadioType))
 				{
                     TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM_RANGE);
                     TxMsg.AddCItem(CI_RX_FREQUENCY);
@@ -484,7 +510,7 @@ void CSdrInterface::ReqStatus()
 CAscpTxMsg TxMsg;
     TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM);
     TxMsg.AddCItem(CI_GENERAL_STATUS_CODE);
-    SendAscpMsg(&TxMsg);
+	SendAscpMsg(&TxMsg);
 }
 
 
@@ -526,6 +552,7 @@ CAscpTxMsg TxMsg;
 	{
 		case SDRIP:
 		case NETSDR:
+		case CLOUDSDR:
 			emit NewStatus( RUNNING );
 
             TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
@@ -645,6 +672,9 @@ CAscpTxMsg TxMsg;
 		case NETSDR:
 			m_GainCalibrationOffset = -12.0;
 			break;
+		case CLOUDSDR:
+			m_GainCalibrationOffset = -12.0;
+			break;
 		case SDR14:
 			m_GainCalibrationOffset = -49.0 + SDRIQ_6620FILTERGAIN[m_BandwidthIndex];
 			break;
@@ -706,7 +736,7 @@ void CSdrInterface::KeepAlive()
 CAscpTxMsg TxMsg;
     TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM);
     TxMsg.AddCItem(CI_GENERAL_STATUS_CODE);
-    SendAscpMsg(&TxMsg);
+	SendAscpMsg(&TxMsg);
 	if(++m_KeepAliveCounter >2)		//see if no ack received
 	{
 		SendStatus(ERR);
@@ -760,6 +790,10 @@ CAscpTxMsg TxMsg;
 		case NETSDR:
 			m_SampleRate = NETSDR_SAMPLERATE[m_BandwidthIndex];
 			m_MaxBandwidth = NETSDR_MAXBW[m_BandwidthIndex];
+			break;
+		case CLOUDSDR:
+			m_SampleRate = CLOUDSDR_SAMPLERATE[m_BandwidthIndex];
+			m_MaxBandwidth = CLOUDSDR_MAXBW[m_BandwidthIndex];
 			break;
 	}
 	SetFftSize(m_FftSize);	//need to tell fft because sample rate has changed

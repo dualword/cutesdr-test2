@@ -130,6 +130,7 @@ char pBuf[2000];
 		{
 			m_pUdpSocket->readDatagram(pBuf, n);
 			((CNetio*)m_pParent)->ProcessUdpData(pBuf, n);
+//qDebug("%X %X\r\n",(unsigned char)pBuf[3], (unsigned char)pBuf[2]);
 		}
 	}
 }
