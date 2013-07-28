@@ -30,7 +30,7 @@ public:
 signals:
 
 public slots:
-	void SetdBmLevel(double dbm);
+	void SetdBmLevel(TYPEREAL dbm);
 
 protected:
 		//re-implemented widget event handlers

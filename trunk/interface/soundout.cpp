@@ -96,7 +96,7 @@ qDebug()<<"Soundout Thread Init "<<this->thread()->currentThread();
 void CSoundOut::StartSlot(int OutDevIndx, bool StereoOut, double UsrDataRate)
 {
 QAudioDeviceInfo  DeviceInfo;
-//qDebug()<<"Soundout Thread "<<this->thread()->currentThread();
+qDebug()<<"Soundout Thread "<<this->thread()->currentThread();
 	m_pThread->setPriority(QThread::HighestPriority);
 	m_StereoOut = StereoOut;
 	//Get required soundcard from list
@@ -165,7 +165,7 @@ void CSoundOut::StopSlot()
 /////////////////////////////////////////////////////////////////////
 // Sets/changes user data input rate
 /////////////////////////////////////////////////////////////////////
-void CSoundOut::ChangeUserDataRate(double UsrDataRate)
+void CSoundOut::ChangeUserDataRate(TYPEREAL UsrDataRate)
 {
 	if(m_UserDataRate != UsrDataRate)
 	{
@@ -196,7 +196,7 @@ void CSoundOut::SetVolume(qint32 vol)
 	if(0==vol)	//if zero make infinite attenuation
 		m_Gain = 0.0;
 	else if(vol<=99)
-		m_Gain = pow(10.0, ((double)vol-99.0)/39.2 );
+		m_Gain = MPOW(10.0, ((TYPEREAL)vol-99.0)/39.2 );
 	m_Mutex.unlock();
 //qDebug()<<"Volume "<<vol << m_Gain;
 }
@@ -274,7 +274,7 @@ g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
 		}
 	}
 	//calculate average Queue fill level
-	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(double)m_OutQLevel;
+	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(TYPEREAL)m_OutQLevel;
 	m_Mutex.unlock();
 }
 
@@ -316,7 +316,7 @@ g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
 		}
 	}
 	//calculate average Queue fill level
-	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(double)m_OutQLevel;
+	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(TYPEREAL)m_OutQLevel;
 	m_Mutex.unlock();
 }
 
@@ -460,8 +460,8 @@ int i;
 ////////////////////////////////////////////////////////////////
 void CSoundOut::CalcError()
 {
-double error;
-	error = (double)(m_AveOutQLevel - OUTQSIZE/2 );	//neg==level is too low  pos == level is to high
+TYPEREAL error;
+	error = (TYPEREAL)(m_AveOutQLevel - OUTQSIZE/2 );	//neg==level is too low  pos == level is to high
 	error = error * P_GAIN;
 	m_RateCorrection = error;
 	m_PpmError = (int)( m_RateCorrection*1e6 );

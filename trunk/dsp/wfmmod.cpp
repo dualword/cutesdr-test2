@@ -5,6 +5,7 @@
 // History:
 //	2011-08-18  Initial creation MSW
 //	2011-08-18  Initial release
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -124,21 +125,21 @@ TYPEREAL mod;
 		m_LeftAcc += m_LeftInc;			//create left and right channel test tone increment
 		m_RightAcc += m_RightInc;
 		m_PilotAcc += m_PilotInc;		//create pilot freq increment
-		mod = (m_LeftAmp*sin(m_LeftAcc) + m_RightAmp*sin(m_RightAcc))/2.0;	//mono component
-		mod += ( (m_LeftAmp*sin(m_LeftAcc) - m_RightAmp*sin(m_RightAcc))/2.0) * sin(m_PilotAcc*2.0 );	//DSB left-right component
+		mod = (m_LeftAmp*MSIN(m_LeftAcc) + m_RightAmp*MSIN(m_RightAcc))/2.0;	//mono component
+		mod += ( (m_LeftAmp*MSIN(m_LeftAcc) - m_RightAmp*MSIN(m_RightAcc))/2.0) * MSIN(m_PilotAcc*2.0 );	//DSB left-right component
 		mod *= AUDIO_LEVEL;
-		mod += ( PILOT_LEVEL*sin(m_PilotAcc) );			//add pilot tone
-		mod += ( RDS_LEVEL*m_RdsOut[i]*sin(m_PilotAcc*3.0) );			//add RDS data
+		mod += ( PILOT_LEVEL*MSIN(m_PilotAcc) );			//add pilot tone
+		mod += ( RDS_LEVEL*m_RdsOut[i]*MSIN(m_PilotAcc*3.0) );			//add RDS data
 #else	//sweep pilot tone for testing
 		m_PilotAcc += ( m_SweepFrequency*m_SweepFreqNorm );
 		m_SweepFrequency += m_SweepRateInc;	//inc sweep frequency
 		if(m_SweepFrequency >= m_SweepStopFrequency)	//reached end of sweep?
 			m_SweepRateInc = 0.0;						//stop sweep when end is reached
-		mod = sin(m_PilotAcc);			//sweep pilot tone for testing
+		mod = MSIN(m_PilotAcc);			//sweep pilot tone for testing
 #endif
 		m_ModAcc += (mod*m_DeviationRate);
-		pOutData[i].re = Amplitude*cos(m_ModAcc);
-		pOutData[i].im = Amplitude*sin(m_ModAcc);
+		pOutData[i].re = Amplitude*MCOS(m_ModAcc);
+		pOutData[i].im = Amplitude*MSIN(m_ModAcc);
 	}
 	while(m_PilotAcc>K_2PI)
 		m_PilotAcc -= K_2PI;
@@ -194,9 +195,9 @@ void CWFmMod::InitRDS()
 		TYPEREAL t = (TYPEREAL)i/(m_SampleRate);
 		TYPEREAL x = t*RDS_BITRATE;
 		TYPEREAL x64 = 64.0*x;
-		m_RdsPulseCoef[i+Period] = .75*cos(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
+		m_RdsPulseCoef[i+Period] = .75*MCOS(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
 								(1.0/(9.0/x-x64)) );
-		m_RdsPulseCoef[Period-i] = -.75*cos(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
+		m_RdsPulseCoef[Period-i] = -.75*MCOS(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
 								(1.0/(9.0/x-x64)) );
 	}
 	m_RdsPulseLength *= 2.0;
@@ -280,8 +281,8 @@ void CWFmMod::CreateRdsSamples(int InLength , TYPEREAL* pBuf)
 {
 int n1;
 int n2;
-double rdsperiod = 1.0/RDS_BITRATE;
-double rds2period = 2.0/RDS_BITRATE;
+TYPEREAL rdsperiod = 1.0/RDS_BITRATE;
+TYPEREAL rds2period = 2.0/RDS_BITRATE;
 	for(int i= 0; i<InLength; i++)
 	{
 		n1 = (int)( m_RdsTime * m_SampleRate);	//create integer index
@@ -310,7 +311,7 @@ double rds2period = 2.0/RDS_BITRATE;
 //	Gets next data bit from m_RdsDataBuf[] and converts to a + or - 1.0 value
 // used by CreateRdsSamples() to produce the modulation waveform
 /////////////////////////////////////////////////////////////////////////////////
-double CWFmMod::CreateNextRdsBit()
+TYPEREAL CWFmMod::CreateNextRdsBit()
 {
 int bit;
 	//get next bit from 26 bit wide buffer msbit first

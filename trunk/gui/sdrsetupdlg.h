@@ -41,7 +41,7 @@ private:
 	QString m_Str1;
 	QString m_Str2;
 	qint32 m_RadioType;
-	double m_SampleRate;
+	TYPEREAL m_SampleRate;
 };
 
 #endif // SDRSETUPDLG_H

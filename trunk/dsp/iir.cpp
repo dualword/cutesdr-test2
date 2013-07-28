@@ -39,6 +39,7 @@
 // History:
 //	2011-02-05  Initial creation MSW
 //	2011-03-27  Initial release
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -86,12 +87,12 @@ CIir::CIir()
 void CIir::InitLP( TYPEREAL F0Freq, TYPEREAL FilterQ, TYPEREAL SampleRate)
 {
 	TYPEREAL w0 = K_2PI * F0Freq/SampleRate;	//normalized corner frequency
-	TYPEREAL alpha = sin(w0)/(2.0*FilterQ);
+	TYPEREAL alpha = MSIN(w0)/(2.0*FilterQ);
 	TYPEREAL A = 1.0/(1.0 + alpha);	//scale everything by 1/A0 for direct form 2
-	m_B0 = A*( (1.0 - cos(w0))/2.0);
-	m_B1 = A*( 1.0 - cos(w0));
-	m_B2 = A*( (1.0 - cos(w0))/2.0);
-	m_A1 = A*( -2.0*cos(w0));
+	m_B0 = A*( (1.0 - MCOS(w0))/2.0);
+	m_B1 = A*( 1.0 - MCOS(w0));
+	m_B2 = A*( (1.0 - MCOS(w0))/2.0);
+	m_A1 = A*( -2.0*MCOS(w0));
 	m_A2 = A*( 1.0 - alpha);
 
 	m_w1a = 0.0;
@@ -108,12 +109,12 @@ void CIir::InitLP( TYPEREAL F0Freq, TYPEREAL FilterQ, TYPEREAL SampleRate)
 void CIir::InitHP( TYPEREAL F0Freq, TYPEREAL FilterQ, TYPEREAL SampleRate)
 {
 	TYPEREAL w0 = K_2PI * F0Freq/SampleRate;	//normalized corner frequency
-	TYPEREAL alpha = sin(w0)/(2.0*FilterQ);
+	TYPEREAL alpha = MSIN(w0)/(2.0*FilterQ);
 	TYPEREAL A = 1.0/(1.0 + alpha);	//scale everything by 1/A0 for direct form 2
-	m_B0 = A*( (1.0 + cos(w0))/2.0);
-	m_B1 = -A*( 1.0 + cos(w0));
-	m_B2 = A*( (1.0 + cos(w0))/2.0);
-	m_A1 = A*( -2.0*cos(w0));
+	m_B0 = A*( (1.0 + MCOS(w0))/2.0);
+	m_B1 = -A*( 1.0 + MCOS(w0));
+	m_B2 = A*( (1.0 + MCOS(w0))/2.0);
+	m_A1 = A*( -2.0*MCOS(w0));
 	m_A2 = A*( 1.0 - alpha);
 
 	m_w1a = 0.0;
@@ -129,12 +130,12 @@ void CIir::InitHP( TYPEREAL F0Freq, TYPEREAL FilterQ, TYPEREAL SampleRate)
 void CIir::InitBP( TYPEREAL F0Freq, TYPEREAL FilterQ, TYPEREAL SampleRate)
 {
 	TYPEREAL w0 = K_2PI * F0Freq/SampleRate;	//normalized corner frequency
-	TYPEREAL alpha = sin(w0)/(2.0*FilterQ);
+	TYPEREAL alpha = MSIN(w0)/(2.0*FilterQ);
 	TYPEREAL A = 1.0/(1.0 + alpha);	//scale everything by 1/A0 for direct form 2
 	m_B0 = A * alpha;
 	m_B1 = 0.0;
 	m_B2 = A * -alpha;
-	m_A1 = A*( -2.0*cos(w0));
+	m_A1 = A*( -2.0*MCOS(w0));
 	m_A2 = A*( 1.0 - alpha);
 
 	m_w1a = 0.0;
@@ -150,12 +151,12 @@ void CIir::InitBP( TYPEREAL F0Freq, TYPEREAL FilterQ, TYPEREAL SampleRate)
 void CIir::InitBR( TYPEREAL F0Freq, TYPEREAL FilterQ, TYPEREAL SampleRate)
 {
 	TYPEREAL w0 = K_2PI * F0Freq/SampleRate;	//normalized corner frequency
-	TYPEREAL alpha = sin(w0)/(2.0*FilterQ);
+	TYPEREAL alpha = MSIN(w0)/(2.0*FilterQ);
 	TYPEREAL A = 1.0/(1.0 + alpha);	//scale everything by 1/A0 for direct form 2
 	m_B0 = A*1.0;
-	m_B1 = A*( -2.0*cos(w0));
+	m_B1 = A*( -2.0*MCOS(w0));
 	m_B2 = A*1.0;
-	m_A1 = A*( -2.0*cos(w0));
+	m_A1 = A*( -2.0*MCOS(w0));
 	m_A2 = A*( 1.0 - alpha);
 
 	m_w1a = 0.0;

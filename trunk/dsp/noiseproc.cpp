@@ -7,6 +7,7 @@
 // History:
 //	2011-01-06  Initial creation MSW
 //	2011-03-27  Initial release(not implemented yet)
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -134,8 +135,8 @@ TYPECPX oldest;
 		newsamp = pInData[i];
 
 		//calculate magnitude peak magnitude
-		TYPEREAL mre = fabs(newsamp.re);
-		TYPEREAL mim = fabs(newsamp.im);
+		TYPEREAL mre = MFABS(newsamp.re);
+		TYPEREAL mim = MFABS(newsamp.im);
 		TYPEREAL mag = (mre>mim) ? mre : mim;
 
 //m_TestBenchDataBuf[i].im = mag;

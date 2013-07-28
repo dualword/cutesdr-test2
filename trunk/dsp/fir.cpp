@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // fir.cpp: implementation of the CFir class.
 //
-//  This class implements a FIR  filter using a double flat coefficient
+//  This class implements a FIR  filter using a dual flat coefficient
 //array to eliminate testing for buffer wrap around.
 //
 //Filter coefficients can be from a fixed table or this class will create
@@ -12,6 +12,7 @@
 //	2011-01-29  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-08-07  Modified FIR filter initialization to force fixed size
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -76,7 +77,7 @@ void CFir::ProcessFilter(int InLength, TYPEREAL* InBuf, TYPEREAL* OutBuf)
 {
 TYPEREAL acc;
 TYPEREAL* Zptr;
-const double* Hptr;
+const TYPEREAL* Hptr;
 	m_Mutex.lock();
 	for(int i=0; i<InLength; i++)
 	{
@@ -171,7 +172,7 @@ TYPEREAL* HQptr;
 //  Initializes a pre-designed FIR filter with fixed coefficients
 //	Iniitalize FIR variables and clear out buffers.
 /////////////////////////////////////////////////////////////////////////////////
-void CFir::InitConstFir( int NumTaps, const double* pCoef, TYPEREAL Fsamprate)
+void CFir::InitConstFir( int NumTaps, const TYPEREAL* pCoef, TYPEREAL Fsamprate)
 {
 	m_Mutex.lock();
 	m_SampleRate = Fsamprate;
@@ -198,7 +199,7 @@ void CFir::InitConstFir( int NumTaps, const double* pCoef, TYPEREAL Fsamprate)
 //  Initializes a pre-designed complex FIR filter with fixed coefficients
 //	Iniitalize FIR variables and clear out buffers.
 /////////////////////////////////////////////////////////////////////////////////
-void CFir::InitConstFir( int NumTaps, const double* pICoef, const double* pQCoef, TYPEREAL Fsamprate)
+void CFir::InitConstFir( int NumTaps, const TYPEREAL* pICoef, const TYPEREAL* pQCoef, TYPEREAL Fsamprate)
 {
 	m_Mutex.lock();
 	m_SampleRate = Fsamprate;
@@ -258,7 +259,7 @@ TYPEREAL Beta;
 	else if(Astop >= 50.0)
 		Beta = .1102 * (Astop - 8.71);
 	else
-		Beta = .5842 * pow( (Astop-20.96), 0.4) + .07886 * (Astop - 20.96);
+		Beta = .5842 * MPOW( (Astop-20.96), 0.4) + .07886 * (Astop - 20.96);
 
 	//Now Estimate number of filter taps required based on filter specs
 	m_NumTaps = (Astop - 8.0) / (2.285*K_2PI*(normFstop - normFpass) ) + 1;
@@ -282,10 +283,10 @@ TYPEREAL Beta;
 		if( (TYPEREAL)n == fCenter )	//deal with odd size filter singularity where sin(0)/0==1
 			c = 2.0 * normFcut;
 		else
-			c = (TYPEREAL)sin(K_2PI*x*normFcut)/(K_PI*x);
+			c = MSIN(K_2PI*x*normFcut)/(K_PI*x);
 		//calculate Kaiser window and multiply to get coefficient
 		x = ((TYPEREAL)n - ((TYPEREAL)m_NumTaps-1.0)/2.0 ) / (((TYPEREAL)m_NumTaps-1.0)/2.0);
-		m_Coef[n] = Scale * c * Izero( Beta * sqrt(1 - (x*x) ) )  / izb;
+		m_Coef[n] = Scale * c * Izero( Beta * MSQRT(1 - (x*x) ) )  / izb;
 	}
 
 	//make a 2x length array for FIR flat calculation efficiency
@@ -367,7 +368,7 @@ TYPEREAL Beta;
 	else if(Astop >= 50.0)
 		Beta = .1102 * (Astop - 8.71);
 	else
-		Beta = .5842 * pow( (Astop-20.96), 0.4) + .07886 * (Astop - 20.96);
+		Beta = .5842 * MPOW( (Astop-20.96), 0.4) + .07886 * (Astop - 20.96);
 
 	//Now Estimate number of filter taps required based on filter specs
 	m_NumTaps = (Astop - 8.0) / (2.285*K_2PI*(normFpass - normFstop ) ) + 1;
@@ -393,11 +394,11 @@ TYPEREAL Beta;
 		if( (TYPEREAL)n == fCenter )	//deal with odd size filter singularity where sin(0)/0==1
 			c = 1.0 - 2.0 * normFcut;
 		else
-			c = (TYPEREAL) (sin(K_PI*x)/(K_PI*x) - sin(K_2PI*x*normFcut)/(K_PI*x) );
+			c = MSIN(K_PI*x)/(K_PI*x) - MSIN(K_2PI*x*normFcut)/(K_PI*x);
 
 		//calculate Kaiser window and multiply to get coefficient
 		x = ((TYPEREAL)n - ((TYPEREAL)m_NumTaps-1.0)/2.0 ) / (((TYPEREAL)m_NumTaps-1.0)/2.0);
-		m_Coef[n] = Scale * c * Izero( Beta * sqrt(1 - (x*x) ) )  / izb;
+		m_Coef[n] = Scale * c * Izero( Beta * MSQRT(1 - (x*x) ) )  / izb;
 	}
 
 	//make a 2x length array for FIR flat calculation efficiency
@@ -455,8 +456,8 @@ int n;
 	for(n=0; n<m_NumTaps; n++)
 	{
 		// apply complex frequency shift transform to low pass filter coefficients
-		m_ICoef[n] = 2.0 * m_Coef[n] * cos( (K_2PI*FreqOffset/m_SampleRate)*((TYPEREAL)n - ( (TYPEREAL)(m_NumTaps-1)/2.0 ) ) );
-		m_QCoef[n] = 2.0 * m_Coef[n] * sin( (K_2PI*FreqOffset/m_SampleRate)*((TYPEREAL)n - ( (TYPEREAL)(m_NumTaps-1)/2.0 ) ) );
+		m_ICoef[n] = 2.0 * m_Coef[n] * MCOS( (K_2PI*FreqOffset/m_SampleRate)*((TYPEREAL)n - ( (TYPEREAL)(m_NumTaps-1)/2.0 ) ) );
+		m_QCoef[n] = 2.0 * m_Coef[n] * MSIN( (K_2PI*FreqOffset/m_SampleRate)*((TYPEREAL)n - ( (TYPEREAL)(m_NumTaps-1)/2.0 ) ) );
 	}
 	//make a 2x length array for FIR flat calculation efficiency
 	for (n = 0; n < m_NumTaps; n++)

@@ -56,37 +56,37 @@ private:
 	void CreateRdsGroup(quint16 Blk1, quint16 Blk2, quint16 Blk3, quint16 Blk4);
 	quint32 CreateBlockWithCheckword(quint16 Data, quint32 BlockOffset);
 	void CreateRdsSamples(int InLength , TYPEREAL* pBuf);
-	double CreateNextRdsBit();
+	TYPEREAL CreateNextRdsBit();
 
-	double m_DeviationRate;
-	double m_ModAcc;
-	double m_PilotAcc;
-	double m_PilotInc;
-	double m_LeftAcc;
-	double m_LeftInc;
-	double m_RightAcc;
-	double m_RightInc;
-	double m_LeftAmp;
-	double m_RightAmp;
+	TYPEREAL m_DeviationRate;
+	TYPEREAL m_ModAcc;
+	TYPEREAL m_PilotAcc;
+	TYPEREAL m_PilotInc;
+	TYPEREAL m_LeftAcc;
+	TYPEREAL m_LeftInc;
+	TYPEREAL m_RightAcc;
+	TYPEREAL m_RightInc;
+	TYPEREAL m_LeftAmp;
+	TYPEREAL m_RightAmp;
 
-	double m_SweepFrequency;
-	double m_SweepFreqNorm;
-	double m_SweepStopFrequency;
-	double m_SweepRateInc;
+	TYPEREAL m_SweepFrequency;
+	TYPEREAL m_SweepFreqNorm;
+	TYPEREAL m_SweepStopFrequency;
+	TYPEREAL m_SweepRateInc;
 
 
 
-	double m_SampleRate;
+	TYPEREAL m_SampleRate;
 	int StateTimer;
 	int TimerPeriod;
 	int ModState;
 
 	TYPEREAL m_RdsPulseCoef[RDSBUF_SIZE];
 	TYPEREAL m_RdsOut[RDSBUF_SIZE];
-	double m_RdsPulseLength;
-	double m_RdsTime;
-	double m_RdsSamplePeriod;
-	double m_RdsTimeToIdx;
+	TYPEREAL m_RdsPulseLength;
+	TYPEREAL m_RdsTime;
+	TYPEREAL m_RdsSamplePeriod;
+	TYPEREAL m_RdsTimeToIdx;
 	int m_RdsD1;
 	int m_RdsD2;
 	int m_RdsBufPos;

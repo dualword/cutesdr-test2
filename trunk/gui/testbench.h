@@ -49,7 +49,7 @@
 #include "dsp/wfmmod.h"
 
 
-extern double g_TestValue;
+extern TYPEREAL g_TestValue;
 
 
 //////////////////////////////////////////////////////////////////////
@@ -102,13 +102,13 @@ public:
     ~CTestBench();
 	void Init();	//called to initialize controls after setting all class variables
 
-	void CreateGeneratorSamples(int length, TYPECPX* pBuf, double samplerate);
-	void CreateGeneratorSamples(int length, TYPEREAL* pBuf, double samplerate);
+	void CreateGeneratorSamples(int length, TYPECPX* pBuf, TYPEREAL samplerate);
+	void CreateGeneratorSamples(int length, TYPEREAL* pBuf, TYPEREAL samplerate);
 	// overloaded data display routines
-	void DisplayData(int n, TYPEREAL* pBuf, double samplerate, int profile);
-	void DisplayData(int n, TYPECPX* pBuf, double samplerate, int profile);
-	void DisplayData(int n, TYPEMONO16* pBuf, double samplerate, int profile);
-	void DisplayData(int n, TYPESTEREO16* pBuf, double samplerate, int profile);
+	void DisplayData(int n, TYPEREAL* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayData(int n, TYPECPX* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayData(int n, TYPEMONO16* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayData(int n, TYPESTEREO16* pBuf, TYPEREAL samplerate, int profile);
 
 	void SendDebugTxt(QString Str){ if(m_Active) emit SendTxt(Str);}
 
@@ -125,13 +125,13 @@ public:
 	int m_HorzSpan;
 	int m_VertRange;
 	int m_TrigLevel;
-	double m_PulseWidth;
-	double m_PulsePeriod;
-	double m_SignalPower;
-	double m_NoisePower;
-	double m_SweepStartFrequency;
-	double m_SweepStopFrequency;
-	double m_SweepRate;
+	TYPEREAL m_PulseWidth;
+	TYPEREAL m_PulsePeriod;
+	TYPEREAL m_SignalPower;
+	TYPEREAL m_NoisePower;
+	TYPEREAL m_SweepStartFrequency;
+	TYPEREAL m_SweepStopFrequency;
+	TYPEREAL m_SweepRate;
 
 public slots:
 	void Reset();		//called by GUI Reset button
@@ -191,8 +191,8 @@ private:
 	qint32 m_dBStepSize;
 	qint32 m_FreqUnits;
 	qint64 m_CenterFreq;
-	double m_GenSampleRate;
-	double m_DisplaySampleRate;
+	TYPEREAL m_GenSampleRate;
+	TYPEREAL m_DisplaySampleRate;
 	QString m_Str;
 	QString m_HDivText[TB_HORZ_DIVS+1];
 	TYPECPX m_FftInBuf[TEST_FFTSIZE];
@@ -212,15 +212,15 @@ private:
 	int m_TrigState;
 	int m_TrigCounter;
 	int m_PostScrnCaptureLength;
-	double m_TimeScrnPixel;
+	TYPEREAL m_TimeScrnPixel;
 
-	double m_SweepFrequency;
-	double m_SweepFreqNorm;
-	double m_SweepAcc;
-	double m_SweepRateInc;
-	double m_SignalAmplitude;
-	double m_NoiseAmplitude;
-	double m_PulseTimer;
+	TYPEREAL m_SweepFrequency;
+	TYPEREAL m_SweepFreqNorm;
+	TYPEREAL m_SweepAcc;
+	TYPEREAL m_SweepRateInc;
+	TYPEREAL m_SignalAmplitude;
+	TYPEREAL m_NoiseAmplitude;
+	TYPEREAL m_PulseTimer;
 
 	CFft m_Fft;
 	QFile m_File;

@@ -7,6 +7,7 @@
 //	2011-01-17  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-08-07  Modified FIR filter initialization to force fixed size
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -90,15 +91,15 @@ void CFmDemod::SetSampleRate(TYPEREAL samplerate)
 	m_OutGain = MAX_FMOUT/m_NcoHLimit;	//audio output level gain value
 
 	//DC removal filter time constant
-	m_DcAlpha = (1.0 - exp(-1.0/(m_SampleRate*FMDC_ALPHA)) );
+	m_DcAlpha = (1.0 - MEXP(-1.0/(m_SampleRate*FMDC_ALPHA)) );
 
 	//initialize some noise squelch items
 	m_SquelchHPFreq = VOICE_BANDWIDTH;
 	m_SquelchAve = 0.0;
 	m_SquelchState = true;
-	m_SquelchAlpha = (1.0-exp(-1.0/(m_SampleRate*SQUELCHAVE_TIMECONST)) );
+	m_SquelchAlpha = (1.0-MEXP(-1.0/(m_SampleRate*SQUELCHAVE_TIMECONST)) );
 
-	m_DeemphasisAlpha = (1.0-exp(-1.0/(m_SampleRate*DEMPHASIS_TIME)) );
+	m_DeemphasisAlpha = (1.0-MEXP(-1.0/(m_SampleRate*DEMPHASIS_TIME)) );
 	m_DeemphasisAve = 0.0;
 
 	m_LpFir.InitLPFilter(0,1.0,50.0,VOICE_BANDWIDTH, 1.6*VOICE_BANDWIDTH, m_SampleRate);
@@ -139,7 +140,7 @@ void CFmDemod::PerformNoiseSquelch(int InLength, TYPEREAL* pOutData)
 //g_pTestBench->DisplayData(InLength, sqbuf, m_SampleRate,PROFILE_6);
 	for(int i=0; i<InLength; i++)
 	{
-		TYPEREAL mag = fabs( sqbuf[i] );	//get magnitude of High pass filtered data
+		TYPEREAL mag = MFABS( sqbuf[i] );	//get magnitude of High pass filtered data
 		// exponential filter squelch magnitude
 		m_SquelchAve = (1.0-m_SquelchAlpha)*m_SquelchAve + m_SquelchAlpha*mag;
 //g_pTestBench->DisplayData(1, &m_SquelchAve, m_SampleRate,PROFILE_3);
@@ -186,13 +187,13 @@ TYPECPX tmp;
 	}
 	for(int i=0; i<InLength; i++)
 	{
-		TYPEREAL Sin = sin(m_NcoPhase);
-		TYPEREAL Cos = cos(m_NcoPhase);
+		TYPEREAL Sin = MSIN(m_NcoPhase);
+		TYPEREAL Cos = MCOS(m_NcoPhase);
 		//complex multiply input sample by NCO's  sin and cos
 		tmp.re = Cos * pInData[i].re - Sin * pInData[i].im;
 		tmp.im = Cos * pInData[i].im + Sin * pInData[i].re;
 		//find current sample phase after being shifted by NCO frequency
-		TYPEREAL phzerror = -atan2(tmp.im, tmp.re);
+		TYPEREAL phzerror = -MATAN2(tmp.im, tmp.re);
 		//create new NCO frequency term
 		m_NcoFreq += (m_PllBeta * phzerror);		//  radians per sampletime
 		//clamp NCO frequency so doesn't get out of lock range
@@ -208,7 +209,7 @@ TYPECPX tmp;
 		pOutData[i] = (m_NcoFreq-m_FreqErrorDC)*m_OutGain;
 	}
 //g_pTestBench->DisplayData(InLength, pOutData, m_SampleRate, PROFILE_3);
-	m_NcoPhase = fmod(m_NcoPhase, K_2PI);	//keep radian counter bounded
+	m_NcoPhase = MFMOD(m_NcoPhase, K_2PI);	//keep radian counter bounded
 	PerformNoiseSquelch(InLength, pOutData);	//calculate squelch
 	return InLength;
 }
@@ -226,13 +227,13 @@ TYPECPX tmp;
 	}
 	for(int i=0; i<InLength; i++)
 	{
-		TYPEREAL Sin = sin(m_NcoPhase);
-		TYPEREAL Cos = cos(m_NcoPhase);
+		TYPEREAL Sin = MSIN(m_NcoPhase);
+		TYPEREAL Cos = MCOS(m_NcoPhase);
 		//complex multiply input sample by NCO's  sin and cos
 		tmp.re = Cos * pInData[i].re - Sin * pInData[i].im;
 		tmp.im = Cos * pInData[i].im + Sin * pInData[i].re;
 		//find current sample phase after being shifted by NCO frequency
-		TYPEREAL phzerror = -atan2(tmp.im, tmp.re);
+		TYPEREAL phzerror = -MATAN2(tmp.im, tmp.re);
 
 		m_NcoFreq += (m_PllBeta * phzerror);		//  radians per sampletime
 		//clamp NCO frequency so doesn't drift out of lock range
@@ -247,7 +248,7 @@ TYPECPX tmp;
 		//subtract out DC term to get FM audio
 		m_OutBuf[i] = (m_NcoFreq-m_FreqErrorDC)*m_OutGain;
 	}
-	m_NcoPhase = fmod(m_NcoPhase, K_2PI);	//keep radian counter bounded
+	m_NcoPhase = MFMOD(m_NcoPhase, K_2PI);	//keep radian counter bounded
 	PerformNoiseSquelch(InLength, m_OutBuf);
 	for(int i=0; i<InLength; i++)
 	{	//copy audio stream into both output channels for stereo version

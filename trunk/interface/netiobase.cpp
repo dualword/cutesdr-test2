@@ -6,6 +6,7 @@
 // History:
 //	2012-12-12  Initial creation MSW
 //	2013-02-05  Modified for CuteSDR. Now TCP runs in gui thread to simplify
+//	2013-07-28  fixed DisconnectFromServerSlot bug
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -170,8 +171,11 @@ qDebug()<<"CNetio constructor";
 CNetio::~CNetio()
 {
 qDebug()<<"CNetio destructor";
-	m_pTcpClient->abort();
-	m_pTcpClient->close();
+	if(m_pTcpClient->state() == QAbstractSocket::ConnectedState)
+	{
+		m_pTcpClient->abort();
+		m_pTcpClient->close();
+	}
 	disconnect();
 	m_pUdpIo->disconnect();
 	if(m_pTcpClient)
@@ -210,7 +214,7 @@ qDebug()<<"Connecting to "<<m_ServerIPAdr <<m_ServerPort;
 ///////////////////////////////////////////////////////////////////////////////
 // Called to disconnect from TCP Server SDR
 ///////////////////////////////////////////////////////////////////////////////
-void CNetio::DisconnectFromServer()
+void CNetio::DisconnectFromServerSlot()
 {
 	m_pTcpClient->abort();
 	m_pTcpClient->close();

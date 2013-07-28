@@ -91,9 +91,9 @@ public:
 	virtual ~CDemodulator();
 
 	void SetInputSampleRate(TYPEREAL InputRate);
-	double GetOutputRate(){return m_DemodOutputRate;}
-	double GetSMeterPeak(){return m_SMeter.GetPeak();}
-	double GetSMeterAve(){return m_SMeter.GetAve();}
+	TYPEREAL GetOutputRate(){return m_DemodOutputRate;}
+	TYPEREAL GetSMeterPeak(){return m_SMeter.GetPeak();}
+	TYPEREAL GetSMeterAve(){return m_SMeter.GetAve();}
 
 	void SetDemod(int Mode, tDemodInfo CurrentDemodInfo);
 	void SetDemodFreq(TYPEREAL Freq){m_DownConvert.SetCwOffset(m_CW_Offset);

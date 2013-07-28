@@ -101,8 +101,8 @@ private:
 	qint32 m_Volume;
 	qint32 m_Percent2DScreen;
 	qint32 m_DemodMode;
-	double m_NCOSpurOffsetI;	//NCO spur reduction variables
-	double m_NCOSpurOffsetQ;
+	TYPEREAL m_NCOSpurOffsetI;	//NCO spur reduction variables
+	TYPEREAL m_NCOSpurOffsetQ;
 	tNoiseProcdInfo m_NoiseProcSettings;
 
 	bool m_FreqChanged;

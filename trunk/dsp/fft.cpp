@@ -117,8 +117,8 @@ void CFft::SetFFTAve( qint32 ave)
 ///////////////////////////////////////////////////////////////////
 void CFft::SetFFTParams( qint32 size,
 						 bool invert,
-						 double dBCompensation,
-						 double SampleFreq)
+						 TYPEREAL dBCompensation,
+						 TYPEREAL SampleFreq)
 {
 qint32 i;
 	if(size==0)
@@ -148,12 +148,12 @@ qint32 i;
 	{
 		m_LastFFTSize = m_FFTSize;
 		FreeMemory();
-		m_pWindowTbl = new double[m_FFTSize];
-		m_pSinCosTbl = new double[m_FFTSize/2];
-		m_pWorkArea = new qint32[ (qint32)sqrt((double)m_FFTSize)+2];
-		m_pFFTPwrAveBuf = new double[m_FFTSize];
-		m_pFFTAveBuf = new double[m_FFTSize];
-		m_pFFTSumBuf = new double[m_FFTSize];
+		m_pWindowTbl = new TYPEREAL[m_FFTSize];
+		m_pSinCosTbl = new TYPEREAL[m_FFTSize/2];
+		m_pWorkArea = new qint32[ (qint32)MSQRT((TYPEREAL)m_FFTSize)+2];
+		m_pFFTPwrAveBuf = new TYPEREAL[m_FFTSize];
+		m_pFFTAveBuf = new TYPEREAL[m_FFTSize];
+		m_pFFTSumBuf = new TYPEREAL[m_FFTSize];
 		for(i=0; i<m_FFTSize; i++)
 		{
 			m_pFFTPwrAveBuf[i] = 0.0;
@@ -161,7 +161,7 @@ qint32 i;
 			m_pFFTSumBuf[i] = 0.0;
 		}
 		m_pWorkArea[0] = 0;
-		m_pFFTInBuf = new double[m_FFTSize*2];
+		m_pFFTInBuf = new TYPEREAL[m_FFTSize*2];
 		m_pTranslateTbl = new qint32[m_FFTSize];
 		for(i=0; i<m_FFTSize*2; i++)
 			m_pFFTInBuf[i] = 0.0;
@@ -183,10 +183,10 @@ qint32 i;
 //		range of 0 to -120dB the stored value is 0.0 to -12.0
 //   so final constant K_B = -8.663833		
 ///////////////////////////////////////////////////////////////////////
-		m_K_B = m_dBCompensation - 20*log10( (double)m_FFTSize*K_AMPMAX/2.0 );
-		m_K_C = pow( 10.0, (K_MINDB-m_K_B)/10.0 );
+		m_K_B = m_dBCompensation - 20*MLOG10( (TYPEREAL)m_FFTSize*K_AMPMAX/2.0 );
+		m_K_C = MPOW( 10.0, (K_MINDB-m_K_B)/10.0 );
 		m_K_B = m_K_B/10.0;
-double WindowGain;
+TYPEREAL WindowGain;
 #if 0
 		WindowGain = 1.0;
 		for(i=0; i<m_FFTSize; i++)	//Rectangle(no window)
@@ -195,45 +195,45 @@ double WindowGain;
 #if 1
 		WindowGain = 2.0;
 		for(i=0; i<m_FFTSize; i++)	//Hann
-			m_pWindowTbl[i] = WindowGain*(.5  - .5 *cos( (K_2PI*i)/(m_FFTSize-1) ));
+			m_pWindowTbl[i] = WindowGain*(.5  - .5 *MCOS( (K_2PI*i)/(m_FFTSize-1) ));
 #endif
 #if 0
 		WindowGain = 1.852;
 		for(i=0; i<m_FFTSize; i++)	//Hamming
-			m_pWindowTbl[i] = WindowGain*(.54  - .46 *cos( (K_2PI*i)/(m_FFTSize-1) ));
+			m_pWindowTbl[i] = WindowGain*(.54  - .46 *MCOS( (K_2PI*i)/(m_FFTSize-1) ));
 #endif
 #if 0
 		WindowGain = 2.8;
 		for(i=0; i<m_FFTSize; i++)	//Blackman-Nuttall
 			m_pWindowTbl[i] = WindowGain*(0.3635819
-				- 0.4891775*cos( (K_2PI*i)/(m_FFTSize-1) )
-				+ 0.1365995*cos( (2.0*K_2PI*i)/(m_FFTSize-1) )
-				- 0.0106411*cos( (3.0*K_2PI*i)/(m_FFTSize-1) ) );
+				- 0.4891775*MCOS( (K_2PI*i)/(m_FFTSize-1) )
+				+ 0.1365995*MCOS( (2.0*K_2PI*i)/(m_FFTSize-1) )
+				- 0.0106411*MCOS( (3.0*K_2PI*i)/(m_FFTSize-1) ) );
 #endif
 #if 0
 		WindowGain = 2.82;
 		for(i=0; i<m_FFTSize; i++)	//Blackman-Harris
 			m_pWindowTbl[i] = WindowGain*(0.35875
-				- 0.48829*cos( (K_2PI*i)/(m_FFTSize-1) )
-				+ 0.14128*cos( (2.0*K_2PI*i)/(m_FFTSize-1) )
-				- 0.01168*cos( (3.0*K_2PI*i)/(m_FFTSize-1) ) );
+				- 0.48829*MCOS( (K_2PI*i)/(m_FFTSize-1) )
+				+ 0.14128*MCOS( (2.0*K_2PI*i)/(m_FFTSize-1) )
+				- 0.01168*MCOS( (3.0*K_2PI*i)/(m_FFTSize-1) ) );
 #endif
 #if 0
 		WindowGain = 2.8;
 		for(i=0; i<m_FFTSize; i++)	//Nuttall
 			m_pWindowTbl[i] = WindowGain*(0.355768
-				- 0.487396*cos( (K_2PI*i)/(m_FFTSize-1) )
-				+ 0.144232*cos( (2.0*K_2PI*i)/(m_FFTSize-1) )
-				- 0.012604*cos( (3.0*K_2PI*i)/(m_FFTSize-1) ) );
+				- 0.487396*MCOS( (K_2PI*i)/(m_FFTSize-1) )
+				+ 0.144232*MCOS( (2.0*K_2PI*i)/(m_FFTSize-1) )
+				- 0.012604*MCOS( (3.0*K_2PI*i)/(m_FFTSize-1) ) );
 #endif
 #if 0
 		WindowGain = 1.0;
 		for(i=0; i<m_FFTSize; i++)	//Flat Top 4 term
 			m_pWindowTbl[i] = WindowGain*(1.0
-					- 1.942604  * cos( (K_2PI*i)/(m_FFTSize-1) )
-					+ 1.340318 * cos( (2.0*K_2PI*i)/(m_FFTSize-1) )
-					- 0.440811 * cos( (3.0*K_2PI*i)/(m_FFTSize-1) )
-					+ 0.043097  * cos( (4.0*K_2PI*i)/(m_FFTSize-1) )
+					- 1.942604  * MCOS( (K_2PI*i)/(m_FFTSize-1) )
+					+ 1.340318 * MCOS( (2.0*K_2PI*i)/(m_FFTSize-1) )
+					- 0.440811 * MCOS( (3.0*K_2PI*i)/(m_FFTSize-1) )
+					+ 0.043097  * MCOS( (4.0*K_2PI*i)/(m_FFTSize-1) )
 				);
 
 #endif
@@ -269,7 +269,7 @@ qint32 CFft::PutInDisplayFFT(qint32 n, TYPECPX* InBuf)
 qint32 i;
 	m_Overload = false;
 	m_Mutex.lock();
-	double dtmp1;
+	TYPEREAL dtmp1;
 	for(i=0; i<n; i++)
 	{
 		if( InBuf[i].re > OVER_LIMIT )	//flag overload if within OVLimit of max
@@ -307,8 +307,8 @@ qint32 i;
 //////////////////////////////////////////////////////////////////////
 bool CFft::GetScreenIntegerFFTData(qint32 MaxHeight,
 								qint32 MaxWidth,
-								double MaxdB,
-								double MindB,
+								TYPEREAL MaxdB,
+								TYPEREAL MindB,
 								qint32 StartFreq,
 								qint32 StopFreq,
 								qint32* OutBuf )
@@ -320,8 +320,8 @@ qint32 m;
 qint32 ymax = -10000;
 qint32 xprev = -1;
 qint32 maxbin;
-double dBmaxOffset = MaxdB/10.0;
-double dBGainFactor = -10.0/(MaxdB-MindB);
+TYPEREAL dBmaxOffset = MaxdB/10.0;
+TYPEREAL dBGainFactor = -10.0/(MaxdB-MindB);
 
 //qDebug()<<"maxoffset dbgaindfact "<<dBmaxOffset << dBGainFactor;
 
@@ -334,9 +334,9 @@ double dBGainFactor = -10.0/(MaxdB-MindB);
 		m_StopFreq = StopFreq;
 		m_PlotWidth = MaxWidth;
 		maxbin = m_FFTSize - 1;
-		m_BinMin = (qint32)((double)StartFreq*(double)m_FFTSize/m_SampleFreq);
+		m_BinMin = (qint32)((TYPEREAL)StartFreq*(TYPEREAL)m_FFTSize/m_SampleFreq);
 		m_BinMin += (m_FFTSize/2);
-		m_BinMax = (qint32)((double)StopFreq*(double)m_FFTSize/m_SampleFreq);
+		m_BinMax = (qint32)((TYPEREAL)StopFreq*(TYPEREAL)m_FFTSize/m_SampleFreq);
 		m_BinMax += (m_FFTSize/2);
 		if(m_BinMin < 0)	//don't allow these go outside the translate table
 			m_BinMin = 0;
@@ -367,9 +367,9 @@ double dBGainFactor = -10.0/(MaxdB-MindB);
 		for( i=m_BinMin; i<=m_BinMax; i++ )
 		{
 			if(m_Invert)
-				y = (qint32)((double)MaxHeight*dBGainFactor*(m_pFFTAveBuf[(m-i)] - dBmaxOffset));
+				y = (qint32)((TYPEREAL)MaxHeight*dBGainFactor*(m_pFFTAveBuf[(m-i)] - dBmaxOffset));
 			else
-				y = (qint32)((double)MaxHeight*dBGainFactor*(m_pFFTAveBuf[i] - dBmaxOffset));
+				y = (qint32)((TYPEREAL)MaxHeight*dBGainFactor*(m_pFFTAveBuf[i] - dBmaxOffset));
 			if(y<0)
 				y = 0;
 			if(y > MaxHeight)
@@ -398,9 +398,9 @@ double dBGainFactor = -10.0/(MaxdB-MindB);
 		{
 			i = m_pTranslateTbl[x];	//get plot to fft bin coordinate transform
 			if(m_Invert)
-				y = (qint32)((double)MaxHeight*dBGainFactor*(m_pFFTAveBuf[(m-i)] - dBmaxOffset));
+				y = (qint32)((TYPEREAL)MaxHeight*dBGainFactor*(m_pFFTAveBuf[(m-i)] - dBmaxOffset));
 			else
-				y = (qint32)((double)MaxHeight*dBGainFactor*(m_pFFTAveBuf[i] - dBmaxOffset));
+				y = (qint32)((TYPEREAL)MaxHeight*dBGainFactor*(m_pFFTAveBuf[i] - dBmaxOffset));
 			if(y<0)
 				y = 0;
 			if(y > MaxHeight)
@@ -433,10 +433,10 @@ void CFft::RevFFT( TYPECPX* pInOutBuf)
 // Nitty gritty fft routines by Takuya OOURA(Updated to his new version 4-18-02)
 // Routine calculates real FFT
 ///////////////////////////////////////////////////////////////////
-void CFft::rftfsub(qint32 n, double *a, qint32 nc, double *c)
+void CFft::rftfsub(qint32 n, TYPEREAL *a, qint32 nc, TYPEREAL *c)
 {
 qint32 j, k, kk, ks, m;
-double wkr, wki, xr, xi, yr, yi;
+TYPEREAL wkr, wki, xr, xi, yr, yi;
 
 	m_TotalCount++;
  	if(m_AveCount < m_AveSize)
@@ -475,11 +475,11 @@ double wkr, wki, xr, xi, yr, yi;
 			m_pFFTSumBuf[j] = m_pFFTSumBuf[j] - m_pFFTPwrAveBuf[j] + xi;
 			m_pFFTSumBuf[k] = m_pFFTSumBuf[k] - m_pFFTPwrAveBuf[k] + xr;
 		}
-		m_pFFTPwrAveBuf[j] = m_pFFTSumBuf[j]/(double)m_AveCount;
-		m_pFFTPwrAveBuf[k] = m_pFFTSumBuf[k]/(double)m_AveCount;
+		m_pFFTPwrAveBuf[j] = m_pFFTSumBuf[j]/(TYPEREAL)m_AveCount;
+		m_pFFTPwrAveBuf[k] = m_pFFTSumBuf[k]/(TYPEREAL)m_AveCount;
 
-		m_pFFTAveBuf[j] = log10(m_pFFTPwrAveBuf[j] + m_K_C) + m_K_B;
-		m_pFFTAveBuf[k] = log10(m_pFFTPwrAveBuf[k] + m_K_C) + m_K_B;
+		m_pFFTAveBuf[j] = MLOG10(m_pFFTPwrAveBuf[j] + m_K_C) + m_K_B;
+		m_pFFTAveBuf[k] = MLOG10(m_pFFTPwrAveBuf[k] + m_K_C) + m_K_B;
 
 	}
 
@@ -498,11 +498,11 @@ double wkr, wki, xr, xi, yr, yi;
 		m_pFFTSumBuf[0] = m_pFFTSumBuf[0] - m_pFFTPwrAveBuf[0] + a[0];
 		m_pFFTSumBuf[n/2] = m_pFFTSumBuf[n/2] - m_pFFTPwrAveBuf[n/2] + xr;
 	}
-	m_pFFTPwrAveBuf[0] = m_pFFTSumBuf[0]/(double)m_AveCount;
-	m_pFFTPwrAveBuf[n/2] = m_pFFTSumBuf[n/2]/(double)m_AveCount;
+	m_pFFTPwrAveBuf[0] = m_pFFTSumBuf[0]/(TYPEREAL)m_AveCount;
+	m_pFFTPwrAveBuf[n/2] = m_pFFTSumBuf[n/2]/(TYPEREAL)m_AveCount;
 
-	m_pFFTAveBuf[0] = log10(m_pFFTPwrAveBuf[0] + m_K_C) + m_K_B;
-	m_pFFTAveBuf[n/2] = log10(m_pFFTPwrAveBuf[n/2] + m_K_C) + m_K_B;
+	m_pFFTAveBuf[0] = MLOG10(m_pFFTPwrAveBuf[0] + m_K_C) + m_K_B;
+	m_pFFTAveBuf[n/2] = MLOG10(m_pFFTPwrAveBuf[n/2] + m_K_C) + m_K_B;
 
 }
 
@@ -510,10 +510,10 @@ double wkr, wki, xr, xi, yr, yi;
 ///////////////////////////////////////////////////////////////////
 // Routine calculates complex FFT
 ///////////////////////////////////////////////////////////////////
-void CFft::CpxFFT(qint32 n, double *a, double *w)
+void CFft::CpxFFT(qint32 n, TYPEREAL *a, TYPEREAL *w)
 {
 qint32 j, j1, j2, j3, l;
-double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
+TYPEREAL x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
     
 	m_TotalCount++;
  	if(m_AveCount < m_AveSize)
@@ -574,8 +574,8 @@ double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
 			m_pFFTSumBuf[j] = m_pFFTSumBuf[j] + x0r;
 		else
 			m_pFFTSumBuf[j] = m_pFFTSumBuf[j] - m_pFFTPwrAveBuf[j] + x0r;
-		m_pFFTPwrAveBuf[j] = m_pFFTSumBuf[j]/(double)m_AveCount;
-		m_pFFTAveBuf[j] = log10( m_pFFTPwrAveBuf[j] + m_K_C) + m_K_B;
+		m_pFFTPwrAveBuf[j] = m_pFFTSumBuf[j]/(TYPEREAL)m_AveCount;
+		m_pFFTAveBuf[j] = MLOG10( m_pFFTPwrAveBuf[j] + m_K_C) + m_K_B;
 	}
 	// FFT output index N/2 to N-1  (times 2 since complex samples)
 	// is frequency output -Fs/2 to 0  
@@ -587,8 +587,8 @@ double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
 			m_pFFTSumBuf[j] = m_pFFTSumBuf[j] + x0r;
 		else
 			m_pFFTSumBuf[j] = m_pFFTSumBuf[j] - m_pFFTPwrAveBuf[j] + x0r;
-		m_pFFTPwrAveBuf[j] = m_pFFTSumBuf[j]/(double)m_AveCount;
-		m_pFFTAveBuf[j] = log10( m_pFFTPwrAveBuf[j] + m_K_C) + m_K_B;
+		m_pFFTPwrAveBuf[j] = m_pFFTSumBuf[j]/(TYPEREAL)m_AveCount;
+		m_pFFTAveBuf[j] = MLOG10( m_pFFTPwrAveBuf[j] + m_K_C) + m_K_B;
 	}
 
 }
@@ -596,24 +596,24 @@ double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
 ///////////////////////////////////////////////////////////////////
 /* -------- initializing routines -------- */
 ///////////////////////////////////////////////////////////////////
-void CFft::makewt(qint32 nw, qint32 *ip, double *w)
+void CFft::makewt(qint32 nw, qint32 *ip, TYPEREAL *w)
 {
 qint32 j, nwh;
-double delta, x, y;
+TYPEREAL delta, x, y;
     
     ip[0] = nw;
     ip[1] = 1;
     if (nw > 2) {
         nwh = nw >> 1;
-        delta = atan(1.0) / nwh;
+		delta = MATAN(1.0) / nwh;
         w[0] = 1;
         w[1] = 0;
-        w[nwh] = cos(delta * nwh);
+		w[nwh] = MCOS(delta * nwh);
         w[nwh + 1] = w[nwh];
         if (nwh > 2) {
             for (j = 2; j < nwh; j += 2) {
-                x = cos(delta * j);
-                y = sin(delta * j);
+				x = MCOS(delta * j);
+				y = MSIN(delta * j);
                 w[j] = x;
                 w[j + 1] = y;
                 w[nw - j] = y;
@@ -625,20 +625,20 @@ double delta, x, y;
 }
 
 ///////////////////////////////////////////////////////////////////
-void CFft::makect(qint32 nc, qint32 *ip, double *c)
+void CFft::makect(qint32 nc, qint32 *ip, TYPEREAL *c)
 {
 qint32 j, nch;
-double delta;
+TYPEREAL delta;
     
 	ip[1] = nc;
     if (nc > 1) {
         nch = nc >> 1;
-        delta = atan(1.0) / nch;
-        c[0] = cos(delta * nch);
+		delta = MATAN(1.0) / nch;
+		c[0] = MCOS(delta * nch);
         c[nch] = 0.5 * c[0];
         for (j = 1; j < nch; j++) {
-            c[j] = 0.5 * cos(delta * j);
-            c[nc - j] = 0.5 * sin(delta * j);
+			c[j] = 0.5 * MCOS(delta * j);
+			c[nc - j] = 0.5 * MSIN(delta * j);
         }
     }
 }
@@ -646,10 +646,10 @@ double delta;
 ///////////////////////////////////////////////////////////////////
 /* -------- child routines -------- */
 ///////////////////////////////////////////////////////////////////
-void CFft::bitrv2(qint32 n, qint32 *ip, double *a)
+void CFft::bitrv2(qint32 n, qint32 *ip, TYPEREAL *a)
 {
 qint32 j, j1, k, k1, l, m, m2;
-double xr, xi, yr, yi;
+TYPEREAL xr, xi, yr, yi;
     
     ip[0] = 0;
     l = n;
@@ -746,10 +746,10 @@ double xr, xi, yr, yi;
 }
 
 ///////////////////////////////////////////////////////////////////
-void CFft::cftfsub(qint32 n, double *a, double *w)
+void CFft::cftfsub(qint32 n, TYPEREAL *a, TYPEREAL *w)
 {
 qint32 j, j1, j2, j3, l;
-double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
+TYPEREAL x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
     
     l = 2;
     if (n > 8) {
@@ -796,11 +796,11 @@ double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
 }
 
 ///////////////////////////////////////////////////////////////////
-void CFft::cft1st(qint32 n, double *a, double *w)
+void CFft::cft1st(qint32 n, TYPEREAL *a, TYPEREAL *w)
 {
 qint32 j, k1, k2;
-double wk1r, wk1i, wk2r, wk2i, wk3r, wk3i;
-double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
+TYPEREAL wk1r, wk1i, wk2r, wk2i, wk3r, wk3i;
+TYPEREAL x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
     
     x0r = a[0] + a[2];
     x0i = a[1] + a[3];
@@ -901,11 +901,11 @@ double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
 }
 
 ///////////////////////////////////////////////////////////////////
-void CFft::cftmdl(qint32 n, qint32 l, double *a, double *w)
+void CFft::cftmdl(qint32 n, qint32 l, TYPEREAL *a, TYPEREAL *w)
 {
 qint32 j, j1, j2, j3, k, k1, k2, m, m2;
-double wk1r, wk1i, wk2r, wk2i, wk3r, wk3i;
-double x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
+TYPEREAL wk1r, wk1i, wk2r, wk2i, wk3r, wk3i;
+TYPEREAL x0r, x0i, x1r, x1i, x2r, x2i, x3r, x3i;
     
     m = l << 2;
     for (j = 0; j < l; j += 2) {

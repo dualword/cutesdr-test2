@@ -8,6 +8,7 @@
 //
 // History:
 //	2013-02-05  Initial creation MSW
+//	2013-07-28  Added single/double precision math macros
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
 //Copyright 2010 Moe Wheatley. All rights reserved.
@@ -154,11 +155,11 @@ TYPECPX cpxtmp;
 			data.bytes.b1 = pBuf[i];		//combine 3 bytes into 32 bit signed int
 			data.bytes.b2 = pBuf[i+1];
 			data.bytes.b3 = pBuf[i+2];
-			cpxtmp.re = (double)data.all/65536.0;
+			cpxtmp.re = (TYPEREAL)data.all/65536.0;
 			data.bytes.b1 = pBuf[i+3];		//combine 3 bytes into 32 bit signed int
 			data.bytes.b2 = pBuf[i+4];
 			data.bytes.b3 = pBuf[i+5];
-			cpxtmp.im = (double)data.all/65536.0;
+			cpxtmp.im = (TYPEREAL)data.all/65536.0;
 			m_pInQueue[m_InHead][j] = cpxtmp;
 		}
 	}
@@ -181,10 +182,10 @@ TYPECPX cpxtmp;
 		{	//use 'seq' as temp variable to combine bytes into short int
 			seq.bytes.b0 = pBuf[i+0];
 			seq.bytes.b1 = pBuf[i+1];
-			cpxtmp.re = (double)seq.sall;
+			cpxtmp.re = (TYPEREAL)seq.sall;
 			seq.bytes.b0 = pBuf[i+2];
 			seq.bytes.b1 = pBuf[i+3];
-			cpxtmp.im = (double)seq.sall;
+			cpxtmp.im = (TYPEREAL)seq.sall;
 			m_pInQueue[m_InHead][j] = cpxtmp;
 		}
 	}

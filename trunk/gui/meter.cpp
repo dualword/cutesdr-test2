@@ -116,7 +116,7 @@ void CMeter::resizeEvent(QResizeEvent* )
 //////////////////////////////////////////////////////////////////////
 // Slot called to update meter level position
 //////////////////////////////////////////////////////////////////////
-void CMeter::SetdBmLevel(double dbm)
+void CMeter::SetdBmLevel(TYPEREAL dbm)
 {
 qreal w = (qreal)m_2DPixmap.width();
 	w = w - 2.0*CTRL_MARGIN*w;	//width of meter scale in pixels
