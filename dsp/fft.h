@@ -28,13 +28,13 @@ public:
 	virtual ~CFft();
 	void SetFFTParams( qint32 size,
 						bool invert,
-						double dBCompensation,
-						double SampleFreq);
+						TYPEREAL dBCompensation,
+						TYPEREAL SampleFreq);
 	//Methods to obtain spectrum formated power vs frequency
 	void SetFFTAve( qint32 ave);
 	void ResetFFT();
 	bool GetScreenIntegerFFTData(qint32 MaxHeight, qint32 MaxWidth,
-									double MaxdB, double MindB,
+									TYPEREAL MaxdB, TYPEREAL MindB,
 									qint32 StartFreq, qint32 StopFreq,
 									qint32* OutBuf );
 	qint32 PutInDisplayFFT(qint32 n, TYPECPX* InBuf);
@@ -45,14 +45,14 @@ public:
 
 private:
 	void FreeMemory();
-	void makewt(qint32 nw, qint32 *ip, double *w);
-	void makect(qint32 nc, qint32 *ip, double *c);
-	void bitrv2(qint32 n, qint32 *ip, double *a);
-	void cftfsub(qint32 n, double *a, double *w);
-	void rftfsub(qint32 n, double *a, qint32 nc, double *c);
-	void CpxFFT(qint32 n, double *a, double *w);
-	void cft1st(qint32 n, double *a, double *w);
-	void cftmdl(qint32 n, qint32 l, double *a, double *w);
+	void makewt(qint32 nw, qint32 *ip, TYPEREAL *w);
+	void makect(qint32 nc, qint32 *ip, TYPEREAL *c);
+	void bitrv2(qint32 n, qint32 *ip, TYPEREAL *a);
+	void cftfsub(qint32 n, TYPEREAL *a, TYPEREAL *w);
+	void rftfsub(qint32 n, TYPEREAL *a, qint32 nc, TYPEREAL *c);
+	void CpxFFT(qint32 n, TYPEREAL *a, TYPEREAL *w);
+	void cft1st(qint32 n, TYPEREAL *a, TYPEREAL *w);
+	void cftmdl(qint32 n, qint32 l, TYPEREAL *a, TYPEREAL *w);
 	void bitrv2conj(int n, int *ip, TYPEREAL *a);
 	void cftbsub(int n, TYPEREAL *a, TYPEREAL *w);
 
@@ -69,18 +69,18 @@ private:
 	qint32 m_BinMax;
 	qint32 m_PlotWidth;
 
-	double m_K_C;
-	double m_K_B;
-	double m_dBCompensation;
-	double m_SampleFreq;
+	TYPEREAL m_K_C;
+	TYPEREAL m_K_B;
+	TYPEREAL m_dBCompensation;
+	TYPEREAL m_SampleFreq;
 	qint32* m_pWorkArea;
 	qint32* m_pTranslateTbl;
-	double* m_pSinCosTbl;
-	double* m_pWindowTbl;
-	double* m_pFFTPwrAveBuf;
-	double* m_pFFTAveBuf;
-	double* m_pFFTSumBuf;
-	double* m_pFFTInBuf;
+	TYPEREAL* m_pSinCosTbl;
+	TYPEREAL* m_pWindowTbl;
+	TYPEREAL* m_pFFTPwrAveBuf;
+	TYPEREAL* m_pFFTAveBuf;
+	TYPEREAL* m_pFFTSumBuf;
+	TYPEREAL* m_pFFTInBuf;
 	QMutex m_Mutex;		//for keeping threads from stomping on each other
 };
 

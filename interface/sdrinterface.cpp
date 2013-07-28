@@ -68,7 +68,7 @@ const quint32 SDRIQ_6620FILTERS[MAX_SAMPLERATES] =
 	Cad6620::BWKHZ_190
 };
 
-const double SDRIQ_6620FILTERGAIN[MAX_SAMPLERATES] =
+const TYPEREAL SDRIQ_6620FILTERGAIN[MAX_SAMPLERATES] =
 {
 	0.0,
 	8.0,
@@ -76,7 +76,7 @@ const double SDRIQ_6620FILTERGAIN[MAX_SAMPLERATES] =
 	22.0
 };
 
-const double SDRIQ_SAMPLERATE[MAX_SAMPLERATES] =
+const TYPEREAL SDRIQ_SAMPLERATE[MAX_SAMPLERATES] =
 {
 	(66666666.6667/1200.0),
 	(66666666.6667/600.0),
@@ -93,7 +93,7 @@ const quint32 NETSDR_MAXBW[MAX_SAMPLERATES] =
 	1600000
 };
 
-const double NETSDR_SAMPLERATE[MAX_SAMPLERATES] =
+const TYPEREAL NETSDR_SAMPLERATE[MAX_SAMPLERATES] =
 {
 	(80.0e6/1280.0),
 	(80.0e6/320.0),
@@ -109,7 +109,7 @@ const quint32 SDRIP_MAXBW[MAX_SAMPLERATES] =
 	1800000
 };
 
-const double SDRIP_SAMPLERATE[MAX_SAMPLERATES] =
+const TYPEREAL SDRIP_SAMPLERATE[MAX_SAMPLERATES] =
 {
 	(80.0e6/1280.0),
 	(80.0e6/320.0),
@@ -125,7 +125,7 @@ const quint32 CLOUDSDR_MAXBW[MAX_SAMPLERATES] =
 	1000000
 };
 
-const double CLOUDSDR_SAMPLERATE[MAX_SAMPLERATES] =
+const TYPEREAL CLOUDSDR_SAMPLERATE[MAX_SAMPLERATES] =
 {
 	(122.88e6/2560.0),
 	(122.88e6/500.0),
@@ -220,9 +220,9 @@ if(index >= MAX_SAMPLERATES)
 /////////////////////////////////////////////////////////////////////
 // returns the maximum bandwidth based on radio and gui bw index
 /////////////////////////////////////////////////////////////////////
-double CSdrInterface::GetSampleRateFromIndex(qint32 index)
+TYPEREAL CSdrInterface::GetSampleRateFromIndex(qint32 index)
 {
-double ret = 1.0;
+TYPEREAL ret = 1.0;
 	if(index >= MAX_SAMPLERATES)
 		return 100000;
 	switch(m_RadioType)
@@ -253,7 +253,7 @@ void CSdrInterface::StopIO()
 {
 	StopSdr();
 	//delay disconnect in case of pending traffic
-	QTimer::singleShot(200, this, SLOT(CNetio::DisconnectFromServer()));
+	QTimer::singleShot(200, this, SLOT(DisconnectFromServerSlot()));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -336,7 +336,7 @@ CAscpTxMsg TxMsg;
 				break;
 			case CI_RX_OUT_SAMPLE_RATE:
 				pMsg->GetParm8();
-				m_SampleRate = (double)pMsg->GetParm32();
+				m_SampleRate = (TYPEREAL)pMsg->GetParm32();
 				break;
 			case CI_GENERAL_PRODUCT_ID:
 				break;
@@ -431,7 +431,7 @@ CAscpTxMsg TxMsg;
     SendAscpMsg(&TxMsg);
 }
 
-void CSdrInterface::SetRx2Parameters(double Rx2Gain, double Rx2Phase)
+void CSdrInterface::SetRx2Parameters(TYPEREAL Rx2Gain, TYPEREAL Rx2Phase)
 {
 CAscpTxMsg TxMsg;
 quint16 gain;
@@ -563,8 +563,11 @@ CAscpTxMsg TxMsg;
             TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
             TxMsg.AddCItem(CI_RX_RF_FILTER);
             TxMsg.AddParm8(m_Channel);
-            TxMsg.AddParm8(CI_RX_RF_FILTER_AUTO);
-            SendAscpMsg(&TxMsg);
+			if(CLOUDSDR == m_RadioType)
+				TxMsg.AddParm8(CI_RX_RF_FILTER_BYPASS);
+			else
+				TxMsg.AddParm8(CI_RX_RF_FILTER_AUTO);
+			SendAscpMsg(&TxMsg);
 
             TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
             TxMsg.AddCItem(CI_RX_AD_MODES);
@@ -837,7 +840,7 @@ void CSdrInterface::SetFftAve(qint32 ave)
 ////////////////////////////////////////////////////////////////////////
 // Called to read/set/start calibration of the NCO Spur Offset value.
 ////////////////////////////////////////////////////////////////////////
-void CSdrInterface::ManageNCOSpurOffsets( eNCOSPURCMD cmd, double* pNCONullValueI,  double* pNCONullValueQ)
+void CSdrInterface::ManageNCOSpurOffsets( eNCOSPURCMD cmd, TYPEREAL* pNCONullValueI,  TYPEREAL* pNCONullValueQ)
 {
 	m_NcoSpurCalActive = false;
 	switch(cmd)
@@ -899,7 +902,7 @@ qDebug()<<"NCO Cal Done";
 // the NewFftData() signal.
 ///////////////////////////////////////////////////////////////////////////////
 bool CSdrInterface::GetScreenIntegerFFTData(qint32 MaxHeight, qint32 MaxWidth,
-								double MaxdB, double MindB,
+								TYPEREAL MaxdB, TYPEREAL MindB,
 								qint32 StartFreq, qint32 StopFreq,
 								qint32* OutBuf )
 {
@@ -916,7 +919,7 @@ bool CSdrInterface::GetScreenIntegerFFTData(qint32 MaxHeight, qint32 MaxWidth,
 ///////////////////////////////////////////////////////////////////////////////
 // Called by worker thread with new I/Q data fom the SDR.
 //  This thread is what is used to perform all the DSP functions
-// pIQData is ptr to complex I/Q double samples.
+// pIQData is ptr to complex I/Q TYPEREAL samples.
 // Length is the number of complex samples in pIQData.
 // emits "NewFftData()" when it accumulates an entire FFT length of samples
 // and the display update time is ready
@@ -928,7 +931,7 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 
 	if(m_InvertSpectrum)	//if need to swap I/Q data for inverting the spectrum
 	{
-		double tmp;
+		TYPEREAL tmp;
 		for(int i=0; i<NumSamples; i++)
 		{
 			tmp = pIQData[i].re;

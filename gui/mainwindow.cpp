@@ -15,6 +15,7 @@
 //	2012-02-11  ver 1.05 Updated to QT 4.8 and fixed issue with not remembering the span setting
 //	2012-06-01  ver 1.06 fixed threading issue with txmsg
 //	2013-03-25  ver 1.10 Updated to QT 5.01 changed threading methods, split GUI forms by OS
+//	2013-07-28  ver 1.11 Updated to QT 5.10 fixed DisconnectFromServerSlot bug, Added single/double precision math macros
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -60,7 +61,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.10")
+#define PROGRAM_TITLE_VERSION tr(" 1.11")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170

@@ -6,6 +6,7 @@
 //	2010-09-22  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-08-07  Modified FIR filter initialization call
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -70,7 +71,7 @@ int CAmDemod::ProcessData(int InLength, TYPECPX* pInData, TYPEREAL* pOutData)
 	{
 		//calculate instantaneous power magnitude of pInData which is I*I + Q*Q
 		TYPECPX in = pInData[i];
-		TYPEREAL mag = sqrt(in.re*in.re+in.im*in.im);
+		TYPEREAL mag = MSQRT(in.re*in.re+in.im*in.im);
 		//High pass filter(DC removal) with IIR filter
 		// H(z) = (1 - z^-1)/(1 - ALPHA*z^-1)
 		TYPEREAL z0 = mag + (m_z1 * DC_ALPHA);
@@ -91,7 +92,7 @@ int CAmDemod::ProcessData(int InLength, TYPECPX* pInData, TYPECPX* pOutData)
 	{
 		//calculate instantaneous power magnitude of pInData which is I*I + Q*Q
 		TYPECPX in = pInData[i];
-		TYPEREAL mag = sqrt(in.re*in.re+in.im*in.im);
+		TYPEREAL mag = MSQRT(in.re*in.re+in.im*in.im);
 		//High pass filter(DC removal) with IIR filter
 		// H(z) = (1 - z^-1)/(1 - ALPHA*z^-1)
 		TYPEREAL z0 = mag + (m_z1 * DC_ALPHA);

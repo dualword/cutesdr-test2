@@ -7,6 +7,7 @@
 //	2010-09-22  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-08-07  Modified FIR filter initialization to force fixed size
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -81,13 +82,13 @@ int CSamDemod::ProcessData(int InLength, TYPECPX* pInData, TYPEREAL* pOutData)
 TYPECPX tmp;
 	for(int i=0; i<InLength; i++)
 	{
-		TYPEREAL Sin = -sin(m_NcoPhase);
-		TYPEREAL Cos = cos(m_NcoPhase);
+		TYPEREAL Sin = MSIN(m_NcoPhase);
+		TYPEREAL Cos = MCOS(m_NcoPhase);
 		//complex multiply input sample by NCO's  -sin and cos
 		tmp.re = Cos * pInData[i].re - Sin * pInData[i].im;
 		tmp.im = Cos * pInData[i].im + Sin * pInData[i].re;
 		//find current sample phase after being shifted by NCO frequency
-		TYPEREAL phzerror = atan2(tmp.im, tmp.re);
+		TYPEREAL phzerror = -MATAN2(tmp.im, tmp.re);
 
 //TYPEREAL test = phzerror*100.0;
 //g_pTestBench->DisplayData(1, &test, m_SampleRate,PROFILE_6);
@@ -106,7 +107,7 @@ TYPECPX tmp;
 		pOutData[i] = (z0 - m_z1);
 		m_z1 = z0;
 	}
-	m_NcoPhase = fmod(m_NcoPhase, K_2PI);	//keep radian counter bounded
+	m_NcoPhase = MFMOD(m_NcoPhase, K_2PI);	//keep radian counter bounded
 	return InLength;
 }
 
@@ -118,13 +119,13 @@ int CSamDemod::ProcessData(int InLength, TYPECPX* pInData, TYPECPX* pOutData)
 TYPECPX tmp;
 	for(int i=0; i<InLength; i++)
 	{
-		TYPEREAL Sin = sin(m_NcoPhase);
-		TYPEREAL Cos = cos(m_NcoPhase);
+		TYPEREAL Sin = MSIN(m_NcoPhase);
+		TYPEREAL Cos = MCOS(m_NcoPhase);
 		//complex multiply input sample by NCO's  sin and cos
 		tmp.re = Cos * pInData[i].re - Sin * pInData[i].im;
 		tmp.im = Cos * pInData[i].im + Sin * pInData[i].re;
 		//find current sample phase error after being shifted by NCO frequency
-		TYPEREAL phzerror = -atan2(tmp.im, tmp.re);
+		TYPEREAL phzerror = -MATAN2(tmp.im, tmp.re);
 
 //TYPEREAL test = phzerror*100.0;
 //g_pTestBench->DisplayData(1, &test, m_SampleRate,PROFILE_6);
@@ -146,7 +147,7 @@ TYPECPX tmp;
 		m_y1 = y0;
 		m_z1 = z0;
 	}
-	m_NcoPhase = fmod(m_NcoPhase, K_2PI);	//keep radian counter bounded
+	m_NcoPhase = MFMOD(m_NcoPhase, K_2PI);	//keep radian counter bounded
 	//process I/Q with bandpass filter with 90deg phase shift between the I and Q filters
 	m_Fir.ProcessFilter(InLength, pOutData, pOutData);
 	for(int i=0; i<InLength; i++)

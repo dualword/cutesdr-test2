@@ -188,7 +188,7 @@ char Buf[2048];	//buffer to hold received UDP packet
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Called when someone double clicks on a listbox entry for viewing/editing
+//Called when someone doubleclicks on a listbox entry for viewing/editing
 //////////////////////////////////////////////////////////////////////////////
 void CSdrDiscoverDlg::OnItemDoubleClick( QListWidgetItem * item )
 {

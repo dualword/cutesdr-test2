@@ -9,6 +9,7 @@
 //	2011-03-27  Initial release
 //	2011-04-20  Changed some scope resolution operators to allow compiling with different compilers
 //	2013-02-01  Fixed issue with missing first coef of HB calculation
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -102,8 +103,8 @@ TYPEREAL tmpf = NcoFreq + m_CW_Offset;
 
 	m_NcoFreq = tmpf;
 	m_NcoInc = K_2PI*m_NcoFreq/m_InRate;
-	m_OscCos = cos(m_NcoInc);
-	m_OscSin = sin(m_NcoInc);
+	m_OscCos = MCOS(m_NcoInc);
+	m_OscSin = MSIN(m_NcoInc);
 //qDebug()<<"NCO "<<m_NcoFreq;
 }
 
@@ -219,11 +220,11 @@ TYPECPX Osc;
 //StartPerformance();
 
 #if (NCO_VCASM || NCO_GCCASM)
-double	dPhaseAcc = (double)m_NcoTime;
-double	dASMCos   = 0.0;
-double	dASMSin   = 0.0;
-double*	pdCosAns  = &dASMCos;
-double*	pdSinAns  = &dASMSin;
+TYPEREAL	dPhaseAcc = m_NcoTime;
+TYPEREAL	dASMCos   = 0.0;
+TYPEREAL	dASMSin   = 0.0;
+TYPEREAL*	pdCosAns  = &dASMCos;
+TYPEREAL*	pdSinAns  = &dASMSin;
 #endif
 
 //263uS using sin/cos or 70uS using quadrature osc or 200uS using _asm
@@ -231,8 +232,8 @@ double*	pdSinAns  = &dASMSin;
 	{
 		dtmp = pInData[i];
 #if NCO_LIB
-		Osc.re = cos(m_NcoTime);
-		Osc.im = sin(m_NcoTime);
+		Osc.re = MCOS(m_NcoTime);
+		Osc.im = MSIN(m_NcoTime);
 		m_NcoTime += m_NcoInc;
 #elif NCO_OSC
 		TYPEREAL OscGn;
@@ -268,7 +269,7 @@ double*	pdSinAns  = &dASMSin;
 #if (NCO_VCASM || NCO_GCCASM)
 	m_NcoTime = dPhaseAcc;
 #elif !NCO_OSC
-	m_NcoTime = fmod(m_NcoTime, K_2PI);	//keep radian counter bounded
+	m_NcoTime = MFMOD(m_NcoTime, K_2PI);	//keep radian counter bounded
 #endif
 
 	//now perform decimation of pInData by calling decimate by 2 stages

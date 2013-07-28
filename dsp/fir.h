@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // fir.h: interface for the CFir class.
 //
-//  This class implements a FIR  filter using a double flat coefficient
+//  This class implements a FIR  filter using a dual flat coefficient
 //array to eliminate testing for buffer wrap around.
 //
 //Also a decimate by 3 half band filter class CDecimateBy2 is implemented
@@ -57,8 +57,8 @@ class CFir
 public:
     CFir();
 
-	void InitConstFir( int NumTaps, const double* pCoef, TYPEREAL Fsamprate);
-	void InitConstFir( int NumTaps, const double* pICoef, const double* pQCoef, TYPEREAL Fsamprate);
+	void InitConstFir( int NumTaps, const TYPEREAL* pCoef, TYPEREAL Fsamprate);
+	void InitConstFir( int NumTaps, const TYPEREAL* pICoef, const TYPEREAL* pQCoef, TYPEREAL Fsamprate);
 	int InitLPFilter(int NumTaps, TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate);
 	int InitHPFilter(int NumTaps, TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate);
 	void GenerateHBFilter( TYPEREAL FreqOffset);

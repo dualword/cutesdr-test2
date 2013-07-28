@@ -6,6 +6,7 @@
 // History:
 //	2011-09-17  Initial creation MSW
 //	2011-09-17  Initial release
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -72,7 +73,7 @@
 #define BLOCK_ERROR_LIMIT 5		//number of bad blocks before trying to resync at the bit level
 
 #define HILB_LENGTH 61
-const double HILBLP_H[HILB_LENGTH] =
+const TYPEREAL HILBLP_H[HILB_LENGTH] =
 {	//LowPass filter prototype that is shifted and "hilbertized" to get 90 deg phase shift
 	//and convert to baseband complex domain.
 	//kaiser-Bessel alpha 1.4  cutoff 30Khz at sample rate of 250KHz
@@ -217,7 +218,7 @@ g_pTestBench->DisplayData(InLength, pInData, m_SampleRate,PROFILE_2);
 	for(int i=0; i<InLength; i++)
 	{
 		m_D0 = pInData[i];
-		pOutData[i] = FMDEMOD_GAIN*atan2( (m_D1.re*m_D0.im - m_D0.re*m_D1.im), (m_D1.re*m_D0.re + m_D1.im*m_D0.im));
+		pOutData[i] = FMDEMOD_GAIN*MATAN2( (m_D1.re*m_D0.im - m_D0.re*m_D1.im), (m_D1.re*m_D0.re + m_D1.im*m_D0.im));
 		m_D1 = m_D0;
 	}
 	//decimate down close to final audio rate by dividing by 2's
@@ -265,7 +266,7 @@ TYPEREAL LminusR;
 	for(int i=0; i<InLength; i++)
 	{
 		m_D0 = pInData[i];
-		m_RawFm[i] = FMDEMOD_GAIN*atan2( (m_D1.re*m_D0.im - m_D0.re*m_D1.im), (m_D1.re*m_D0.re + m_D1.im*m_D0.im));//~266 nSec/sample
+		m_RawFm[i] = FMDEMOD_GAIN*MATAN2( (m_D1.re*m_D0.im - m_D0.re*m_D1.im), (m_D1.re*m_D0.re + m_D1.im*m_D0.im));//~266 nSec/sample
 		m_D1 = m_D0;
 	}
 //StopPerformance(InLength);
@@ -283,7 +284,7 @@ g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
 			TYPEREAL in = m_RawFm[i];
 			//Left minus Right signal is created by multiplying by 38KHz recovered pilot
 			// scale by 2 since DSB amplitude is half of the Right plus Left signal
-			LminusR = 2.0 * in * sin( m_PilotPhase[i]*2.0);
+			LminusR = 2.0 * in * MSIN( m_PilotPhase[i]*2.0);
 			pOutData[i].re = in + LminusR;		//extract left and right signals
 			pOutData[i].im = in - LminusR;
 		}
@@ -390,7 +391,7 @@ void CWFmDemod::InitPilotPll( TYPEREAL SampleRate )
 	m_PilotPllAlpha = 2.0*PILOTPLL_ZETA*PILOTPLL_BW * norm;
 	m_PilotPllBeta = (m_PilotPllAlpha * m_PilotPllAlpha)/(4.0*PILOTPLL_ZETA*PILOTPLL_ZETA);
 	m_PhaseErrorMagAve = 0.0;
-	m_PhaseErrorMagAlpha = (1.0-exp(-1.0/(m_SampleRate*LOCK_TIMECONST)) );
+	m_PhaseErrorMagAlpha = (1.0-MEXP(-1.0/(m_SampleRate*LOCK_TIMECONST)) );
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -399,8 +400,8 @@ void CWFmDemod::InitPilotPll( TYPEREAL SampleRate )
 /////////////////////////////////////////////////////////////////////////////////
 bool CWFmDemod::ProcessPilotPll( int InLength, TYPECPX* pInData )
 {
-double Sin;
-double Cos;
+TYPEREAL Sin;
+TYPEREAL Cos;
 TYPECPX tmp;
 //StartPerformance();
 //m_PilotPhaseAdjust = g_TestValue;
@@ -409,8 +410,8 @@ TYPECPX tmp;
 #if 1
 		asm volatile ("fsincos" : "=%&t" (Cos), "=%&u" (Sin) : "0" (m_PilotNcoPhase));	//126nS
 #else
-		Sin = sin(m_PilotNcoPhase);		//178ns for sin/cos calc
-		Cos = cos(m_PilotNcoPhase);
+		Sin = MSIN(m_PilotNcoPhase);		//178ns for sin/cos calc
+		Cos = MCOS(m_PilotNcoPhase);
 #endif
 		//complex multiply input sample by NCO's  sin and cos
 		tmp.re = Cos * pInData[i].re - Sin * pInData[i].im;
@@ -431,7 +432,7 @@ TYPECPX tmp;
 		//create long average of error magnitude for lock detection
 		m_PhaseErrorMagAve = (1.0-m_PhaseErrorMagAlpha)*m_PhaseErrorMagAve + m_PhaseErrorMagAlpha*phzerror*phzerror;
 	}
-	m_PilotNcoPhase = fmod(m_PilotNcoPhase, K_2PI);	//keep radian counter bounded
+	m_PilotNcoPhase = MFMOD(m_PilotNcoPhase, K_2PI);	//keep radian counter bounded
 //StopPerformance(InLength);
 	if(m_PhaseErrorMagAve < LOCK_MAG_THRESHOLD)
         return true;
@@ -461,7 +462,7 @@ int CWFmDemod::GetStereoLock(int* pPilotLock)
 /////////////////////////////////////////////////////////////////////////////////
 void CWFmDemod::InitDeemphasis( TYPEREAL Time, TYPEREAL SampleRate)	//create De-emphasis LP filter
 {
-	m_DeemphasisAlpha = (1.0-exp(-1.0/(SampleRate*Time)) );
+	m_DeemphasisAlpha = (1.0-MEXP(-1.0/(SampleRate*Time)) );
 	m_DeemphasisAveRe = 0.0;
 	m_DeemphasisAveIm = 0.0;
 }
@@ -520,9 +521,9 @@ void CWFmDemod::InitRds( TYPEREAL SampleRate )
 		TYPEREAL t = (TYPEREAL)i/(SampleRate);
 		TYPEREAL x = t*RDS_BITRATE;
 		TYPEREAL x64 = 64.0*x;
-		m_RdsMatchCoef[i+m_MatchCoefLength] = .75*cos(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
+		m_RdsMatchCoef[i+m_MatchCoefLength] = .75*MCOS(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
 								(1.0/(9.0/x-x64)) );
-		m_RdsMatchCoef[m_MatchCoefLength-i] = -.75*cos(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
+		m_RdsMatchCoef[m_MatchCoefLength-i] = -.75*MCOS(2.0*K_2PI*x)*( (1.0/(1.0/x-x64)) -
 								(1.0/(9.0/x-x64)) );
 	}
 	m_MatchCoefLength *= 2;
@@ -551,16 +552,16 @@ void CWFmDemod::InitRds( TYPEREAL SampleRate )
 /////////////////////////////////////////////////////////////////////////////////
 void CWFmDemod::ProcessRdsPll( int InLength, TYPECPX* pInData, TYPEREAL* pOutData )
 {
-double Sin;
-double Cos;
+TYPEREAL Sin;
+TYPEREAL Cos;
 TYPECPX tmp;
 	for(int i=0; i<InLength; i++)
 	{
 #if 1
 		asm volatile ("fsincos" : "=%&t" (Cos), "=%&u" (Sin) : "0" (m_RdsNcoPhase));	//126nS
 #else
-		Sin = sin(m_RdsNcoPhase);		//178ns for sin/cos calc
-		Cos = cos(m_RdsNcoPhase);
+		Sin = MSIN(m_RdsNcoPhase);		//178ns for sin/cos calc
+		Cos = MCOS(m_RdsNcoPhase);
 #endif
 		//complex multiply input sample by NCO's  sin and cos
 		tmp.re = Cos * pInData[i].re - Sin * pInData[i].im;
@@ -578,7 +579,7 @@ TYPECPX tmp;
 		m_RdsNcoPhase += (m_RdsNcoFreq + m_RdsPllAlpha * phzerror);
 		pOutData[i] = tmp.im;
 	}
-	m_RdsNcoPhase = fmod(m_RdsNcoPhase, K_2PI);	//keep radian counter bounded
+	m_RdsNcoPhase = MFMOD(m_RdsNcoPhase, K_2PI);	//keep radian counter bounded
 //g_pTestBench->DisplayData(InLength, m_RdsData, m_RdsOutputRate, PROFILE_6);
 }
 
@@ -809,7 +810,7 @@ TYPEREAL angle;
 		return -K_PI2;
 	}
 	TYPEREAL z = y/x;
-	if( fabs( z ) < 1.0 )
+	if( MFABS( z ) < 1.0 )
 	{
 		angle = z/(1.0 + 0.2854*z*z);
 		if( x < 0.0 )

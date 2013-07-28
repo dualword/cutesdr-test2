@@ -85,13 +85,13 @@ public:
 	void StartSdr();
 	void StopSdr();
 	bool GetScreenIntegerFFTData(qint32 MaxHeight, qint32 MaxWidth,
-									double MaxdB, double MindB,
+									TYPEREAL MaxdB, TYPEREAL MindB,
 									qint32 StartFreq, qint32 StopFreq,
 									qint32* OutBuf );
 	void ScreenUpdateDone(){m_ScreenUpateFinished = true;}
 	void KeepAlive();
-	void ManageNCOSpurOffsets( eNCOSPURCMD cmd, double* pNCONullValueI,  double* pNCONullValueQ);
-	void SetRx2Parameters(double Rx2Gain, double Rx2Phase);
+	void ManageNCOSpurOffsets( eNCOSPURCMD cmd, TYPEREAL* pNCONullValueI,  TYPEREAL* pNCONullValueQ);
+	void SetRx2Parameters(TYPEREAL Rx2Gain, TYPEREAL Rx2Phase);
 
 	//calls to these functions promt a signal in response
 	void GetSdrInfo();
@@ -122,7 +122,7 @@ public:
 	qint32 GetSdrRfGain(){return m_RfGain;}
 
 	void SetSdrBandwidthIndex(qint32 bwindex);
-	double GetSdrSampleRate(){return m_SampleRate;}
+	TYPEREAL GetSdrSampleRate(){return m_SampleRate;}
 	quint32 GetSdrMaxBandwidth(){return m_SampleRate;}
 
 	void SetFftSize(qint32 size);
@@ -132,7 +132,7 @@ public:
 	quint32 GetSdrFftAve(){return m_FftAve;}
 
 	qint32 GetMaxBWFromIndex(qint32 index);
-	double GetSampleRateFromIndex(qint32 index);
+	TYPEREAL GetSampleRateFromIndex(qint32 index);
 
 	void SetMaxDisplayRate(int updatespersec){m_MaxDisplayRate = updatespersec;
 							m_DisplaySkipValue = m_SampleRate/(m_FftSize*m_MaxDisplayRate);
@@ -143,8 +143,8 @@ public:
 
 	void SetupNoiseProc(tNoiseProcdInfo* pNoiseProcSettings);
 
-	double GetSMeterPeak(){return m_Demodulator.GetSMeterPeak() + m_GainCalibrationOffset - m_RfGain;}
-	double GetSMeterAve(){return m_Demodulator.GetSMeterAve() + m_GainCalibrationOffset - m_RfGain;}
+	TYPEREAL GetSMeterPeak(){return m_Demodulator.GetSMeterPeak() + m_GainCalibrationOffset - m_RfGain;}
+	TYPEREAL GetSMeterAve(){return m_Demodulator.GetSMeterAve() + m_GainCalibrationOffset - m_RfGain;}
 
 	void SetSpectrumInversion(bool Invert){m_InvertSpectrum = Invert;}
 	void SetUSFmVersion(bool USFm){m_USFm = USFm;}
@@ -189,8 +189,8 @@ private:
 	quint64 m_BaseFrequencyRangeMax;
 	quint64 m_OptionFrequencyRangeMin;
 	quint64 m_OptionFrequencyRangeMax;
-	double m_SampleRate;
-	double m_GainCalibrationOffset;
+	TYPEREAL m_SampleRate;
+	TYPEREAL m_GainCalibrationOffset;
 	TYPECPX m_DataBuf[MAX_FFT_SIZE];
 
 	Cad6620 m_AD6620;
@@ -198,8 +198,8 @@ private:
 
 	bool m_NcoSpurCalActive;	//NCO spur reduction variables
 	qint32 m_NcoSpurCalCount;
-	double m_NCOSpurOffsetI;
-	double m_NCOSpurOffsetQ;
+	TYPEREAL m_NCOSpurOffsetI;
+	TYPEREAL m_NCOSpurOffsetQ;
 
 	CFft m_Fft;
 	CDemodulator m_Demodulator;

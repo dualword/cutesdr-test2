@@ -8,6 +8,7 @@
 //	2010-12-18  Initial creation MSW
 //	2011-03-27  Initial release
 //	2011-08-07  Added WFM test generator
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -43,7 +44,7 @@
 #include <QDebug>
 
 CTestBench* g_pTestBench = NULL;		//pointer to this class is global so everybody can access
-double g_TestValue= 0.0;
+TYPEREAL g_TestValue= 0.0;
 
 #define USE_FILE 0
 //#define FILE_NAME "SSB-7210000Hz_001.wav"
@@ -191,7 +192,7 @@ void CTestBench::showEvent(QShowEvent *event)
 
 void CTestBench::OnTestSlider1(int val)
 {
-	g_TestValue = (double)val/100.0;
+	g_TestValue = (TYPEREAL)val/100.0;
 qDebug()<<"Test Val = "<<g_TestValue;
 }
 
@@ -244,7 +245,7 @@ void CTestBench::Init()
 //////////////////////////////////////////////////////////////////////
 void CTestBench::OnSweepStart(int start)
 {
-	m_SweepStartFrequency = (double)start*1000.0;
+	m_SweepStartFrequency = (TYPEREAL)start*1000.0;
 	m_SweepFrequency = m_SweepStartFrequency;
 	m_SweepAcc = 0.0;
 	if(m_UseFmGen)
@@ -253,7 +254,7 @@ void CTestBench::OnSweepStart(int start)
 
 void CTestBench::OnSweepStop(int stop)
 {
-	m_SweepStopFrequency = (double)stop*1000.0;
+	m_SweepStopFrequency = (TYPEREAL)stop*1000.0;
 	m_SweepFrequency = m_SweepStartFrequency;
 	m_SweepAcc = 0.0;
 	if(m_UseFmGen)
@@ -262,7 +263,7 @@ void CTestBench::OnSweepStop(int stop)
 
 void CTestBench::OnSweepRate(int rate)
 {
-	m_SweepRate = (double)rate; // Hz/sec
+	m_SweepRate = (TYPEREAL)rate; // Hz/sec
 	m_SweepAcc = 0.0;
 	m_SweepRateInc = m_SweepRate/m_GenSampleRate;
 	if(m_UseFmGen)
@@ -276,7 +277,7 @@ void CTestBench::OnDisplayRate(int rate)
 	m_DisplayRate = rate;
 	if(m_TimeDisplay)
 	{
-		double capturesize = ( (double)m_HorzSpan*m_DisplaySampleRate/1000.0);
+		TYPEREAL capturesize = ( (TYPEREAL)m_HorzSpan*m_DisplaySampleRate/1000.0);
 		m_DisplaySkipValue = m_DisplaySampleRate/(capturesize*m_DisplayRate);
 	}
 	else
@@ -300,9 +301,9 @@ void CTestBench::OnHorzSpan(int span)
 	if(m_TimeDisplay)
 	{
 		DrawTimeOverlay();
-		double capturesize = ( (double)m_HorzSpan*m_DisplaySampleRate/1000.0);
+		TYPEREAL capturesize = ( (TYPEREAL)m_HorzSpan*m_DisplaySampleRate/1000.0);
 		m_DisplaySkipValue = m_DisplaySampleRate/(capturesize*m_DisplayRate);
-		m_TimeScrnPixel = .001* (double)((double)m_HorzSpan/(double)m_Rect.width());	//time per pixel on screen in seconds
+		m_TimeScrnPixel = .001* (TYPEREAL)((TYPEREAL)m_HorzSpan/(TYPEREAL)m_Rect.width());	//time per pixel on screen in seconds
 	}
 }
 
@@ -344,24 +345,24 @@ void CTestBench::OnFmGen(bool On)
 
 void CTestBench::OnPulseWidth(int pwidth)
 {
-	m_PulseWidth = (double)pwidth * .001;
+	m_PulseWidth = (TYPEREAL)pwidth * .001;
 }
 
 void CTestBench::OnPulsePeriod(int pperiod)
 {
-	m_PulsePeriod = (double)pperiod * .001;
+	m_PulsePeriod = (TYPEREAL)pperiod * .001;
 }
 
 void CTestBench::OnSignalPwr(int pwr)
 {
 	m_SignalPower = pwr;
-	m_SignalAmplitude = MAX_AMPLITUDE*pow(10.0, m_SignalPower/20.0);
+	m_SignalAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_SignalPower/20.0);
 }
 
 void CTestBench::OnNoisePwr(int pwr)
 {
 	m_NoisePower = pwr;
-	m_NoiseAmplitude = MAX_AMPLITUDE*pow(10.0, m_NoisePower/20.0);
+	m_NoiseAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_NoisePower/20.0);
 }
 
 void CTestBench::OnEnablePeak(bool enablepeak)
@@ -382,13 +383,13 @@ void CTestBench::OnEnablePeak(bool enablepeak)
 //and place in users pBuf.
 //Called by thread so no GUI calls!
 //////////////////////////////////////////////////////////////////////
-void CTestBench::CreateGeneratorSamples(int length, TYPECPX* pBuf, double samplerate)
+void CTestBench::CreateGeneratorSamples(int length, TYPECPX* pBuf, TYPEREAL samplerate)
 {
 int i;
-double rad;
-double r;
-double u1;
-double u2;
+TYPEREAL rad;
+TYPEREAL r;
+TYPEREAL u1;
+TYPEREAL u2;
 	if(!m_Active || !m_GenOn)
 		return;
 	if(m_GenSampleRate != samplerate)
@@ -457,7 +458,7 @@ double u2;
 
 	for(i=0; i<length; i++)
 	{
-		double amp = m_SignalAmplitude;
+		TYPEREAL amp = m_SignalAmplitude;
 		if(m_PulseWidth > 0.0)
 		{	//if pulse width is >0 create pulse modulation
 			m_PulseTimer += (1.0/m_GenSampleRate);
@@ -480,8 +481,8 @@ if( (m_SweepFrequency>-31250) && (m_SweepFrequency<31250) )
 	if(!m_UseFmGen)
 	{
 		//create complex sin/cos signal
-		pBuf[i].re = amp*cos(m_SweepAcc);
-		pBuf[i].im = amp*sin(m_SweepAcc);
+		pBuf[i].re = amp*MCOS(m_SweepAcc);
+		pBuf[i].im = amp*MSIN(m_SweepAcc);
 		//inc phase accummulator with normalized freqeuency step
 
 
@@ -498,17 +499,17 @@ if( (m_SweepFrequency>-31250) && (m_SweepFrequency<31250) )
 		if(m_NoisePower > -160.0)
 		{	//create and add noise samples to signal
 			do {
-				u1 = 1.0 - 2.0 * (double)rand()/(double)RAND_MAX ;
-				u2 = 1.0 - 2.0 * (double)rand()/(double)RAND_MAX ;
+				u1 = 1.0 - 2.0 * (TYPEREAL)rand()/(TYPEREAL)RAND_MAX ;
+				u2 = 1.0 - 2.0 * (TYPEREAL)rand()/(TYPEREAL)RAND_MAX ;
 				r = u1*u1 + u2*u2;
 			} while(r >= 1.0 || r == 0.0);
-			rad = sqrt(-2.0*log(r)/r);
+			rad = MSQRT(-2.0*MLOG(r)/r);
 			//add noise samples to generator output
 			pBuf[i].re += (m_NoiseAmplitude*u1*rad);
 			pBuf[i].im += (m_NoiseAmplitude*u2*rad);
 		}
 	}
-	m_SweepAcc = (double)fmod((double)m_SweepAcc, K_2PI);	//keep radian counter bounded
+	m_SweepAcc = (TYPEREAL)MFMOD((TYPEREAL)m_SweepAcc, K_2PI);	//keep radian counter bounded
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -516,13 +517,13 @@ if( (m_SweepFrequency>-31250) && (m_SweepFrequency<31250) )
 //and place in users pBuf.
 //Called by thread so no GUI calls!
 //////////////////////////////////////////////////////////////////////
-void CTestBench::CreateGeneratorSamples(int length, TYPEREAL* pBuf, double samplerate)
+void CTestBench::CreateGeneratorSamples(int length, TYPEREAL* pBuf, TYPEREAL samplerate)
 {
 int i;
-double rad;
-double r;
-double u1;
-double u2;
+TYPEREAL rad;
+TYPEREAL r;
+TYPEREAL u1;
+TYPEREAL u2;
 	if(!m_Active || !m_GenOn)
 		return;
 	if(m_GenSampleRate != samplerate)
@@ -532,7 +533,7 @@ double u2;
 	}
 	for(i=0; i<length; i++)
 	{
-		double amp = m_SignalAmplitude;
+		TYPEREAL amp = m_SignalAmplitude;
 		if(m_PulseWidth > 0.0)
 		{	//if pulse width is >0 create pulse modulation
 			m_PulseTimer += (1.0/m_GenSampleRate);
@@ -569,16 +570,16 @@ if( (m_SweepFrequency>-31250) && (m_SweepFrequency<31250) )
 		if(m_NoisePower > -160.0)
 		{	//create and add noise samples to signal
 			do {
-				u1 = 1.0 - 2.0 * (double)rand()/(double)RAND_MAX ;
-				u2 = 1.0 - 2.0 * (double)rand()/(double)RAND_MAX ;
+				u1 = 1.0 - 2.0 * (TYPEREAL)rand()/(TYPEREAL)RAND_MAX ;
+				u2 = 1.0 - 2.0 * (TYPEREAL)rand()/(TYPEREAL)RAND_MAX ;
 				r = u1*u1 + u2*u2;
 			} while(r >= 1.0 || r == 0.0);
-			rad = sqrt(-2.0*log(r)/r);
+			rad = MSQRT(-2.0*MLOG(r)/r);
 			//add noise samples to generator output
 			pBuf[i] += (m_NoiseAmplitude*u1*rad);
 		}
 	}
-	m_SweepAcc = (double)fmod((double)m_SweepAcc, K_2PI);	//keep radian counter bounded
+	m_SweepAcc = (TYPEREAL)MFMOD((TYPEREAL)m_SweepAcc, K_2PI);	//keep radian counter bounded
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -595,8 +596,8 @@ int i;
 	m_SweepRateInc = m_SweepRate/m_GenSampleRate;
 	if(m_UseFmGen)
 		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
-	m_SignalAmplitude = MAX_AMPLITUDE*pow(10.0, m_SignalPower/20.0);
-	m_NoiseAmplitude = MAX_AMPLITUDE*pow(10.0, m_NoisePower/20.0);
+	m_SignalAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_SignalPower/20.0);
+	m_NoiseAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_NoisePower/20.0);
 
 	//init FFT values
     m_Fft.SetFFTParams(  TEST_FFTSIZE, false, 0.0,	m_DisplaySampleRate);
@@ -605,7 +606,7 @@ int i;
 	m_Span = ( m_Span - (m_Span+5)%10 + 5);
 
 	//init time display values
-	m_TimeScrnPixel = .001* (double)((double)m_HorzSpan/(double)m_Rect.width());	//time per pixel on screen in seconds
+	m_TimeScrnPixel = .001* (TYPEREAL)((TYPEREAL)m_HorzSpan/(TYPEREAL)m_Rect.width());	//time per pixel on screen in seconds
 
 
 	m_TimeScrnPos = 0;
@@ -628,7 +629,7 @@ int i;
 	if(m_TimeDisplay)
 	{
 		DrawTimeOverlay();
-		double capturesize = ( (double)m_HorzSpan*m_DisplaySampleRate/1000.0);
+		TYPEREAL capturesize = ( (TYPEREAL)m_HorzSpan*m_DisplaySampleRate/1000.0);
 		m_DisplaySkipValue = m_DisplaySampleRate/(capturesize*m_DisplayRate);
 	}
 	else
@@ -647,7 +648,7 @@ int i;
 //Called by thread so no GUI calls!
 // COMPLEX Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPECPX* pBuf, double samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPECPX* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -682,15 +683,15 @@ void CTestBench::DisplayData(int length, TYPECPX* pBuf, double samplerate, int p
 		{
 			//calc to time variables, one in sample time units and
 			//one in screen pixel units
-			double intime = (double)m_TimeInPos/samplerate;
-			double scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+			TYPEREAL intime = (TYPEREAL)m_TimeInPos/samplerate;
+			TYPEREAL scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
 				ChkForTrigger( (int)pBuf[i].re );
 				m_TimeBuf1[m_TimeScrnPos] = (int)pBuf[i].re;
 				m_TimeBuf2[m_TimeScrnPos++] = (int)pBuf[i].im;
-				scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
 				{
 					m_TimeScrnPos = 0;
@@ -707,7 +708,7 @@ void CTestBench::DisplayData(int length, TYPECPX* pBuf, double samplerate, int p
 //Called by thread so no GUI calls!
 // REAL Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPEREAL* pBuf, double samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPEREAL* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -741,15 +742,15 @@ void CTestBench::DisplayData(int length, TYPEREAL* pBuf, double samplerate, int 
 	{
 		for(int i=0; i<length; i++)
 		{
-			double intime = (double)m_TimeInPos/samplerate;
-			double scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+			TYPEREAL intime = (TYPEREAL)m_TimeInPos/samplerate;
+			TYPEREAL scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
 				ChkForTrigger( (int)pBuf[i] );
 				m_TimeBuf1[m_TimeScrnPos] = (int)pBuf[i];
 				m_TimeBuf2[m_TimeScrnPos++] = 0;
-				scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
 				{
 					m_TimeScrnPos = 0;
@@ -766,7 +767,7 @@ void CTestBench::DisplayData(int length, TYPEREAL* pBuf, double samplerate, int 
 //Called by thread so no GUI calls!
 // MONO 16 bit Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, double samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -800,15 +801,15 @@ void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, double samplerate, in
 	{
 		for(int i=0; i<length; i++)
 		{
-			double intime = (double)m_TimeInPos/samplerate;
-			double scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+			TYPEREAL intime = (TYPEREAL)m_TimeInPos/samplerate;
+			TYPEREAL scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
 				ChkForTrigger( (int)pBuf[i<<1] );
 				m_TimeBuf1[m_TimeScrnPos] = (int)pBuf[i];
 				m_TimeBuf2[m_TimeScrnPos++] = 0;
-				scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
 				{
 					m_TimeScrnPos = 0;
@@ -825,7 +826,7 @@ void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, double samplerate, in
 //Called by thread so no GUI calls!
 // STEREO 16 bit Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, double samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -859,15 +860,15 @@ void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, double samplerate, 
 	{	//if displaying time domain data
 		for(int i=0; i<length; i++)
 		{
-			double intime = (double)m_TimeInPos/samplerate;
-			double scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+			TYPEREAL intime = (TYPEREAL)m_TimeInPos/samplerate;
+			TYPEREAL scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
 				ChkForTrigger( (int)pBuf[i].re );
 				m_TimeBuf1[m_TimeScrnPos] = pBuf[i].re;
 				m_TimeBuf2[m_TimeScrnPos++] = pBuf[i].im;
-				scrntime = (double)m_TimeScrnPos*m_TimeScrnPixel;
+				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
 				{
 					m_TimeScrnPos = 0;
@@ -1175,7 +1176,7 @@ QRect rect;
 	//draw time values
 	painter.setPen(Qt::cyan);
 	y = h - (h/TB_TIMEVERT_DIVS);
-	double xval = 0;
+	TYPEREAL xval = 0;
 	for( int i=0; i<=TB_HORZ_DIVS; i++)
 	{
 		if(0==i)
@@ -1196,7 +1197,7 @@ QRect rect;
 			rect.setRect(x ,y, (int)pixperdiv, h/TB_TIMEVERT_DIVS);
 			painter.drawText(rect, Qt::AlignHCenter|Qt::AlignVCenter,  QString::number(xval));
 		}
-		xval += (double)m_HorzSpan/(double)TB_HORZ_DIVS;
+		xval += (TYPEREAL)m_HorzSpan/(TYPEREAL)TB_HORZ_DIVS;
 	}
 	//draw horizontal grids
 	pixperdiv = (float)h / (float)TB_TIMEVERT_DIVS;
@@ -1341,7 +1342,7 @@ qint64 FreqPerDiv;
 qint64 StartFreq;
 float freq;
 int i,j;
-int numfractdigits = (int)log10((double)m_FreqUnits);
+int numfractdigits = (int)MLOG10((TYPEREAL)m_FreqUnits);
 	if(m_CurrentDataIsCpx)
 	{
 		FreqPerDiv = m_Span/TB_HORZ_DIVS;

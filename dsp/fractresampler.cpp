@@ -8,6 +8,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2013-07-28  Added single/double precision math macros
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -76,7 +77,6 @@ CFractResampler::~CFractResampler()
 	if(m_pInputBuf)
 		delete m_pInputBuf;
 }
-//
 
 //////////////////////////////////////////////////////////////////////
 // Initialize resampler memory and create windowed sinc table
@@ -101,13 +101,13 @@ TYPEREAL window;
 	for(i=0; i<SINC_LENGTH; i++)
 	{	//calc Blackman-Harris window points
 		window = (0.35875
-				- 0.48829*cos( (K_2PI*i)/(SINC_LENGTH-1) )
-				+ 0.14128*cos( (2.0*K_2PI*i)/(SINC_LENGTH-1) )
-				- 0.01168*cos( (3.0*K_2PI*i)/(SINC_LENGTH-1) ) );
+				- 0.48829*MCOS( (K_2PI*i)/(SINC_LENGTH-1) )
+				+ 0.14128*MCOS( (2.0*K_2PI*i)/(SINC_LENGTH-1) )
+				- 0.01168*MCOS( (3.0*K_2PI*i)/(SINC_LENGTH-1) ) );
 		//calculate sin(x)/x    sinc point * window
-		fi = K_PI*(double)(i - SINC_LENGTH/2)/(double)SINC_PERIOD_PTS ;
+		fi = K_PI*(TYPEREAL)(i - SINC_LENGTH/2)/(TYPEREAL)SINC_PERIOD_PTS ;
 		if(i != SINC_LENGTH/2)
-			m_pSinc[i] = window * (TYPEREAL)sin( (double)fi )/(double)fi;
+			m_pSinc[i] = window * (TYPEREAL)MSIN( (TYPEREAL)fi )/(TYPEREAL)fi;
 		else
 			m_pSinc[i] = 1.0;
 
@@ -146,7 +146,7 @@ int CFractResampler::Resample( int InLength, TYPEREAL Rate, TYPECPX* pInBuf, TYP
 int i;
 int j;
 int IntegerTime = (int)m_FloatTime;	//integer input time accumulator
-double dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
+TYPEREAL dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
 int outsamples = 0;
 TYPECPX acc;
 
@@ -165,7 +165,7 @@ TYPECPX acc;
 		for(i=1; i<=SINC_PERIODS; i++)
 		{
 			j = IntegerTime + i;	//temp integer time position for convolution loop
-			int sindx =  (int)(( (double)j - m_FloatTime) * (double)SINC_PERIOD_PTS );
+			int sindx =  (int)(( (TYPEREAL)j - m_FloatTime) * (TYPEREAL)SINC_PERIOD_PTS );
 			acc.re += (m_pInputBuf[j].re * m_pSinc[sindx] );
 			acc.im += (m_pInputBuf[j].im * m_pSinc[sindx] );
 		}
@@ -173,7 +173,7 @@ TYPECPX acc;
 		m_FloatTime += dt;		//inc floating pt output time step
 		IntegerTime = (int)m_FloatTime;	//truncate to integer
 	}
-	m_FloatTime -= (double)InLength;	//move floating time position back for next call
+	m_FloatTime -= (TYPEREAL)InLength;	//move floating time position back for next call
 										//keeping leftover fraction
 	//need to copy last SINC_PERIODS input samples in buffer to beginning of buffer
 	// for FIR wrap around management. j points to last input sample processed
@@ -196,7 +196,7 @@ int CFractResampler::Resample( int InLength, TYPEREAL Rate, TYPECPX* pInBuf, TYP
 int i;
 int j;
 int IntegerTime = (int)m_FloatTime;	//integer input time accumulator
-double dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
+TYPEREAL dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
 int outsamples = 0;
 TYPECPX acc;
 
@@ -217,7 +217,7 @@ TYPECPX acc;
 		for(i=1; i<=SINC_PERIODS; i++)
 		{
 			j = IntegerTime + i;	//temp integer time position for convolution loop
-			int sindx =  (int)(( (double)j - m_FloatTime) * (double)SINC_PERIOD_PTS );
+			int sindx =  (int)(( (TYPEREAL)j - m_FloatTime) * (TYPEREAL)SINC_PERIOD_PTS );
 			acc.re += (m_pInputBuf[j].re * m_pSinc[sindx] );
 			acc.im += (m_pInputBuf[j].im * m_pSinc[sindx] );
 		}
@@ -238,7 +238,7 @@ TYPECPX acc;
 		m_FloatTime += dt;	//inc floating pt output time step
 		IntegerTime = (int)m_FloatTime;	//truncate to integer
 	}
-	m_FloatTime -= (double)InLength;	//move floating time position back for next call
+	m_FloatTime -= (TYPEREAL)InLength;	//move floating time position back for next call
 										//keeping leftover fraction
 	//need to copy last SINC_PERIODS input samples in buffer to beginning of buffer
 	// for FIR wrap around management. j points to last input sample processed
@@ -260,7 +260,7 @@ int CFractResampler::Resample( int InLength, TYPEREAL Rate, TYPEREAL* pInBuf, TY
 int i;
 int j;
 int IntegerTime = (int)m_FloatTime;	//integer input time accumulator
-double dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
+TYPEREAL dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
 int outsamples = 0;
 TYPEREAL acc;
 
@@ -279,14 +279,14 @@ TYPEREAL acc;
 		for(i=1; i<=SINC_PERIODS; i++)
 		{
 			j = IntegerTime + i;	//temp integer time position for convolution loop
-			int sindx =  (int)(( (double)j - m_FloatTime) * (double)SINC_PERIOD_PTS );
+			int sindx =  (int)(( (TYPEREAL)j - m_FloatTime) * (TYPEREAL)SINC_PERIOD_PTS );
 			acc += (m_pInputBuf[j].re * m_pSinc[sindx] );
 		}
 		pOutBuf[outsamples++] = acc;
 		m_FloatTime += dt;
 		IntegerTime = (int)m_FloatTime;
 	}
-	m_FloatTime -= (double)InLength;	//move floating time position back for next call
+	m_FloatTime -= (TYPEREAL)InLength;	//move floating time position back for next call
 										//keeping leftover fraction
 	//need to copy last SINC_PERIODS input samples in buffer to beginning of buffer
 	// for FIR wrap around management. j points to last input sample processed
@@ -308,7 +308,7 @@ int CFractResampler::Resample( int InLength, TYPEREAL Rate, TYPEREAL* pInBuf, TY
 int i;
 int j;
 int IntegerTime = (int)m_FloatTime;	//integer input time accumulator
-double dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
+TYPEREAL dt = Rate;	//output delta time as function of input sample time (input rate/output rate)
 int outsamples = 0;
 TYPEREAL acc;
 
@@ -327,7 +327,7 @@ TYPEREAL acc;
 		for(i=1; i<=SINC_PERIODS; i++)
 		{
 			j = IntegerTime + i;	//temp integer time position for convolution loop
-			int sindx =  (int)(( (double)j - m_FloatTime) * (double)SINC_PERIOD_PTS );
+			int sindx =  (int)(( (TYPEREAL)j - m_FloatTime) * (TYPEREAL)SINC_PERIOD_PTS );
 			acc += (m_pInputBuf[j].re * m_pSinc[sindx] );
 		}
 		TYPEREAL tmp;
@@ -341,7 +341,7 @@ TYPEREAL acc;
 		m_FloatTime += dt;
 		IntegerTime = (int)m_FloatTime;
 	}
-	m_FloatTime -= (double)InLength;	//move floating time position back for next call
+	m_FloatTime -= (TYPEREAL)InLength;	//move floating time position back for next call
 										//keeping leftover fraction
 	//need to copy last SINC_PERIODS input samples in buffer to beginning of buffer
 	// for FIR wrap around management. j points to last input sample processed

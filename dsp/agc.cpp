@@ -6,6 +6,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2011-03-27  Initial release
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -136,26 +137,24 @@ void CAgc::SetParameters(bool AgcOn,  bool UseHang, int Threshold, int ManualGai
 	}
 
 	//convert m_ThreshGain to linear manual gain value
-	m_ManualAgcGain = MAX_MANUAL_AMPLITUDE*pow(10.0, -(100-(TYPEREAL)m_ManualGain)/20.0);
+	m_ManualAgcGain = MAX_MANUAL_AMPLITUDE*MPOW(10.0, -(100-(TYPEREAL)m_ManualGain)/20.0);
 
 	//calculate parameters for AGC gain as a function of input magnitude
 	m_Knee = (TYPEREAL)m_Threshold/20.0;
 	m_GainSlope = m_SlopeFactor/(100.0);
-	m_FixedGain = AGC_OUTSCALE * pow(10.0, m_Knee*(m_GainSlope - 1.0) );	//fixed gain value used below knee threshold
+	m_FixedGain = AGC_OUTSCALE * MPOW(10.0, m_Knee*(m_GainSlope - 1.0) );	//fixed gain value used below knee threshold
 //qDebug()<<"m_Knee = "<<m_Knee<<" m_GainSlope = "<<m_GainSlope<< "m_FixedGain = "<<m_FixedGain;
 
-	//calculate fast and slow filter values.
-	m_AttackRiseAlpha = (1.0-exp(-1.0/(m_SampleRate*ATTACK_RISE_TIMECONST)) );
-	m_AttackFallAlpha = (1.0-exp(-1.0/(m_SampleRate*ATTACK_FALL_TIMECONST)) );
-
-	m_DecayRiseAlpha = (1.0-exp(-1.0/(m_SampleRate * (TYPEREAL)m_Decay*.001*DECAY_RISEFALL_RATIO)) );	//make rise time DECAY_RISEFALL_RATIO of fall
 	m_HangTime = (int)(m_SampleRate * (TYPEREAL)m_Decay * .001);
 
+	//calculate fast and slow filter values.
+	m_AttackRiseAlpha = (1.0-MEXP(-1.0/(m_SampleRate*ATTACK_RISE_TIMECONST)) );
+	m_AttackFallAlpha = (1.0-MEXP(-1.0/(m_SampleRate*ATTACK_FALL_TIMECONST)) );
+	m_DecayRiseAlpha = (1.0-MEXP(-1.0/(m_SampleRate * (TYPEREAL)m_Decay*.001*DECAY_RISEFALL_RATIO)) );	//make rise time DECAY_RISEFALL_RATIO of fall
 	if(m_UseHang)
-		m_DecayFallAlpha = (1.0-exp(-1.0/(m_SampleRate * RELEASE_TIMECONST)) );
+		m_DecayFallAlpha = (1.0-MEXP(-1.0/(m_SampleRate * RELEASE_TIMECONST)) );
 	else
-		m_DecayFallAlpha = (1.0-exp(-1.0/(m_SampleRate * (TYPEREAL)m_Decay *.001)) );
-
+		m_DecayFallAlpha = (1.0-MEXP(-1.0/(m_SampleRate * (TYPEREAL)m_Decay *.001)) );
 	m_DelaySamples = (int)(m_SampleRate*DELAY_TIMECONST);
 	m_WindowSamples = (int)(m_SampleRate*WINDOW_TIMECONST);
 
@@ -188,23 +187,15 @@ TYPECPX delayedin;
 			m_SigDelayBuf[m_SigDelayPtr++] = in;
 			if( m_SigDelayPtr >= m_DelaySamples)	//deal with delay buffer wrap around
 				m_SigDelayPtr = 0;
-
-//TYPEREAL dmag = 0.5* log10(  (dsig.re*dsig.re+dsig.im*dsig.im)/(MAX_AMPLITUDE*MAX_AMPLITUDE) + 1e-16);	//clamped to -160dBfs
-//pOutData[i].re = 3000*dmag;
-#if 1
-			mag = fabs(in.re);
-			TYPEREAL mim = fabs(in.im);
+			mag = MFABS(in.re);
+			TYPEREAL mim = MFABS(in.im);
 			if(mim>mag)
 				mag = mim;
-			mag = log10( mag + MIN_CONSTANT ) - log10(MAX_AMPLITUDE);		//0==max  -8 is min==-160dB
-#else
-			mag = in.re*in.re+in.im*in.im;
-			//mag is power so 0.5 factor takes square root of power
-			mag = 0.5* log10( mag/(MAX_AMPLITUDE*MAX_AMPLITUDE) + 1e-16);	//clamped to -160dBfs
-#endif
+			mag = MLOG10( mag + MIN_CONSTANT ) - MLOG10(MAX_AMPLITUDE);		//0==max  -8 is min==-160dB
+
 //pOutData[i].re = 3000*mag;
 
-//pOutData[i].re = 1500*log10( ((delayedin.re*delayedin.re)+(delayedin.im*delayedin.im))/(MAX_AMPLITUDE*MAX_AMPLITUDE) + 1e-16);;
+//pOutData[i].re = 1500*MLOG10( ((delayedin.re*delayedin.re)+(delayedin.im*delayedin.im))/(MAX_AMPLITUDE*MAX_AMPLITUDE) + 1e-16);;
 
 			//create a sliding window of 'm_WindowSamples' magnitudes and output the peak value within the sliding window
 			TYPEREAL tmp = m_MagBuf[m_MagBufPos];	//get oldest mag sample from buffer into tmp
@@ -278,7 +269,7 @@ TYPECPX delayedin;
 			if(mag<=m_Knee)		//use fixed gain if below knee
 				gain = m_FixedGain;
 			else				//use variable gain if above knee
-				gain = AGC_OUTSCALE * pow(10.0, mag*(m_GainSlope - 1.0) );
+				gain = AGC_OUTSCALE * MPOW(10.0, mag*(m_GainSlope - 1.0) );
 //pOutData[i].re = .5*gain;
 			pOutData[i].re = delayedin.re * gain;
 			pOutData[i].im = delayedin.im * gain;
@@ -318,7 +309,7 @@ TYPEREAL delayedin;
 				m_SigDelayPtr = 0;
 
 			//convert |mag| to log |mag|
-			mag = log10( fabs(in) + MIN_CONSTANT ) - log10(MAX_AMPLITUDE);		//0==max  -8 is min==-160dB
+			mag = MLOG10( MFABS(in) + MIN_CONSTANT ) - MLOG10(MAX_AMPLITUDE);		//0==max  -8 is min==-160dB
 
 			//create a sliding window of 'm_WindowSamples' magnitudes and output the peak value within the sliding window
 			TYPEREAL tmp = m_MagBuf[m_MagBufPos];	//get oldest mag sample from buffer into tmp
@@ -388,7 +379,7 @@ TYPEREAL delayedin;
 			if(mag<=m_Knee)		//use fixed gain if below knee
 				gain = m_FixedGain;
 			else				//use variable gain if above knee
-				gain = AGC_OUTSCALE * pow(10.0, mag*(m_GainSlope - 1.0) );
+				gain = AGC_OUTSCALE * MPOW(10.0, mag*(m_GainSlope - 1.0) );
 			pOutData[i] = delayedin * gain;
 		}
 	}

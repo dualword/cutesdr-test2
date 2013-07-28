@@ -6,6 +6,7 @@
 // History:
 //	2010-12-22  Initial creation MSW
 //	2011-03-27  Initial release
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -64,8 +65,8 @@ void CSMeter::ProcessData(int length, TYPECPX* pInData, TYPEREAL SampleRate)
 	if(SampleRate != m_SampleRate)
 	{	//need to recalculate any values dependent on sample rate
 		m_SampleRate = SampleRate;
-		m_AttackAlpha = (1.0-exp(-1.0/(m_SampleRate*ATTACK_TIMECONST)) );
-		m_DecayAlpha = (1.0-exp(-1.0/(m_SampleRate*DECAY_TIMECONST)) );
+		m_AttackAlpha = (1.0-MEXP(-1.0/(m_SampleRate*ATTACK_TIMECONST)) );
+		m_DecayAlpha = (1.0-MEXP(-1.0/(m_SampleRate*DECAY_TIMECONST)) );
 //qDebug()<<"SMeter vals "<<m_AttackAlpha << m_DecayAlpha << SampleRate;
 	}
 	for(int i=0; i<length; i++)
@@ -73,7 +74,7 @@ void CSMeter::ProcessData(int length, TYPECPX* pInData, TYPEREAL SampleRate)
 		//calculate instantaeous power magnitude of pInData which is I*I + Q*Q
 		TYPECPX in = pInData[i];
 		//convert I/Q magnitude to dB power
-		TYPEREAL mag = 10.0*log10((in.re*in.re+in.im*in.im)/ MAX_PWR + 1e-50);
+		TYPEREAL mag = 10.0*MLOG10((in.re*in.re+in.im*in.im)/ MAX_PWR + 1e-50);
 		//calculate attack and decay average
 		m_AttackAve = (1.0-m_AttackAlpha)*m_AttackAve + m_AttackAlpha*mag;
 		m_DecayAve = (1.0-m_DecayAlpha)*m_DecayAve + m_DecayAlpha*mag;

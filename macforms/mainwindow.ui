@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>572</width>
-    <height>256</height>
+    <height>270</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -280,6 +280,11 @@
            <height>20</height>
           </size>
          </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -429,7 +434,7 @@
      <x>0</x>
      <y>0</y>
      <width>572</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

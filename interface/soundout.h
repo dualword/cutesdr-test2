@@ -53,13 +53,13 @@ public:
 	virtual ~CSoundOut();
 
 	//Exposed functions
-	void Start(int OutDevIndx, bool StereoOut, double UsrDataRate)
+	void Start(int OutDevIndx, bool StereoOut, TYPEREAL UsrDataRate)
 					{emit StartSig(OutDevIndx, StereoOut, UsrDataRate);}
 	void Stop(){emit StopSig();}	//stops soundcard output
 
 	void PutOutQueue(int numsamples, TYPEREAL* pData );
 	void PutOutQueue(int numsamples, TYPECPX* pData );
-	void ChangeUserDataRate(double UsrDataRate);
+	void ChangeUserDataRate(TYPEREAL UsrDataRate);
 	void SetVolume(qint32 vol);
 	int GetRateError(){return (int)m_PpmError;}
 
@@ -88,11 +88,11 @@ private:
 	int m_RateUpdateCount;
 	int m_OutQLevel;
 	int m_PpmError;
-	double m_Gain;
-	double m_UserDataRate;
-	double m_OutRatio;
-	double m_RateCorrection;
-	double m_AveOutQLevel;
+	TYPEREAL m_Gain;
+	TYPEREAL m_UserDataRate;
+	TYPEREAL m_OutRatio;
+	TYPEREAL m_RateCorrection;
+	TYPEREAL m_AveOutQLevel;
 
 	char m_pData[SOUND_WRITEBUFSIZE];
 	TYPEMONO16 m_OutQueueMono[OUTQSIZE];

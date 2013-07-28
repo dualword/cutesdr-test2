@@ -54,7 +54,7 @@ public:
 	int ProcessData(int InLength, TYPECPX* InBuf, TYPECPX* OutBuf);
 
 private:
-	void CpxMpy(int N, TYPECPX* m, TYPECPX* src, TYPECPX* dest);
+	inline void CpxMpy(int N, TYPECPX* m, TYPECPX* src, TYPECPX* dest);
 	void FreeMemory();
 
 	TYPEREAL m_FLoCut;

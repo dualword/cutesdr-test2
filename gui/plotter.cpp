@@ -730,7 +730,7 @@ qint64 FreqPerDiv = m_Span/HORZ_DIVS;
 qint64 StartFreq = m_CenterFreq - m_Span/2;
 float freq;
 int i,j;
-int numfractdigits = (int)log10((double)m_FreqUnits);
+int numfractdigits = (int)MLOG10((TYPEREAL)m_FreqUnits);
 	if(1 == m_FreqUnits)
 	{	//if units is Hz then just output integer freq
 		for(int i=0; i<=HORZ_DIVS; i++)
@@ -820,9 +820,9 @@ void CPlotter::DisplayCursorFreq(QPoint pt, qint64 freq)
 	if(freq<100000)
 		m_Str = QString::number(freq) + " Hz";
 	else if(freq<1000000)
-		m_Str = QString::number((double)freq/1000.0) + " kHz";
+		m_Str = QString::number((TYPEREAL)freq/1000.0) + " kHz";
 	else
-		m_Str = QString::number((double)freq/1000000.0,'g', 8) + " MHz";
+		m_Str = QString::number((TYPEREAL)freq/1000000.0,'g', 8) + " MHz";
 	QToolTip::showText(pt, m_Str, this, rect() );
 }
 

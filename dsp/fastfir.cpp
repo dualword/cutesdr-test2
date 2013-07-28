@@ -14,6 +14,7 @@
 //	2011-03-27  Initial release
 //	2011-11-03  Fixed m_pFFTOverlapBuf initialization bug
 //	2012-08-06	Fixed m_pWindowTbl sizing problem
+//	2013-07-28  Added single/double precision math macros
 //////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -95,9 +96,9 @@ int i;
 	for( i=0; i<CONV_FIR_SIZE; i++)
 	{
 		m_pWindowTbl[i] = (0.3635819
-			- 0.4891775*cos( (K_2PI*i)/(CONV_FIR_SIZE-1) )
-			+ 0.1365995*cos( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
-			- 0.0106411*cos( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
+			- 0.4891775*MCOS( (K_2PI*i)/(CONV_FIR_SIZE-1) )
+			+ 0.1365995*MCOS( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
+			- 0.0106411*MCOS( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
 		m_pFFTOverlapBuf[i].re = 0.0;
 		m_pFFTOverlapBuf[i].im = 0.0;
 	}
@@ -107,9 +108,9 @@ int i;
 	for( i=0; i<CONV_FIR_SIZE; i++)
 	{
 		m_pWindowTbl[i] = (0.35875
-			- 0.48829*cos( (K_2PI*i)/(CONV_FIR_SIZE-1) )
-			+ 0.14128*cos( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
-			- 0.01168*cos( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
+			- 0.48829*MCOS( (K_2PI*i)/(CONV_FIR_SIZE-1) )
+			+ 0.14128*MCOS( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
+			- 0.01168*MCOS( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
 		m_pFFTOverlapBuf[i].re = 0.0;
 		m_pFFTOverlapBuf[i].im = 0.0;
 	}
@@ -119,9 +120,9 @@ int i;
 	for( i=0; i<CONV_FIR_SIZE; i++)
 	{
 		m_pWindowTbl[i] = (0.355768
-			- 0.487396*cos( (K_2PI*i)/(CONV_FIR_SIZE-1) )
-			+ 0.144232*cos( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
-			- 0.012604*cos( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
+			- 0.487396*MCOS( (K_2PI*i)/(CONV_FIR_SIZE-1) )
+			+ 0.144232*MCOS( (2.0*K_2PI*i)/(CONV_FIR_SIZE-1) )
+			- 0.012604*MCOS( (3.0*K_2PI*i)/(CONV_FIR_SIZE-1) ) );
 		m_pFFTOverlapBuf[i].re = 0.0;
 		m_pFFTOverlapBuf[i].im = 0.0;
 	}
@@ -226,12 +227,12 @@ int i;
 		if( (TYPEREAL)i == fCenter )	//deal with odd size filter singularity where sin(0)/0==1
 			z = 2.0 * nFc;
 		else
-			z = (TYPEREAL)sin(K_2PI*x*nFc)/(K_PI*x) * m_pWindowTbl[i];
+			z = (TYPEREAL)MSIN(K_2PI*x*nFc)/(K_PI*x) * m_pWindowTbl[i];
 
 		//shift lowpass filter coefficients in frequency by (hicut+lowcut)/2 to form bandpass filter anywhere in range
 		// (also scales by 1/FFTsize since inverse FFT routine scales by FFTsize)
-		m_pFilterCoef[i].re  =  z * cos(nFs * x)/(TYPEREAL)CONV_FFT_SIZE;
-		m_pFilterCoef[i].im = z * sin(nFs * x)/(TYPEREAL)CONV_FFT_SIZE;
+		m_pFilterCoef[i].re  =  z * MCOS(nFs * x)/(TYPEREAL)CONV_FFT_SIZE;
+		m_pFilterCoef[i].im = z * MSIN(nFs * x)/(TYPEREAL)CONV_FFT_SIZE;
 	}
 
 #if 0		//debug hack to write m_pFilterCoef to a file for analysis
@@ -244,7 +245,7 @@ int i;
 		char Buf[256];
 		for( i=0; i<CONV_FIR_SIZE; i++)
 		{
-			sprintf( Buf, "%19.12g %19.12g\r\n", (double)CONV_FFT_SIZE*m_pFilterCoef[i].re, (double)CONV_FFT_SIZE*m_pFilterCoef[i].im);
+			sprintf( Buf, "%19.12g %19.12g\r\n", (TYPEREAL)CONV_FFT_SIZE*m_pFilterCoef[i].re, (TYPEREAL)CONV_FFT_SIZE*m_pFilterCoef[i].im);
 			File.write(Buf);
 		}
 	}
@@ -311,7 +312,7 @@ int outpos = 0;
 //   Complex multiply N point array m with src and place in dest.  
 // src and dest can be the same buffer.
 ///////////////////////////////////////////////////////////////////////////////
-void CFastFIR::CpxMpy(int N, TYPECPX* m, TYPECPX* src, TYPECPX* dest)
+inline void CFastFIR::CpxMpy(int N, TYPECPX* m, TYPECPX* src, TYPECPX* dest)
 {
 	for(int i=0; i<N; i++)
 	{
