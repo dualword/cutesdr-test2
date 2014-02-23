@@ -149,6 +149,8 @@ TYPEREAL mod;
 		m_RightAcc -= K_2PI;
 	while(m_ModAcc>K_2PI)
 		m_ModAcc -= K_2PI;
+	while(m_ModAcc < -K_2PI)
+		m_ModAcc += K_2PI;
 #if 1	//state machine for stereo testing
 	if(StateTimer++ > TimerPeriod/Length)
 	{

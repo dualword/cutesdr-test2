@@ -16,6 +16,8 @@
 //	2012-06-01  ver 1.06 fixed threading issue with txmsg
 //	2013-03-25  ver 1.10 Updated to QT 5.01 changed threading methods, split GUI forms by OS
 //	2013-07-28  ver 1.11 Updated to QT 5.10 fixed DisconnectFromServerSlot bug, Added single/double precision math macros
+//	2013-12-16  ver 1.12 Updated to QT 5.20 updated to Q_OS_WIN macro use
+//	2014-02-23  ver 1.13 Updated to correct qwindows.dll for QT 5.2 and expanded frequency ranges
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -46,6 +48,7 @@
 //or implied, of Moe Wheatley.
 //==========================================================================================
 
+#include <QMainWindow>
 #include "gui/mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
@@ -61,7 +64,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.11")
+#define PROGRAM_TITLE_VERSION tr(" 1.13")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -143,7 +146,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	//tmp save demod freq since gets set to center freq by center freq control inititalization
 	qint64 tmpdemod = m_DemodFrequency;
 
-	ui->frameFreqCtrl->Setup(9, 100U, 500000000U, 1, UNITS_KHZ );
+	ui->frameFreqCtrl->Setup(10, 100U, 1700000000U, 1, UNITS_KHZ );
 	ui->frameFreqCtrl->SetBkColor(Qt::darkBlue);
 	ui->frameFreqCtrl->SetDigitColor(Qt::cyan);
 	ui->frameFreqCtrl->SetUnitsColor(Qt::lightGray);
@@ -151,13 +154,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->frameFreqCtrl->SetFrequency(m_CenterFrequency);
 
 	m_DemodFrequency = tmpdemod;
-	ui->frameDemodFreqCtrl->Setup(9, 100U, 500000000U, 1, UNITS_KHZ );
+	ui->frameDemodFreqCtrl->Setup(10, 100U, 1700000000U, 1, UNITS_KHZ );
 	ui->frameDemodFreqCtrl->SetBkColor(Qt::darkBlue);
 	ui->frameDemodFreqCtrl->SetDigitColor(Qt::white);
 	ui->frameDemodFreqCtrl->SetUnitsColor(Qt::lightGray);
 	ui->frameDemodFreqCtrl->SetHighlightColor(Qt::darkGray);
 	//limit demod frequency to Center Frequency +/-span frequency
-	ui->frameDemodFreqCtrl->Setup(9, m_CenterFrequency-m_SpanFrequency/2,
+	ui->frameDemodFreqCtrl->Setup(10, m_CenterFrequency-m_SpanFrequency/2,
 								  m_CenterFrequency+m_SpanFrequency/2,
 								  1,
 								  UNITS_KHZ );
@@ -676,7 +679,7 @@ CSdrSetupDlg dlg(this,m_pSdrInterface);
 		ui->SpanspinBox->setValue(m_SpanFrequency/1000);
 		ui->framePlot->SetSpanFreq( m_SpanFrequency );
 		//limit demod frequency to Center Frequency +/-span frequency
-		ui->frameDemodFreqCtrl->Setup(9, m_CenterFrequency-m_SpanFrequency/2,
+		ui->frameDemodFreqCtrl->Setup(10, m_CenterFrequency-m_SpanFrequency/2,
 									  m_CenterFrequency+m_SpanFrequency/2,
 									  1,
 									  UNITS_KHZ );
@@ -886,7 +889,7 @@ void MainWindow::OnNewCenterFrequency(qint64 freq)
 	ui->framePlot->SetCenterFreq( m_CenterFrequency );
 	ui->framePlot->SetDemodCenterFreq( m_DemodFrequency );
 	//limit demod frequency to Center Frequency +/-span frequency
-	ui->frameDemodFreqCtrl->Setup(9, m_CenterFrequency-m_SpanFrequency/2,
+	ui->frameDemodFreqCtrl->Setup(10, m_CenterFrequency-m_SpanFrequency/2,
 								  m_CenterFrequency+m_SpanFrequency/2,
 								  1,
 								  UNITS_KHZ );
@@ -965,7 +968,7 @@ void MainWindow::OnSpanChanged(int spanKhz)
 	ui->framePlot->SetSpanFreq(m_SpanFrequency);
 	ui->framePlot->UpdateOverlay();
 	//limit demod frequency to Center Frequency +/-span frequency
-	ui->frameDemodFreqCtrl->Setup(9, m_CenterFrequency-m_SpanFrequency/2,
+	ui->frameDemodFreqCtrl->Setup(10, m_CenterFrequency-m_SpanFrequency/2,
 								  m_CenterFrequency+m_SpanFrequency/2,
 								  1,
 								  UNITS_KHZ );
