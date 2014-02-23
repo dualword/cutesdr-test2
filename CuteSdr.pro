@@ -128,7 +128,8 @@ FORMS += macforms/mainwindow.ui \
 	macforms/aboutdlg.ui \
 	macforms/noiseprocdlg.ui
 }
-unix {
+
+unix:!macx {
 FORMS += unixforms/mainwindow.ui \
 	unixforms/sdrdiscoverdlg.ui \
 	unixforms/sounddlg.ui \

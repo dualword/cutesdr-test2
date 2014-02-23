@@ -43,9 +43,10 @@
 #include <QDebug>
 #include "netiobase.h"
 
-#ifndef Q_OS_WIN
-#include <sys/socket.h>
+#ifdef Q_OS_WIN
+ #include "winsock2.h"
 #endif
+
 
 #define MSGSTATE_HDR1 0		//ASCP msg assembly states
 #define MSGSTATE_HDR2 1
