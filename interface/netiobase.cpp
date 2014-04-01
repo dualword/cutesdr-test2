@@ -93,8 +93,10 @@ QHostAddress CIPAdr(ClientAdr);
 
 	if(m_pUdpSocket->bind( ServerPort ) )
 	{
+#ifdef Q_OS_WIN
 		int v = 2000000;	//need to bump socket memory buffer size for higher speeds
 		::setsockopt(m_pUdpSocket->socketDescriptor(), SOL_SOCKET, SO_RCVBUF, (char *)&v, sizeof(v));
+#endif
 		qDebug()<<"Udp Bind ok"<<CIPAdr<< ServerPort;
 	}
 	else
