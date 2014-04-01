@@ -68,6 +68,11 @@
      <height>20</height>
     </size>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>-100 dB</string>
    </property>
@@ -95,6 +100,11 @@
      <width>0</width>
      <height>20</height>
     </size>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>Name</string>
