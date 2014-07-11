@@ -44,6 +44,7 @@ public:
 	void ProcessData(int length, TYPECPX* pInData, TYPEREAL SampleRate);
 	TYPEREAL GetPeak();
 	TYPEREAL GetAve();
+	void SetSMeterCalibration(TYPEREAL offset) { m_CalibrationOffset=offset;}
 
 private:
 	TYPEREAL m_AverageMag;
@@ -53,6 +54,7 @@ private:
 	TYPEREAL m_DecayAve;
 	TYPEREAL m_AttackAlpha;
 	TYPEREAL m_DecayAlpha;
+	TYPEREAL m_CalibrationOffset;
 
 };
 

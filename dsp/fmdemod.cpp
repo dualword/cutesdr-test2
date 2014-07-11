@@ -109,11 +109,11 @@ void CFmDemod::SetSampleRate(TYPEREAL samplerate)
 
 
 /////////////////////////////////////////////////////////////////////////////////
-// Sets squelch threshold based on 'Value' which goes from 0 to 99.
+// Sets squelch threshold based on 'Value' which goes from -160 to 0.
 /////////////////////////////////////////////////////////////////////////////////
 void CFmDemod::SetSquelch(int Value)
 {
-	m_SquelchThreshold = (TYPEREAL)(SQUELCH_MAX - (( SQUELCH_MAX*Value)/99));
+	m_SquelchThreshold = (SQUELCH_MAX*(TYPEREAL)Value)/-160.0;
 }
 
 

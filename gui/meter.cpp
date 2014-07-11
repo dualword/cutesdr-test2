@@ -4,13 +4,13 @@
 //  This class creates and draws an S meter widget
 //
 // History:
-//	2010-12-28  Initial creation MSW
-//	2011-03-27  Initial release
+//	2013-10-02  Initial creation MSW
+//	2014-07-11  Added Squelch threshold marker
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
-//Copyright 2010 Moe Wheatley. All rights reserved.
+//Copyright 2013 Moe Wheatley. All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without modification, are
 //permitted provided that the following conditions are met:
@@ -59,7 +59,7 @@
 CMeter::CMeter(QWidget *parent) :
 	QFrame(parent)
 {
-	m_pSdrInterface = NULL;
+	m_Overload = false;
 	setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	setFocusPolicy(Qt::StrongFocus);
 	setAttribute(Qt::WA_PaintOnScreen,false);
@@ -68,11 +68,12 @@ CMeter::CMeter(QWidget *parent) :
 	setAttribute(Qt::WA_NoSystemBackground, true);
 	setMouseTracking ( true );
 
-	m_2DPixmap = QPixmap(0,0);
+	m_Pixmap = QPixmap(0,0);
 	m_OverlayPixmap = QPixmap(0,0);
 	m_Size = QSize(0,0);
 	m_Slevel = 0;
 	m_dBm = -120;
+	m_SquelchPos = 0;
 }
 
 CMeter::~CMeter()
@@ -105,8 +106,8 @@ void CMeter::resizeEvent(QResizeEvent* )
 		m_Size = size();
 		m_OverlayPixmap = QPixmap(m_Size.width(), m_Size.height());
 		m_OverlayPixmap.fill(Qt::black);
-		m_2DPixmap = QPixmap(m_Size.width(), m_Size.height());
-		m_2DPixmap.fill(Qt::black);
+		m_Pixmap = QPixmap(m_Size.width(), m_Size.height());
+		m_Pixmap.fill(Qt::black);
 	}
 	DrawOverlay();
 	draw();
@@ -114,56 +115,80 @@ void CMeter::resizeEvent(QResizeEvent* )
 
 
 //////////////////////////////////////////////////////////////////////
-// Slot called to update meter level position
+// Slot called to update meter Receiver level position
 //////////////////////////////////////////////////////////////////////
-void CMeter::SetdBmLevel(TYPEREAL dbm)
+void CMeter::SetdBmLevel(double dbm, bool Overload)
 {
-qreal w = (qreal)m_2DPixmap.width();
-	w = w - 2.0*CTRL_MARGIN*w;	//width of meter scale in pixels
 	m_dBm = (int)dbm;
-	if(dbm<MIN_DBM)
-		dbm = MIN_DBM;
-	if(dbm>MAX_DBM)
-		dbm = MAX_DBM;
-	if(dbm <= -73.0)
+	m_Slevel = CalcPosFromdB(dbm);
+	if(m_Overload != Overload)
 	{
-		qreal div = w/14.0;
-		m_Slevel = (int)( (dbm/6.0 + 121.0/6.0)*div + .5);
-}
-	else
-	{
-		qreal div = w/14.0;
-		m_Slevel = (int)( ( 8 + dbm/10.0 + 73.0/10.0 )*div + .5);
+		m_Overload = Overload;
+		DrawOverlay();
 	}
 	draw();
 }
 
+
 //////////////////////////////////////////////////////////////////////
-// Called by QT when screen needs to be redrawn
+// called to calculate meter position from a dB level
 //////////////////////////////////////////////////////////////////////
-void CMeter::paintEvent(QPaintEvent *)
+int CMeter::CalcPosFromdB(double db)
 {
-	QPainter painter(this);
-	painter.drawPixmap(0,0,m_2DPixmap);
-	return;
+qreal w = (qreal)m_Pixmap.width();
+	w = w - 2.0*CTRL_MARGIN*w;	//width of meter scale in pixels
+	if(db<MIN_DBM)
+		db = MIN_DBM;
+	if(db>MAX_DBM)
+		db = MAX_DBM;
+	if(db <= -73.0)
+	{
+		qreal div = w/14.0;
+		return (int)( (db/6.0 + 121.0/6.0)*div + .5);
+	}
+	else
+	{
+		qreal div = w/14.0;
+		return (int)( ( 8 + db/10.0 + 73.0/10.0 )*div + .5);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
+// called to set Squelch Threshold meter position from a dB level
+//////////////////////////////////////////////////////////////////////
+void CMeter::SetSquelchPos(double db)
+{
+	m_SquelchPos = CalcPosFromdB(db);
+	DrawOverlay();
+	draw();
 }
 
 
 //////////////////////////////////////////////////////////////////////
-// Called to update spectrum data for displaying on the screen
+// Called by Qt when screen needs to be redrawn
+//////////////////////////////////////////////////////////////////////
+void CMeter::paintEvent(QPaintEvent *)
+{
+	QPainter painter(this);
+	painter.drawPixmap(0,0,m_Pixmap);
+	return;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Called to update meter data display on the screen
 //////////////////////////////////////////////////////////////////////
 void CMeter::draw()
 {
 int w;
 int h;
-	if(m_2DPixmap.isNull())
+	if(m_Pixmap.isNull())
 		return;
 	//get/draw the 2D spectrum
-	w = m_2DPixmap.width();
-	h = m_2DPixmap.height();
+	w = m_Pixmap.width();
+	h = m_Pixmap.height();
 	//first copy into 2Dbitmap the overlay bitmap.
-	m_2DPixmap = m_OverlayPixmap.copy(0,0,w,h);
-	QPainter painter(&m_2DPixmap);
+	m_Pixmap = m_OverlayPixmap.copy(0,0,w,h);
+	QPainter painter(&m_Pixmap);
 
 	//DrawCurrent position indicator
 	qreal hline = (qreal)h*CTRL_XAXIS_HEGHT;
@@ -176,7 +201,10 @@ int h;
 	pts[2].setX(x+6); pts[2].setY(hline+6);
 
 
-	painter.setBrush(QBrush(Qt::yellow));
+	if(m_Overload)
+		painter.setBrush(QBrush(Qt::red));
+	else
+		painter.setBrush(QBrush(Qt::yellow));
 	painter.setOpacity(1.0);
 	painter.drawPolygon(pts,3);
 
@@ -192,14 +220,12 @@ int h;
 	painter.setOpacity(1.0);
 	m_Str.setNum(m_dBm);
 	painter.drawText(marg, h-1, m_Str+" dBm" );
-
-
 	update();
 }
 
 //////////////////////////////////////////////////////////////////////
-// Called to draw an overlay bitmap containing grid and text that
-// does not need to be recreated every fft data update.
+// Called to draw an overlay bitmap containing graphics that
+// does not need to be recreated every data update.
 //////////////////////////////////////////////////////////////////////
 void CMeter::DrawOverlay()
 {
@@ -211,20 +237,25 @@ void CMeter::DrawOverlay()
 	QRect rect;
 	QPainter painter(&m_OverlayPixmap);
 
-//	m_OverlayPixmap.fill(Qt::darkCyan);
-#if 1
 	//fill background with gradient
 	QLinearGradient gradient(0, 0, 0 ,h);
-	gradient.setColorAt(1, Qt::cyan);
-	gradient.setColorAt(0, Qt::blue);
+	if(m_Overload)
+	{
+		gradient.setColorAt(1, Qt::white);
+		gradient.setColorAt(0, Qt::red);
+	}
+	else
+	{
+		gradient.setColorAt(1, Qt::cyan);
+		gradient.setColorAt(0, Qt::blue);
+	}
 	painter.setBrush(gradient);
 	painter.drawRect(0, 0, w, h);
-#endif
 
 	//Draw scale lines
 	qreal marg = (qreal)w*CTRL_MARGIN;
 	qreal hline = (qreal)h*CTRL_XAXIS_HEGHT;
-	qreal magstart = (qreal)h*CTRL_MAJOR_START;
+	qreal majstart = (qreal)h*CTRL_MAJOR_START;
 	qreal minstart = (qreal)h*CTRL_MINOR_START;
 	qreal hstop = (qreal)w-marg;
 	painter.setPen(QPen(Qt::white, 1,Qt::SolidLine));
@@ -235,21 +266,22 @@ void CMeter::DrawOverlay()
 		if(x&1)	//minor tics
 			painter.drawLine( QLineF(xpos, minstart, xpos, hline) );
 		else
-			painter.drawLine( QLineF(xpos, magstart, xpos, hline) );
+			painter.drawLine( QLineF(xpos, majstart, xpos, hline) );
 		xpos += (hstop-marg)/14.0;
 	}
+
 
 	//draw scale text
 	//create Font to use for scales
 	QFont Font("Arial");
-	QFontMetrics metrics(Font);
+//	QFontMetrics metrics(Font);
 	y = h/4;
 	Font.setPixelSize(y);
 	Font.setWeight(QFont::Normal);
 	painter.setFont(Font);
 	int rwidth = (int)((hstop-marg)/7.0);
 	m_Str = "+60";
-	rect.setRect(marg/2, 0, rwidth, magstart);
+	rect.setRect(marg/2, 0, rwidth, majstart);
 	for(x=1; x<=9; x+=2)
 	{
 		m_Str.setNum(x);
@@ -263,5 +295,8 @@ void CMeter::DrawOverlay()
 		painter.drawText(rect, Qt::AlignHCenter|Qt::AlignVCenter, m_Str);
 		rect.translate( rwidth,0);
 	}
+	//Draw Squelch Threshold Position thingy
+	painter.setPen(QPen(Qt::red, 2,Qt::SolidLine));
+	painter.drawEllipse( marg + m_SquelchPos-1, majstart, 2, 2 );
 }
 

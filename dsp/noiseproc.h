@@ -74,7 +74,6 @@ private:
 	int m_WidthSamples;
 	TYPEREAL m_Ratio;
 	TYPEREAL m_MagAveSum;
-	TYPEREAL m_MagAve;
 
 	QMutex m_Mutex;		//for keeping threads from stomping on each other
 

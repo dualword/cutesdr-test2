@@ -2,8 +2,8 @@
 // meter.h: interface for the CMeter class.
 //
 // History:
-//	2010-12-28  Initial creation MSW
-//	2011-03-27  Initial release
+//	2013-10-02  Initial creation MSW
+//	2014-07-11  Added Squelch level position MSW
 /////////////////////////////////////////////////////////////////////
 #ifndef METER_H
 #define METER_H
@@ -11,7 +11,6 @@
 #include <QtGui>
 #include <QFrame>
 #include <QImage>
-#include "interface/sdrinterface.h"
 
 
 class CMeter : public QFrame
@@ -26,11 +25,12 @@ public:
 
 	void draw();		//call to draw new fft data onto screen plot
 	void UpdateOverlay(){DrawOverlay();}
+	void SetSquelchPos(double db);		//{ m_SquelchPos = CalcPosFromdB(db);}
 
 signals:
 
 public slots:
-	void SetdBmLevel(TYPEREAL dbm);
+	void SetdBmLevel(double dbm, bool Overload);
 
 protected:
 		//re-implemented widget event handlers
@@ -39,13 +39,15 @@ protected:
 
 private:
 	void DrawOverlay();
-	QPixmap m_2DPixmap;
+	int CalcPosFromdB(double db);
+	QPixmap m_Pixmap;
 	QPixmap m_OverlayPixmap;
 	QSize m_Size;
 	QString m_Str;
+	bool m_Overload;
 	int m_Slevel;
+	int m_SquelchPos;
 	int m_dBm;
-	CSdrInterface* m_pSdrInterface;
 };
 
 #endif // METER_H

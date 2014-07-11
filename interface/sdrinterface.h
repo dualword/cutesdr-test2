@@ -143,8 +143,8 @@ public:
 
 	void SetupNoiseProc(tNoiseProcdInfo* pNoiseProcSettings);
 
-	TYPEREAL GetSMeterPeak(){return m_Demodulator.GetSMeterPeak() + m_GainCalibrationOffset - m_RfGain;}
-	TYPEREAL GetSMeterAve(){return m_Demodulator.GetSMeterAve() + m_GainCalibrationOffset - m_RfGain;}
+	TYPEREAL GetSMeterPeak(){return m_Demodulator.GetSMeterPeak();}
+	TYPEREAL GetSMeterAve(){return m_Demodulator.GetSMeterAve();}
 
 	void SetSpectrumInversion(bool Invert){m_InvertSpectrum = Invert;}
 	void SetUSFmVersion(bool USFm){m_USFm = USFm;}

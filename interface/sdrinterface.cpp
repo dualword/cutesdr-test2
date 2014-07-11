@@ -689,6 +689,8 @@ CAscpTxMsg TxMsg;
 						false,
 						m_GainCalibrationOffset-m_RfGain,
 						m_SampleRate);
+	m_Demodulator.SetSmeterOffset(m_GainCalibrationOffset-m_RfGain);
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -740,7 +742,7 @@ CAscpTxMsg TxMsg;
     TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM);
     TxMsg.AddCItem(CI_GENERAL_STATUS_CODE);
 	SendAscpMsg(&TxMsg);
-	if(++m_KeepAliveCounter >2)		//see if no ack received
+    if(++m_KeepAliveCounter >4)		//see if no ack received
 	{
 		SendStatus(ERR);
 qDebug()<<"Keepalive failed";

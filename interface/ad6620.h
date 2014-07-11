@@ -87,7 +87,6 @@ private:
 	int	m_CIC5Rate;
 	int	m_CIC5Scale;
 	int	m_RCFRate;
-	int	m_RCFScale;
 	int m_RCFTaps;
 	int m_FIRcoef[MAX_COEF];
 	int m_TotalDecimationRate;

@@ -94,6 +94,7 @@ public:
 	TYPEREAL GetOutputRate(){return m_DemodOutputRate;}
 	TYPEREAL GetSMeterPeak(){return m_SMeter.GetPeak();}
 	TYPEREAL GetSMeterAve(){return m_SMeter.GetAve();}
+	void SetSmeterOffset(TYPEREAL Offset){ m_SMeter.SetSMeterCalibration(Offset);}
 
 	void SetDemod(int Mode, tDemodInfo CurrentDemodInfo);
 	void SetDemodFreq(TYPEREAL Freq){m_DownConvert.SetCwOffset(m_CW_Offset);
@@ -132,9 +133,6 @@ private:
 	int m_DemodMode;
 	int m_InBufPos;
 	int m_InBufLimit;
-	int m_AGClength;
-	int m_AGChang;
-	int m_AGChangTimer;
 	//pointers to all the various implemented demodulator classes
 	CAmDemod* m_pAmDemod;
 	CSamDemod* m_pSamDemod;

@@ -51,7 +51,6 @@ private:
 	TYPEREAL m_y1;
 	TYPEREAL m_NcoPhase;
 	TYPEREAL m_NcoFreq;
-	TYPEREAL m_NcoAcc;
 	TYPEREAL m_NcoLLimit;
 	TYPEREAL m_NcoHLimit;
 	TYPEREAL m_PllAlpha;

@@ -41,7 +41,7 @@
 #include <QDebug>
 
 #define  ATTACK_TIMECONST .01	//attack time in seconds
-#define  DECAY_TIMECONST .5		//decay time in seconds
+#define  DECAY_TIMECONST .1		//decay time in seconds
 
 #define SMETER_CALIBRATION 5.0	//S-Meter calibration offset added to make reading absolute dBm
 
@@ -90,7 +90,6 @@ void CSMeter::ProcessData(int length, TYPECPX* pInData, TYPEREAL SampleRate)
 		if(mag > m_PeakMag)
 			m_PeakMag = mag;		//save new peak (reset when read )
 	}
-
 }
 
 
@@ -101,7 +100,7 @@ TYPEREAL CSMeter::GetPeak()
 {
 	TYPEREAL x = m_PeakMag;
 	m_PeakMag = 0;
-	return x+SMETER_CALIBRATION;
+	return x+SMETER_CALIBRATION + m_CalibrationOffset;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -109,6 +108,6 @@ TYPEREAL CSMeter::GetPeak()
 ////////////////////////////////////////////////////////////////////////////////////
 TYPEREAL CSMeter::GetAve()
 {
-	return m_AverageMag + SMETER_CALIBRATION;
+	return m_AverageMag + SMETER_CALIBRATION + m_CalibrationOffset;
 }
 
