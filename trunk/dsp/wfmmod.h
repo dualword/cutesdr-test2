@@ -86,7 +86,6 @@ private:
 	TYPEREAL m_RdsPulseLength;
 	TYPEREAL m_RdsTime;
 	TYPEREAL m_RdsSamplePeriod;
-	TYPEREAL m_RdsTimeToIdx;
 	int m_RdsD1;
 	int m_RdsD2;
 	int m_RdsBufPos;

@@ -119,7 +119,6 @@ private:
 	int m_ClickResolution;
 	int m_FilterClickResolution;
 
-
 	quint32 m_LastSampleRate;
 	CSdrInterface* m_pSdrInterface;
 

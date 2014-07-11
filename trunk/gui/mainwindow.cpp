@@ -18,6 +18,7 @@
 //	2013-07-28  ver 1.11 Updated to QT 5.10 fixed DisconnectFromServerSlot bug, Added single/double precision math macros
 //	2013-12-16  ver 1.12 Updated to QT 5.20 updated to Q_OS_WIN macro use
 //	2014-02-23  ver 1.13 Updated to correct qwindows.dll for QT 5.2 and expanded frequency ranges
+//	2014-07-11  ver 1.14 Updated for QT 5.3
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -64,7 +65,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.13")
+#define PROGRAM_TITLE_VERSION tr(" 1.14")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -262,16 +263,12 @@ void MainWindow::AlwaysOnTop()
 {
 	m_AlwaysOnTop = ui->actionAlwaysOnTop->isChecked();
 	Qt::WindowFlags flags = this->windowFlags();
+
 	if (m_AlwaysOnTop)
-	{
-		this->setWindowFlags(flags | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint);
-		this->show();
-	}
+		this->setWindowFlags( (flags & ~Qt::WindowStaysOnBottomHint) | Qt::WindowStaysOnTopHint  | Qt::CustomizeWindowHint );
 	else
-	{
-		this->setWindowFlags( (flags | Qt::CustomizeWindowHint) & ~Qt::WindowStaysOnTopHint );
-		this->show();
-	}
+		this->setWindowFlags( (flags & ~Qt::WindowStaysOnTopHint) | Qt::WindowStaysOnBottomHint  | Qt::CustomizeWindowHint );
+	this->show();
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -460,7 +457,7 @@ void MainWindow::readSettings()
 		m_DemodSettings[i].LowCut = settings.value(tr("LowCut"), -5000).toInt();
 		m_DemodSettings[i].FilterClickResolution = settings.value(tr("FilterClickResolution"), 100).toInt();
 		m_DemodSettings[i].Offset = settings.value(tr("Offset"), 0).toInt();
-		m_DemodSettings[i].SquelchValue = settings.value(tr("SquelchValue"), 0).toInt();
+		m_DemodSettings[i].SquelchValue = settings.value(tr("SquelchValue"), -160).toInt();
 		m_DemodSettings[i].AgcSlope = settings.value(tr("AgcSlope"), 0).toInt();
 		m_DemodSettings[i].AgcThresh = settings.value(tr("AgcThresh"), -100).toInt();
 		m_DemodSettings[i].AgcManualGain = settings.value(tr("AgcManualGain"), 30).toInt();
@@ -488,7 +485,7 @@ void MainWindow::OnTimer()
 		if( CSdrInterface::NOT_CONNECTED == m_Status )
 			m_pSdrInterface->ConnectToServer(m_IPAdr,m_Port);
 	}
-	ui->frameMeter->SetdBmLevel( m_pSdrInterface->GetSMeterAve() );
+	ui->frameMeter->SetdBmLevel( m_pSdrInterface->GetSMeterAve(), false );
 	if(DEMOD_WFM == m_DemodMode)	//if in WFM mode manage stereo status display
 	{
 		bool update = false;
@@ -1062,6 +1059,7 @@ void MainWindow::SetupDemod(int index)
 	m_pSdrInterface->SetDemod(m_DemodMode, m_DemodSettings[m_DemodMode]);
 	m_pSdrInterface->SetDemodFreq(m_CenterFrequency - m_DemodFrequency);
 	UpdateInfoBox();
+	ui->frameMeter->SetSquelchPos( m_DemodSettings[m_DemodMode].SquelchValue );
 }
 
 

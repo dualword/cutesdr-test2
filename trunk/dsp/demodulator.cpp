@@ -198,6 +198,7 @@ void CDemodulator::SetDemod(int Mode, tDemodInfo CurrentDemodInfo)
 	m_Mutex.unlock();
 qDebug()<<"m_InputRate="<<m_InputRate<<" DesiredMaxOutputBandwidth=="<<m_DesiredMaxOutputBandwidth <<"DemodOutputRate="<<m_DemodOutputRate;
 //qDebug()<<"m_InBufLimit="<<m_InBufLimit;
+qDebug()<<"SquelchThreshold = "<<m_DemodInfo.SquelchValue;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -207,6 +208,7 @@ qDebug()<<"m_InputRate="<<m_InputRate<<" DesiredMaxOutputBandwidth=="<<m_Desired
 int CDemodulator::ProcessData(int InLength, TYPECPX* pInData, TYPEREAL* pOutData)
 {
 int ret = 0;
+bool SquelchState = false;
 	m_Mutex.lock();
 	for(int i=0; i<InLength; i++)
 	{	//place in demod buffer
@@ -223,10 +225,13 @@ int ret = 0;
 				//perform main bandpass filtering
 				n = m_FastFIR.ProcessData(n, m_pDemodInBuf, m_pDemodTmpBuf);
 				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
-
 				//perform S-Meter processing
 				m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_DemodOutputRate);
-
+				if(m_DemodMode != DEMOD_FM)
+				{
+					if( m_SMeter.GetAve() < (TYPEREAL)m_DemodInfo.SquelchValue )
+						SquelchState = true;
+				}
 				//perform AGC
 				m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
 //				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
@@ -259,6 +264,11 @@ int ret = 0;
 					n = m_pSsbDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
 			}
+			if(SquelchState)
+			{
+				for(int i=0; i<n; i++)
+					pOutData[i] = 0.0;
+			}
 			g_pTestBench->DisplayData(n, pOutData, m_DemodOutputRate,PROFILE_4);
 			m_InBufPos = 0;
 			ret += n;
@@ -275,6 +285,7 @@ int ret = 0;
 int CDemodulator::ProcessData(int InLength, TYPECPX* pInData, TYPECPX* pOutData)
 {
 int ret = 0;
+bool SquelchState = false;
 	m_Mutex.lock();
 	for(int i=0; i<InLength; i++)
 	{	//place in demod buffer
@@ -295,7 +306,11 @@ g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1)
 
 				//perform S-Meter processing
 				m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_DemodOutputRate);
-
+				if(m_DemodMode != DEMOD_FM)
+				{
+					if( m_SMeter.GetAve() < (TYPEREAL)m_DemodInfo.SquelchValue )
+						SquelchState = true;
+				}
 				//perform AGC
 				m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
 //g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
@@ -327,7 +342,15 @@ g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1)
 					n = m_pSsbDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
 			}
-		g_pTestBench->DisplayData(n, pOutData, m_DemodOutputRate,PROFILE_4);
+			if(SquelchState)
+			{
+				for(int i=0; i<n; i++)
+				{
+					pOutData[i].re = 0.0;
+					pOutData[i].im = 0.0;
+				}
+			}
+				g_pTestBench->DisplayData(n, pOutData, m_DemodOutputRate,PROFILE_4);
 			m_InBufPos = 0;
 			ret += n;
 		}

@@ -445,7 +445,8 @@ void CPlotter::paintEvent(QPaintEvent *)
 	painter.drawPixmap(0,0,m_2DPixmap);
 	painter.drawPixmap(0, m_Percent2DScreen*m_Size.height()/100,m_WaterfallPixmap);
 	//tell interface that its ok to signal a new line of fft data
-	m_pSdrInterface->ScreenUpdateDone();
+	if(m_pSdrInterface)
+		m_pSdrInterface->ScreenUpdateDone();
 	return;
 }
 
@@ -474,7 +475,9 @@ QPoint LineBuf[MAX_SCREENSIZE];
 
 	QPainter painter1(&m_WaterfallPixmap);
 	//get scaled FFT data
-	bool fftoverload = m_pSdrInterface->GetScreenIntegerFFTData( 255, w,
+	bool fftoverload = false;
+	if(m_pSdrInterface)
+		fftoverload = m_pSdrInterface->GetScreenIntegerFFTData( 255, w,
 							m_MaxdB,
 							m_MindB,
 							-m_Span/2,
@@ -495,8 +498,15 @@ QPoint LineBuf[MAX_SCREENSIZE];
 	m_2DPixmap = m_OverlayPixmap.copy(0,0,w,h);
 
 	QPainter painter2(&m_2DPixmap);
+	// workaround for "fixed" line drawing since Qt 5
+	// see http://stackoverflow.com/questions/16990326
+#if QT_VERSION >= 0x050000
+	painter2.translate(0.5, 0.5);
+#endif
+
 	//get new scaled fft data
-	m_pSdrInterface->GetScreenIntegerFFTData( h, w,
+	if(m_pSdrInterface)
+		m_pSdrInterface->GetScreenIntegerFFTData( h, w,
 							m_MaxdB,
 							m_MindB,
 							-m_Span/2,
@@ -564,8 +574,9 @@ QRect rect;
 	painter.setBrush(Qt::SolidPattern);
 	painter.setOpacity(0.5);
 
-	int LockState;
-	m_pSdrInterface->GetStereoLock(&LockState);
+    int LockState = false;
+	if(m_pSdrInterface)
+		m_pSdrInterface->GetStereoLock(&LockState);
 	if( LockState )
 		painter.fillRect(m_DemodLowCutFreqX, 0,dw, h, Qt::green);
 	else
@@ -632,7 +643,7 @@ QRect rect;
 	{
 		if( 0==i )
 		{
-			if((hskip==1) )
+            if( hskip==1 )
 			{	//left justify the leftmost text
 				x = (int)( (float)i*pixperdiv);
 				rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);
@@ -641,7 +652,7 @@ QRect rect;
 		}
 		else if(HORZ_DIVS == i)
 		{
-			if((hskip==1) )
+            if( hskip==1 )
 			{	//right justify the rightmost text
 				x = (int)( (float)i*pixperdiv - pixperdiv);
 				rect.setRect(x ,y, (int)pixperdiv, h/VERT_DIVS);

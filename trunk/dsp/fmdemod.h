@@ -50,7 +50,7 @@ public:
 	int ProcessData(int InLength, TYPEREAL FmBW, TYPECPX* pInData, TYPEREAL* pOutData);
 
 	void SetSampleRate(TYPEREAL samplerate);
-	void SetSquelch(int Value);		//call with range of 0 to 99 to set squelch threshold
+	void SetSquelch(int Value);		//call with range of -160 to 0 to set squelch threshold
 
 private:
 	void PerformNoiseSquelch(int InLength, TYPECPX* pOutData);

@@ -54,7 +54,6 @@ public:
 	void ProcessFilter(int InLength, TYPECPX* InBuf, TYPECPX* OutBuf);
 
 private:
-	TYPEREAL m_SampleRate;
 	TYPEREAL m_A1;		//direct form 2 coefficients
 	TYPEREAL m_A2;
 	TYPEREAL m_B0;
