@@ -99,7 +99,7 @@
     <rect>
      <x>220</x>
      <y>10</y>
-     <width>120</width>
+     <width>131</width>
      <height>111</height>
     </rect>
    </property>
@@ -109,7 +109,7 @@
    <widget class="QRadioButton" name="radioButtonAttn0">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>20</y>
       <width>82</width>
       <height>17</height>
@@ -122,7 +122,7 @@
    <widget class="QRadioButton" name="radioButtonAttn10">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>40</y>
       <width>82</width>
       <height>17</height>
@@ -135,7 +135,7 @@
    <widget class="QRadioButton" name="radioButtonAttn20">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>60</y>
       <width>82</width>
       <height>17</height>
@@ -148,14 +148,14 @@
    <widget class="QRadioButton" name="radioButtonAttn30">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>80</y>
-      <width>82</width>
+      <width>121</width>
       <height>17</height>
      </rect>
     </property>
     <property name="text">
-     <string>-30 dB</string>
+     <string>-30 dB(or auto)</string>
     </property>
    </widget>
   </widget>

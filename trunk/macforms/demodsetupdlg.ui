@@ -290,10 +290,10 @@
     </rect>
    </property>
    <property name="toolTip">
-    <string>FM Squelch Control</string>
+    <string>Squelch Control</string>
    </property>
    <property name="text">
-    <string>FM Squelch</string>
+    <string>Squelch</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

@@ -22,6 +22,11 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
    </property>
@@ -34,9 +39,14 @@
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>201</width>
+     <width>171</width>
      <height>111</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="title">
     <string>Bandwidth / Sample Rate</string>
@@ -97,11 +107,16 @@
   <widget class="QGroupBox" name="groupBoxGain">
    <property name="geometry">
     <rect>
-     <x>220</x>
+     <x>199</x>
      <y>10</y>
-     <width>120</width>
+     <width>141</width>
      <height>111</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="title">
     <string>RF Gain/Attn</string>
@@ -109,7 +124,7 @@
    <widget class="QRadioButton" name="radioButtonAttn0">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>0</x>
       <y>20</y>
       <width>82</width>
       <height>17</height>
@@ -122,7 +137,7 @@
    <widget class="QRadioButton" name="radioButtonAttn10">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>0</x>
       <y>40</y>
       <width>82</width>
       <height>17</height>
@@ -135,7 +150,7 @@
    <widget class="QRadioButton" name="radioButtonAttn20">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>0</x>
       <y>60</y>
       <width>82</width>
       <height>17</height>
@@ -148,14 +163,14 @@
    <widget class="QRadioButton" name="radioButtonAttn30">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>0</x>
       <y>80</y>
-      <width>82</width>
+      <width>141</width>
       <height>17</height>
      </rect>
     </property>
     <property name="text">
-     <string>-30 dB</string>
+     <string>-30 dB(or Auto)</string>
     </property>
    </widget>
   </widget>
@@ -167,6 +182,11 @@
      <width>141</width>
      <height>21</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="frameShape">
     <enum>QFrame::NoFrame</enum>
@@ -181,11 +201,16 @@
   <widget class="QCheckBox" name="checkBoxInvert">
    <property name="geometry">
     <rect>
-     <x>180</x>
+     <x>190</x>
      <y>130</y>
      <width>151</width>
      <height>17</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>Invert Spectrum</string>
@@ -199,6 +224,11 @@
      <width>141</width>
      <height>17</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>US FM Version</string>
