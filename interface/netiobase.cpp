@@ -193,7 +193,7 @@ qDebug()<<"CNetio destructor";
 void CNetio::SendStatus(eStatus status)
 {
 	m_Status = status;
-qDebug()<<"Status = "<<m_Status;
+//qDebug()<<"Status = "<<m_Status;
 	emit NewStatus( status );
 }
 
