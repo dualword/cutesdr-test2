@@ -40,6 +40,8 @@
 #include "dsp/iir.h"
 #include "dsp/downconvert.h"
 #include "dsp/rbdsconstants.h"
+#include "interface/wavefilewriter.h"
+
 
 #define PHZBUF_SIZE 16384
 
@@ -149,6 +151,7 @@ private:
 	int m_BlockErrors;
 	quint16 m_BlockData[4];
 
+	WaveFileWriter m_fileWriter;
 
 };
 

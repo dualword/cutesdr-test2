@@ -7,6 +7,7 @@
 //	2011-09-17  Initial creation MSW
 //	2011-09-17  Initial release
 //	2013-07-28  Added single/double precision math macros
+//	2014-09-22  Added some test code to output to a wav file
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -95,6 +96,71 @@ const TYPEREAL HILBLP_H[HILB_LENGTH] =
 	-0.000389631665953405
 };
 
+#if 0
+const TYPEREAL HILBLP_H[HILB_LENGTH] = {	//test wideband hilbert
+	0.000639403635f,
+   -0.000876414761f,
+	0.000763344477f,
+   -0.000136153196f,
+   -0.000959189633f,
+	0.002196797759f,
+   -0.003022642082f,
+	0.002843677701f,
+   -0.001305921508f,
+   -0.001445249432f,
+	0.004652418499f,
+   -0.007079194912f,
+	0.007402035698f,
+   -0.004761371611f,
+   -0.000723462240f,
+	0.007705168551f,
+   -0.013799667280f,
+	0.016252251992f,
+   -0.012930808533f,
+	0.003338459172f,
+	0.010731465462f,
+   -0.025212726547f,
+	0.034579859350f,
+   -0.033317627946f,
+	0.017655163815f,
+	0.012969531446f,
+   -0.055222198103f,
+	0.102266070453f,
+   -0.145217247362f,
+	0.175301692976f,
+	0.813425068326f,
+	0.175301692976f,
+   -0.145217247362f,
+	0.102266070453f,
+   -0.055222198103f,
+	0.012969531446f,
+	0.017655163815f,
+   -0.033317627946f,
+	0.034579859350f,
+   -0.025212726547f,
+	0.010731465462f,
+	0.003338459172f,
+   -0.012930808533f,
+	0.016252251992f,
+   -0.013799667280f,
+	0.007705168551f,
+   -0.000723462240f,
+   -0.004761371611f,
+	0.007402035698f,
+   -0.007079194912f,
+	0.004652418499f,
+   -0.001445249432f,
+   -0.001305921508f,
+	0.002843677701f,
+   -0.003022642082f,
+	0.002196797759f,
+   -0.000959189633f,
+   -0.000136153196f,
+	0.000763344477f,
+   -0.000876414761f,
+	0.000639403635f
+};
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////
 //	Construct/destruct WFM demod object
@@ -114,6 +180,14 @@ CWFmDemod::CWFmDemod(TYPEREAL samplerate) : m_SampleRate(samplerate)
     m_PilotLocked = false;
 	m_LastPilotLocked = !m_PilotLocked;
 	m_BlockErrors = 0;
+
+	QAudioFormat format;
+	format.setChannelCount(2);
+	format.setSampleSize(16);
+	format.setSampleRate(245760);
+	format.setCodec("audio/pcm");
+	format.setSampleType(QAudioFormat::SignedInt);
+//	m_fileWriter.open("d:\\fmdemod.wav", format);
 }
 
 CWFmDemod::~CWFmDemod()
@@ -124,6 +198,7 @@ CWFmDemod::~CWFmDemod()
 		delete m_pDecBy2B;
 	if(m_pDecBy2C)
 		delete m_pDecBy2C;
+//	m_fileWriter.close();
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -245,7 +320,7 @@ g_pTestBench->DisplayData(InLength, pInData, m_SampleRate,PROFILE_2);
 // Perform wideband FM demod into a REAL data stream.
 // Perform REAL to complex filtering to make easier to shift and process signals
 //		within the demodulated FM signal.
-// IIR Filter sround the 19KHz Pilot then Phase Lock a PLL to it.
+// IIR Filter around the 19KHz Pilot then Phase Lock a PLL to it.
 // If locked, perform stereo demuxing using the PLL signal and a delay line to
 //		match the raw REAL data stream.
 // Shift the 57KHz RDS signal to baseband and decimate its sample rate down.
@@ -274,6 +349,9 @@ TYPEREAL LminusR;
 g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
 	//create complex data from demodulator real data
 	m_HilbertFilter.ProcessFilter(InLength, m_RawFm, m_CpxRawFm);	//~173 nSec/sample
+
+//m_fileWriter.write( InLength, m_CpxRawFm);
+
 //g_pTestBench->DisplayData(InLength, m_CpxRawFm, m_SampleRate,PROFILE_3);
 
 	m_PilotBPFilter.ProcessFilter(InLength, m_CpxRawFm, pInData);//~173 nSec/sample, use input buffer for complex output storage
@@ -337,12 +415,12 @@ g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
 			if(m_RdsLastData>=0)
 			{
 				bit = 1;
-m_RdsRaw[i].re = m_RdsLastData;
+				m_RdsRaw[i].re = m_RdsLastData;
 			}
 			else
 			{
 				bit = 0;
-m_RdsRaw[i].re = m_RdsLastData;
+				m_RdsRaw[i].re = m_RdsLastData;
 			}
 			//need to XOR with previous bit to get actual data bit value
 			ProcessNewRdsBit(bit^m_RdsLastBit);		//go process new RDS Bit
@@ -350,14 +428,14 @@ m_RdsRaw[i].re = m_RdsLastData;
 		}
 		else
 		{
-m_RdsRaw[i].re = 0;
+			m_RdsRaw[i].re = 0;
 		}
 
 		m_RdsLastData = Data;		//keep last bit since is differential data
 		m_RdsLastSyncSlope = Slope;
-m_RdsRaw[i].im = Data;
+		m_RdsRaw[i].im = Data;
 	}
-g_pTestBench->DisplayData(length, m_RdsRaw, m_RdsOutputRate, PROFILE_3);	//display rds data and sample point
+//g_pTestBench->DisplayData(length, m_RdsRaw, m_RdsOutputRate, PROFILE_3);	//display rds data and sample point
 
 //g_pTestBench->DisplayData(length, m_RdsData, m_RdsOutputRate, PROFILE_3);
 
