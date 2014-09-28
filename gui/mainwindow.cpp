@@ -19,6 +19,7 @@
 //	2013-12-16  ver 1.12 Updated to QT 5.20 updated to Q_OS_WIN macro use
 //	2014-02-23  ver 1.13 Updated to correct qwindows.dll for QT 5.2 and expanded frequency ranges
 //	2014-07-11  ver 1.14 Updated for QT 5.3
+//	2014-09-22  ver 1.15 Modified Thread Launcher to deal with closing resources from thread context
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -65,7 +66,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.14")
+#define PROGRAM_TITLE_VERSION tr(" 1.15")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170

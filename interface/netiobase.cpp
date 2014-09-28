@@ -65,8 +65,7 @@ qDebug()<<"CUdp constructor";
 CUdp::~CUdp()
 {
 qDebug()<<"CUdp destructor";
-	if(m_pUdpSocket)
-		delete m_pUdpSocket;
+	CleanupThread();	//tell thread to cleanup after itself by calling ThreadExit()
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -80,6 +79,15 @@ void CUdp::ThreadInit()	//override called by new thread when started
 	connect(m_pParent, SIGNAL(StartUdp(quint32, quint32, quint16) ), this, SLOT( StartUdpSlot(quint32, quint32, quint16) ) );
 	connect(m_pParent, SIGNAL(StopUdp() ), this, SLOT( StopUdpSlot() ) );
 qDebug()<<"UDP Thread "<<this->thread()->currentThread();
+}
+
+/////////////////////////////////////////////////////////////////////
+// Called by this worker thread to cleanup after itself
+/////////////////////////////////////////////////////////////////////
+void CUdp::ThreadExit()
+{
+	if(m_pUdpSocket)
+		delete m_pUdpSocket;
 }
 
 ////////////////////////////////////////////////////////////////////////

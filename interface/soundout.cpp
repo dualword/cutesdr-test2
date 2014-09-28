@@ -76,7 +76,7 @@ qDebug()<<"GUI Thread "<<this->thread()->currentThread();
 CSoundOut::~CSoundOut()
 {
 qDebug()<<"CSoundOut destructor";
-	disconnect();	//disconnect message connections
+	CleanupThread();	//tell thread to cleanup after itself by calling ThreadExit()
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -88,6 +88,14 @@ void CSoundOut::ThreadInit()	//overrided funciton is called by new thread when s
 	connect(this,SIGNAL( StartSig(int, bool, double) ), this, SLOT(StartSlot(int, bool, double) ) );
 	connect(this,SIGNAL( StopSig()), this, SLOT(StopSlot()) );
 qDebug()<<"Soundout Thread Init "<<this->thread()->currentThread();
+}
+
+/////////////////////////////////////////////////////////////////////
+// Called by this worker thread to cleanup after itself
+/////////////////////////////////////////////////////////////////////
+void CSoundOut::ThreadExit()
+{
+	StopSlot();
 }
 
 /////////////////////////////////////////////////////////////////////

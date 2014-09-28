@@ -51,7 +51,6 @@ class CUdp : public CThreadWrapper
 public:
 	CUdp(QObject *parent = 0);
 	~CUdp();
-	void ThreadInit();	//overrided function is called by new thread when started
 	void SendUdpData(char* pBuf, qint32 Length);
 
 signals:
@@ -60,6 +59,8 @@ private slots:
 	void StartUdpSlot(quint32 ServerAdr, quint32 ClientAdr, quint16 ServerPort);
 	void StopUdpSlot();
 	void GotUdpData();
+	void ThreadInit();	//overrided function is called by new thread when started
+	void ThreadExit();	//overrided function is called by new thread when stopped
 
 private:
 	QObject* m_pParent;

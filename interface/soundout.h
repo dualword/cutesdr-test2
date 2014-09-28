@@ -69,6 +69,7 @@ signals:
 
 private slots:
 	void ThreadInit();	//overrided function is called by new thread when started
+	void ThreadExit();	//overrided function is called by new thread when stopped
 	void StartSlot(int OutDevIndx, bool StereoOut, double UsrDataRate);
 	void StopSlot();	//stops soundcard output
 	void GetNewData();

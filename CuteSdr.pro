@@ -35,6 +35,7 @@ SOURCES += gui/main.cpp \
     interface/ad6620.cpp \
 	interface/perform.cpp \
 	interface/dataprocess.cpp \
+	interface/wavefilewriter.cpp \
 	dsp/fractresampler.cpp \
     dsp/fastfir.cpp \
     dsp/downconvert.cpp \
@@ -76,9 +77,10 @@ HEADERS  += gui/mainwindow.h \
     interface/ad6620.h \
 	interface/ascpmsg.h \
 	interface/perform.h \
-	dsp/fractresampler.h \
 	interface/threadwrapper.h \
 	interface/dataprocess.h \
+	interface/wavefilewriter.h \
+	dsp/fractresampler.h \
 	dsp/fastfir.h \
 	dsp/filtercoef.h \
 	dsp/downconvert.h \

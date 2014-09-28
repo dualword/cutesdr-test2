@@ -49,7 +49,6 @@ class CDataProcess : public CThreadWrapper
 public:
 	explicit CDataProcess(QObject* pParent=NULL);
 	~CDataProcess();
-	void ThreadInit();	//overrided function is called by new thread when started
 	void PutInQ(char* pBuf, qint64 Length);
 
 signals:
@@ -58,6 +57,8 @@ signals:
 public slots:
 
 private slots:
+	void ThreadInit();	//overrided function is called by new thread when started
+	void ThreadExit();	//overrided function is called by new thread when stopped
 	void ProcNewData();
 
 private:

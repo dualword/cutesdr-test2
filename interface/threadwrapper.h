@@ -3,13 +3,15 @@
 //This base class is used to derive thread based objects that will have their
 //own event loop running in this worker thread.  The init() function is called by
 // the worker thread when started to setup all signal-slot connections
+//The ThreadExit() function is called by the thread after CleanupThread() is
+//called.  This can be used in cases where the worker thread must delete its own resources
+// as is the case for network objects.
 // History:
-//	2012-12-06  Initial creation MSW
-//	2012-12-06  Initial release
+//	2013-10-02  Initial creation MSW
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
-//Copyright 2010 Moe Wheatley. All rights reserved.
+//Copyright 2013 Moe Wheatley. All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without modification, are
 //permitted provided that the following conditions are met:
@@ -41,6 +43,7 @@
 #include <QObject>
 #include <QThread>
 #include <QMutex>
+#include <QDebug>
 
 class CThreadWrapper : public QObject
 {
@@ -51,6 +54,7 @@ public:
 		m_pThread = new QThread(this);
 		this->moveToThread(m_pThread);
 		connect(m_pThread, SIGNAL(started()), this,SLOT(ThreadInit()) );
+		connect(this, SIGNAL(ThreadExitSignal() ), this,SLOT( ThreadExit() ) );
 		m_pThread->start();
 	}
 	virtual ~CThreadWrapper()
@@ -60,11 +64,14 @@ public:
 		delete m_pThread;
 	}
 	QMutex m_Mutex;
+	void CleanupThread(){emit ThreadExitSignal(); m_pThread->wait(10);}
 
 signals:
-    
+	void ThreadExitSignal();
+
 public slots:
 	virtual void ThreadInit() = 0;	//derived class must override. called by new thread when started
+	virtual void ThreadExit() = 0;
 
 protected:
 	QThread* m_pThread;
