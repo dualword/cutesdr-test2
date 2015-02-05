@@ -164,9 +164,15 @@ char Buf[2048];	//buffer to hold received UDP packet
 				if(m_DiscovermsgNetSDR[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
 					InUse = true;
 			}
+			else if( QString(m_DiscovermsgCommon[index].name ) == "CloudSDR" )
+			{ ///get all information from CloudSDR
+				memcpy((void*)&m_DiscovermsgCloudSDR[index], (void*)Buf, sizeof(tDiscover_CLOUDSDR) );
+				if(m_DiscovermsgCloudSDR[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
+					InUse = true;
+			}
 			else	//get info for SDR-IQ and SDR-14
 			{
-				memcpy((void*)&m_DiscovermsgSDRxx[index], (void*)Buf,  sizeof(tDiscover_NETSDR) );
+				memcpy((void*)&m_DiscovermsgSDRxx[index], (void*)Buf,  sizeof(tDiscover_SDRxx) );
 				if(m_DiscovermsgSDRxx[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
 					InUse = true;
 			}

@@ -20,6 +20,7 @@
 //	2014-02-23  ver 1.13 Updated to correct qwindows.dll for QT 5.2 and expanded frequency ranges
 //	2014-07-11  ver 1.14 Updated for QT 5.3
 //	2014-09-22  ver 1.15 Modified Thread Launcher to deal with closing resources from thread context
+//	2015-02-05  ver 1.15a Added CloudSDR discover fields. no need for release now
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
