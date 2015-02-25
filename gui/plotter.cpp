@@ -156,7 +156,7 @@ QPoint gpt = event->globalPos();
 				if(CENTER!=m_CursorCaptured)
 					setCursor(QCursor(Qt::CrossCursor));
 				m_CursorCaptured = CENTER;
-				DisplayCursorFreq(gpt, FreqfromX( pt.x() ));
+				DisplayCursorFreq(gpt, RoundFreq( FreqfromX( pt.x() ), m_ClickResolution) );
 			}
 			else if( IsPointCloseTo( pt.x(),m_DemodHiCutFreqX, m_CursorCaptureDelta) )
 			{	//in move demod hicut region
@@ -306,6 +306,7 @@ QPoint gpt = event->globalPos();
 		if( CENTER!=m_CursorCaptured)
 		{	//if cursor not captured set demod frequency and start demod box capture
 			m_DemodCenterFreq = RoundFreq(FreqfromX(pt.x()),m_ClickResolution );
+//qDebug()<<m_ClickResolution << m_DemodCenterFreq;
 			emit NewDemodFreq(m_DemodCenterFreq);
 			//save initial grab postion from m_DemodFreqX
 			setCursor(QCursor(Qt::CrossCursor));

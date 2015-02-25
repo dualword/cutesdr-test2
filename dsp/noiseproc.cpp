@@ -125,7 +125,7 @@ TYPECPX newsamp;
 TYPECPX oldest;
 	if(!m_On)
 	{
-		g_pTestBench->DisplayData(InLength, pOutData, m_SampleRate,PROFILE_7);
+		g_pTestBench->DisplayData(InLength, 1.0, pOutData, m_SampleRate,PROFILE_7);
 		return;
 	}
 	m_Mutex.lock();
@@ -173,5 +173,5 @@ m_TestBenchDataBuf[i].re = m_MagAveSum/m_Ratio;
 	}
 	m_Mutex.unlock();
 //StopPerformance(InLength);
-g_pTestBench->DisplayData(InLength, m_TestBenchDataBuf, m_SampleRate,PROFILE_7);
+g_pTestBench->DisplayData(InLength, 1.0, m_TestBenchDataBuf, m_SampleRate,PROFILE_7);
 }

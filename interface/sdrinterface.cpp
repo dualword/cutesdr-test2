@@ -818,6 +818,11 @@ void CSdrInterface::SetDemod(int Mode, tDemodInfo CurrentDemodInfo)
 qDebug()<<"UsrDataRate="<< m_Demodulator.GetOutputRate();
 }
 
+void CSdrInterface::SetPskMode(int Index)
+{
+	m_Demodulator.SetPskMode(Index);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //called to change Noise Processing parameters
 ///////////////////////////////////////////////////////////////////////////////

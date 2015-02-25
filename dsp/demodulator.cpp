@@ -45,7 +45,8 @@
 //////////////////////////////////////////////////////////////////
 //	Constructor/Destructor
 //////////////////////////////////////////////////////////////////
-CDemodulator::CDemodulator()
+CDemodulator::CDemodulator(QObject *parent) :
+	m_pChatDialog(parent)
 {
 	m_DesiredMaxOutputBandwidth = 48000.0;
 	m_DownConverterOutputRate = 48000.0;
@@ -60,7 +61,9 @@ CDemodulator::CDemodulator()
 	m_pSsbDemod = NULL;
 	m_pFmDemod = NULL;
 	m_pWFmDemod = NULL;
+	m_pPskDemod = NULL;
 	m_USFm = true;
+	m_PskRate = 31.25;
 	SetDemodFreq(0.0);
 }
 
@@ -86,15 +89,17 @@ void CDemodulator::DeleteAllDemods()
 		delete m_pFmDemod;
 	if(m_pWFmDemod)
 		delete m_pWFmDemod;
+	if(m_pPskDemod)
+		delete m_pPskDemod;
 	if(m_pSsbDemod)
 		delete m_pSsbDemod;
 	m_pAmDemod = NULL;
 	m_pSamDemod = NULL;
 	m_pFmDemod = NULL;
 	m_pWFmDemod = NULL;
+	m_pPskDemod = NULL;
 	m_pSsbDemod = NULL;
 }
-
 
 //////////////////////////////////////////////////////////////////
 //	Called to set/change the demodulator input sample rate
@@ -126,6 +131,11 @@ void CDemodulator::SetInputSampleRate(TYPEREAL InputRate)
 			case DEMOD_CWL:
 				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
 				m_DemodOutputRate = m_DownConverterOutputRate;
+				break;
+			case DEMOD_PSK:
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_DemodOutputRate = m_DownConverterOutputRate;
+				m_pPskDemod->SetPskParams(m_DownConverterOutputRate, m_PskRate, BPSK_MODE);
 				break;
 		}
 	}
@@ -180,6 +190,13 @@ void CDemodulator::SetDemod(int Mode, tDemodInfo CurrentDemodInfo)
 				m_pSsbDemod = new CSsbDemod();
 				m_DemodOutputRate = m_DownConverterOutputRate;
 				break;
+			case DEMOD_PSK:
+//qDebug()<<"Desired MaxOutputBW="<<m_DesiredMaxOutputBandwidth;
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_pPskDemod = new CPskDemod();
+				m_pPskDemod->SetPskParams(m_DownConverterOutputRate, m_PskRate, BPSK_MODE);
+				m_DemodOutputRate = m_DownConverterOutputRate;
+				break;
 		}
 	}
 	m_CW_Offset = m_DemodInfo.Offset;
@@ -202,6 +219,21 @@ qDebug()<<"SquelchThreshold = "<<m_DemodInfo.SquelchValue;
 }
 
 //////////////////////////////////////////////////////////////////
+///
+//////////////////////////////////////////////////////////////////
+void CDemodulator::SetPskMode(int index)
+{
+	if(	m_pPskDemod && (DEMOD_PSK == m_DemodMode) )
+	{
+		if(0 == index)
+			m_PskRate = 31.25;
+		else
+			m_PskRate = 63.5;
+		m_pPskDemod->SetPskParams(m_DownConverterOutputRate, m_PskRate, BPSK_MODE);
+	}
+}
+
+//////////////////////////////////////////////////////////////////
 //	Called with complex data from radio and performs the demodulation
 // with MONO audio output
 //////////////////////////////////////////////////////////////////
@@ -218,13 +250,13 @@ bool SquelchState = false;
 
 			//perform baseband tuning and decimation
 			int n = m_DownConvert.ProcessData(m_InBufPos, m_pDemodInBuf, m_pDemodInBuf);
-			g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1);
+g_pTestBench->DisplayData(n, 1.0, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1);
 
 			if(m_DemodMode != DEMOD_WFM)
 			{	//if not wideband FM mode do filtering and AGC
 				//perform main bandpass filtering
 				n = m_FastFIR.ProcessData(n, m_pDemodInBuf, m_pDemodTmpBuf);
-				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
+g_pTestBench->DisplayData(n, 1.0, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
 				//perform S-Meter processing
 				m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_DemodOutputRate);
 				if(m_DemodMode != DEMOD_FM)
@@ -234,7 +266,7 @@ bool SquelchState = false;
 				}
 				//perform AGC
 				m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
-//				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
+//				g_pTestBench->DisplayData(n, 1.0, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
 			}
 			else
 			{
@@ -263,13 +295,17 @@ bool SquelchState = false;
 				case DEMOD_CWL:
 					n = m_pSsbDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
+				case DEMOD_PSK:
+					if(n>0)
+						n = m_pPskDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
+					break;
 			}
+g_pTestBench->DisplayData(n, 1.0, pOutData, m_DemodOutputRate,PROFILE_4);
 			if(SquelchState)
 			{
 				for(int i=0; i<n; i++)
 					pOutData[i] = 0.0;
 			}
-			g_pTestBench->DisplayData(n, pOutData, m_DemodOutputRate,PROFILE_4);
 			m_InBufPos = 0;
 			ret += n;
 		}
@@ -295,14 +331,14 @@ bool SquelchState = false;
 
 			//perform baseband tuning and decimation
 			int n = m_DownConvert.ProcessData(m_InBufPos, m_pDemodInBuf, m_pDemodInBuf);
-g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1);
+g_pTestBench->DisplayData(n, 1.0, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1);
 
 
 			if(m_DemodMode != DEMOD_WFM)
 			{	//if not wideband FM mode do filtering and AGC
 				//perform main bandpass filtering
 				n = m_FastFIR.ProcessData(n, m_pDemodInBuf, m_pDemodTmpBuf);
-				g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
+g_pTestBench->DisplayData(n, 1.0, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
 
 				//perform S-Meter processing
 				m_SMeter.ProcessData(n, m_pDemodTmpBuf, m_DemodOutputRate);
@@ -313,7 +349,7 @@ g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1)
 				}
 				//perform AGC
 				m_Agc.ProcessData(n, m_pDemodTmpBuf, m_pDemodTmpBuf );
-//g_pTestBench->DisplayData(n, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
+//g_pTestBench->DisplayData(n, 1.0, m_pDemodTmpBuf, m_DemodOutputRate, PROFILE_3);
 			}
 			else
 			{
@@ -341,6 +377,9 @@ g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1)
 				case DEMOD_CWL:
 					n = m_pSsbDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
+				case DEMOD_PSK:
+					n = m_pPskDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
+					break;
 			}
 			if(SquelchState)
 			{
@@ -350,7 +389,7 @@ g_pTestBench->DisplayData(n, m_pDemodInBuf, m_DownConverterOutputRate,PROFILE_1)
 					pOutData[i].im = 0.0;
 				}
 			}
-				g_pTestBench->DisplayData(n, pOutData, m_DemodOutputRate,PROFILE_4);
+g_pTestBench->DisplayData(n, 1.0, pOutData, m_DemodOutputRate,PROFILE_4);
 			m_InBufPos = 0;
 			ret += n;
 		}

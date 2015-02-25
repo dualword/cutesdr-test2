@@ -91,7 +91,7 @@ TYPECPX tmp;
 		TYPEREAL phzerror = -MATAN2(tmp.im, tmp.re);
 
 //TYPEREAL test = phzerror*100.0;
-//g_pTestBench->DisplayData(1, &test, m_SampleRate,PROFILE_6);
+//g_pTestBench->DisplayData(1, 1.0, &test, m_SampleRate,PROFILE_6);
 
 		m_NcoFreq += (m_PllBeta * phzerror);		//  radians per sampletime
 		//clamp NCO frequency so doesn't drift out of lock range
@@ -128,7 +128,7 @@ TYPECPX tmp;
 		TYPEREAL phzerror = -MATAN2(tmp.im, tmp.re);
 
 //TYPEREAL test = phzerror*100.0;
-//g_pTestBench->DisplayData(1, &test, m_SampleRate,PROFILE_6);
+//g_pTestBench->DisplayData(1, 1.0, &test, m_SampleRate,PROFILE_6);
 
 		m_NcoFreq += (m_PllBeta * phzerror);		//  radians per sampletime
 		//clamp NCO frequency so doesn't drift out of lock range

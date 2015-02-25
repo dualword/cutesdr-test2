@@ -11,7 +11,6 @@ QT += widgets
 TARGET = CuteSdr
 TEMPLATE = app
 
-
 SOURCES += gui/main.cpp \
     gui/sounddlg.cpp \
     gui/sdrsetupdlg.cpp \
@@ -29,6 +28,7 @@ SOURCES += gui/main.cpp \
 	gui/noiseprocdlg.cpp \
 	gui/aboutdlg.cpp \
 	gui/rdsdecode.cpp \
+	gui/chatdialog.cpp \
 	interface/soundout.cpp \
     interface/sdrinterface.cpp \
     interface/netiobase.cpp \
@@ -51,8 +51,9 @@ SOURCES += gui/main.cpp \
     dsp/iir.cpp \
 	dsp/noiseproc.cpp \
     dsp/wfmdemod.cpp \
-	dsp/wfmmod.cpp
-
+	dsp/wfmmod.cpp \
+	dsp/pskmod.cpp \
+	dsp/pskdemod.cpp
 
 HEADERS  += gui/mainwindow.h \
 	gui/sounddlg.h \
@@ -70,6 +71,7 @@ HEADERS  += gui/mainwindow.h \
 	gui/noiseprocdlg.h \
 	gui/aboutdlg.h \
 	gui/rdsdecode.h \
+	gui/chatdialog.h \
 	interface/soundout.h \
     interface/sdrinterface.h \
     interface/protocoldefs.h \
@@ -97,7 +99,10 @@ HEADERS  += gui/mainwindow.h \
     dsp/iir.h \
 	dsp/noiseproc.h \
     dsp/wfmdemod.h \
-    dsp/wfmmod.h \
+	dsp/wfmmod.h \
+	dsp/pskmod.h \
+	dsp/pskdemod.h \
+	dsp/psktables.h \
 	dsp/rbdsconstants.h
 
 #Use separate forms for each OS
@@ -113,7 +118,8 @@ FORMS += winforms/mainwindow.ui \
 	winforms/testbench.ui \
 	winforms/sliderctrl.ui \
 	winforms/aboutdlg.ui \
-	winforms/noiseprocdlg.ui
+	winforms/noiseprocdlg.ui  \
+	winforms/chatdialog.ui
 }
 
 macx {
@@ -160,3 +166,6 @@ win32 {
 
 OTHER_FILES += \
     cutesdr.rc
+
+
+

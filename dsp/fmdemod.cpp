@@ -137,13 +137,13 @@ void CFmDemod::PerformNoiseSquelch(int InLength, TYPEREAL* pOutData)
 	TYPEREAL sqbuf[MAX_SQBUF_SIZE];
 	//high pass filter to get the high frequency noise above the voice
 	m_HpFir.ProcessFilter(InLength, pOutData, sqbuf);
-//g_pTestBench->DisplayData(InLength, sqbuf, m_SampleRate,PROFILE_6);
+//g_pTestBench->DisplayData(InLength, 1.0, sqbuf, m_SampleRate,PROFILE_6);
 	for(int i=0; i<InLength; i++)
 	{
 		TYPEREAL mag = MFABS( sqbuf[i] );	//get magnitude of High pass filtered data
 		// exponential filter squelch magnitude
 		m_SquelchAve = (1.0-m_SquelchAlpha)*m_SquelchAve + m_SquelchAlpha*mag;
-//g_pTestBench->DisplayData(1, &m_SquelchAve, m_SampleRate,PROFILE_3);
+//g_pTestBench->DisplayData(1, 1.0, &m_SquelchAve, m_SampleRate,PROFILE_3);
 	}
 	//perform squelch compare to threshold using some Hysteresis
 	if(0==m_SquelchThreshold)
@@ -170,7 +170,7 @@ void CFmDemod::PerformNoiseSquelch(int InLength, TYPEREAL* pOutData)
 	{	//low pass filter audio if squelch is open
 //		ProcessDeemphasisFilter(InLength, pOutData, pOutData);
 		m_LpFir.ProcessFilter(InLength, pOutData, pOutData);
-g_pTestBench->DisplayData(InLength, pOutData, m_SampleRate,PROFILE_6);
+g_pTestBench->DisplayData(InLength, 1.0, pOutData, m_SampleRate,PROFILE_6);
 	}
 }
 
@@ -208,7 +208,7 @@ TYPECPX tmp;
 		//subtract out DC term to get FM audio
 		pOutData[i] = (m_NcoFreq-m_FreqErrorDC)*m_OutGain;
 	}
-//g_pTestBench->DisplayData(InLength, pOutData, m_SampleRate, PROFILE_3);
+//g_pTestBench->DisplayData(InLength, 1.0, pOutData, m_SampleRate, PROFILE_3);
 	m_NcoPhase = MFMOD(m_NcoPhase, K_2PI);	//keep radian counter bounded
 	PerformNoiseSquelch(InLength, pOutData);	//calculate squelch
 	return InLength;

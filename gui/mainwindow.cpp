@@ -21,6 +21,7 @@
 //	2014-07-11  ver 1.14 Updated for QT 5.3
 //	2014-09-22  ver 1.15 Modified Thread Launcher to deal with closing resources from thread context
 //	2015-02-05  ver 1.15a Added CloudSDR discover fields. no need for release now
+//	2015-02-25  ver 1.16 Added CloudSDR-IQ and added PSK digital decoder
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -67,7 +68,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.15")
+#define PROGRAM_TITLE_VERSION tr(" 1.16")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -94,7 +95,14 @@ MainWindow::MainWindow(QWidget *parent) :
 	if(!g_pTestBench)
 		g_pTestBench = new CTestBench(this);
 
-	readSettings();		//read persistent settings
+	if(!g_pChatDialog)
+	{
+		g_pChatDialog = new CChatDialog(this, Qt::WindowTitleHint );
+		g_pChatDialog->SetSdrInterface(m_pSdrInterface);
+	}
+
+	InitDemodSettings();	//must be before readSettings to set some defualts
+	readSettings();			//read persistent settings
 
 	ui->actionAlwaysOnTop->setChecked(m_AlwaysOnTop);
 	AlwaysOnTop();
@@ -171,7 +179,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->framePlot->SetSpanFreq( m_SpanFrequency );
 	ui->framePlot->SetCenterFreq( m_CenterFrequency );
-	ui->framePlot->SetClickResolution(m_ClickResolution);
 	ui->framePlot->EnableCurText(m_UseCursorText);
 	m_FreqChanged = false;
 
@@ -207,10 +214,11 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_pSdrInterface->SetSpectrumInversion(m_InvertSpectrum);
 	m_pSdrInterface->SetUSFmVersion(m_USFm);
 
-	InitDemodSettings();
 	ui->framePlot->SetDemodCenterFreq( m_DemodFrequency );
 	SetupDemod(m_DemodMode);
 	m_RdsDecode.DecodeReset(m_USFm);
+
+	m_pSdrInterface->SetDemod(m_DemodMode, m_DemodSettings[m_DemodMode]);
 
 	SetupNoiseProc();
 
@@ -231,6 +239,9 @@ MainWindow::MainWindow(QWidget *parent) :
 		g_pTestBench->show();
 		g_pTestBench->Init();
 	}
+
+	if(DEMOD_PSK == m_DemodMode)
+		SetChatDialogState(true);
 }
 
 MainWindow::~MainWindow()
@@ -290,6 +301,11 @@ void MainWindow::writeSettings()
 		settings.setValue(tr("TestBenchRect"),m_TestBenchRect);
 	}
 
+	if( g_pChatDialog->isVisible() )
+		m_ChatDialogRect = g_pChatDialog->geometry();
+	settings.setValue(tr("ChatDialogRect"),m_ChatDialogRect);
+
+
 	settings.endGroup();
 
 	settings.beginGroup(tr("Common"));
@@ -309,7 +325,6 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("FftSize"),m_FftSize);
 	settings.setValue(tr("FftAve"),m_FftAve);
 	settings.setValue(tr("MaxDisplayRate"),m_MaxDisplayRate);
-	settings.setValue(tr("ClickResolution"),m_ClickResolution);
 	settings.setValue(tr("UseTestBench"),m_UseTestBench);
 	settings.setValue(tr("AlwaysOnTop"),m_AlwaysOnTop);
 	settings.setValue(tr("Volume"),m_Volume);
@@ -353,7 +368,7 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("PulsePeriod"),g_pTestBench->m_PulsePeriod);
 	settings.setValue(tr("SignalPower"),g_pTestBench->m_SignalPower);
 	settings.setValue(tr("NoisePower"),g_pTestBench->m_NoisePower);
-	settings.setValue(tr("UseFmGen"),g_pTestBench->m_UseFmGen);
+	settings.setValue(tr("GenMode"),g_pTestBench->m_GenMode);
 
 	settings.endGroup();
 
@@ -364,6 +379,7 @@ void MainWindow::writeSettings()
 		settings.setArrayIndex(i);
 		settings.setValue(tr("HiCut"), m_DemodSettings[i].HiCut);
 		settings.setValue(tr("LowCut"), m_DemodSettings[i].LowCut);
+		settings.setValue(tr("FreqClickResolution"), m_DemodSettings[i].FreqClickResolution);
 		settings.setValue(tr("FilterClickResolution"), m_DemodSettings[i].FilterClickResolution);
 		settings.setValue(tr("Offset"), m_DemodSettings[i].Offset);
 		settings.setValue(tr("SquelchValue"), m_DemodSettings[i].SquelchValue);
@@ -386,6 +402,12 @@ void MainWindow::readSettings()
 	bool ismin = settings.value(tr("minstate"), false).toBool();
 	m_TestBenchRect = settings.value(tr("TestBenchRect"), QRect(0,0,500,200)).toRect();
 
+	m_ChatDialogRect = settings.value(tr("ChatDialogRect"), QRect(10,10,500,200)).toRect();
+	if( (m_ChatDialogRect.x()<0) ||  (m_ChatDialogRect.y()<0) )
+	{
+		 m_ChatDialogRect.setX(10);
+		 m_ChatDialogRect.setY(10);
+	}
 	settings.endGroup();
 
 	settings.beginGroup(tr("Common"));
@@ -405,7 +427,6 @@ void MainWindow::readSettings()
 	m_FftSize = settings.value(tr("FftSize"), 4096).toInt();
 	m_MaxDisplayRate = settings.value(tr("MaxDisplayRate"), 10).toInt();
 	m_RadioType = settings.value(tr("RadioType"), 0).toInt();
-	m_ClickResolution = settings.value(tr("ClickResolution"),100).toInt();
 	m_Volume = settings.value(tr("Volume"),100).toInt();
 	m_Percent2DScreen = settings.value(tr("Percent2DScreen"),50).toInt();
 
@@ -446,7 +467,7 @@ void MainWindow::readSettings()
 	g_pTestBench->m_PulsePeriod = settings.value(tr("PulsePeriod"),0.0).toDouble();
 	g_pTestBench->m_SignalPower = settings.value(tr("SignalPower"),0.0).toDouble();
 	g_pTestBench->m_NoisePower = settings.value(tr("NoisePower"),0.0).toDouble();
-	g_pTestBench->m_UseFmGen = settings.value(tr("UseFmGen"),false).toBool();
+	g_pTestBench->m_GenMode = settings.value(tr("GenMode"),0).toInt();
 
 	settings.endGroup();
 
@@ -457,7 +478,7 @@ void MainWindow::readSettings()
 		settings.setArrayIndex(i);
 		m_DemodSettings[i].HiCut = settings.value(tr("HiCut"), 5000).toInt();
 		m_DemodSettings[i].LowCut = settings.value(tr("LowCut"), -5000).toInt();
-		m_DemodSettings[i].FilterClickResolution = settings.value(tr("FilterClickResolution"), 100).toInt();
+		m_DemodSettings[i].FreqClickResolution = settings.value(tr("FreqClickResolution"), m_DemodSettings[i].DefFreqClickResolution).toInt();
 		m_DemodSettings[i].Offset = settings.value(tr("Offset"), 0).toInt();
 		m_DemodSettings[i].SquelchValue = settings.value(tr("SquelchValue"), -160).toInt();
 		m_DemodSettings[i].AgcSlope = settings.value(tr("AgcSlope"), 0).toInt();
@@ -566,7 +587,7 @@ void MainWindow::OnDisplayDlg()
 CDisplayDlg dlg(this);
 	dlg.m_FftSize = m_FftSize;
 	dlg.m_FftAve = m_FftAve;
-	dlg.m_ClickResolution = m_ClickResolution;
+	dlg.m_ClickResolution = m_DemodSettings[m_DemodMode].FreqClickResolution;
 	dlg.m_MaxDisplayRate = m_MaxDisplayRate;
 	dlg.m_UseTestBench = m_UseTestBench;
 	dlg.m_Percent2DScreen = m_Percent2DScreen;
@@ -590,13 +611,13 @@ CDisplayDlg dlg(this);
 		m_FftSize = dlg.m_FftSize;
 		m_FftAve = dlg.m_FftAve;
 		m_UseCursorText = dlg.m_UseCursorText;
-		m_ClickResolution = dlg.m_ClickResolution;
+		m_DemodSettings[m_DemodMode].FreqClickResolution = dlg.m_ClickResolution;
 		m_MaxDisplayRate = dlg.m_MaxDisplayRate;
 		m_UseTestBench = dlg.m_UseTestBench;
 		m_pSdrInterface->SetFftAve( m_FftAve);
 		m_pSdrInterface->SetFftSize( m_FftSize);
 		m_pSdrInterface->SetMaxDisplayRate(m_MaxDisplayRate);
-		ui->framePlot->SetClickResolution(m_ClickResolution);
+		ui->framePlot->SetClickResolution(m_DemodSettings[m_DemodMode].FreqClickResolution);
 		ui->framePlot->EnableCurText(m_UseCursorText);
 		if(m_UseTestBench)
 		{	//make TestBench visable if not already
@@ -1032,10 +1053,42 @@ void MainWindow::SetupNoiseProc()
 }
 
 /////////////////////////////////////////////////////////////////////
+// Called when memory dialog checkbox is clicked
+/////////////////////////////////////////////////////////////////////
+void MainWindow::SetChatDialogState(int state)
+{
+	if(state)
+	{	//make memory dialog visable if not already
+		if(!g_pChatDialog->isVisible())
+		{
+			g_pChatDialog->setGeometry(m_ChatDialogRect);
+			g_pChatDialog->show();
+		}
+		g_pChatDialog->activateWindow();
+		g_pChatDialog->raise();
+	}
+	else
+	{	//hide memory dialog
+		if(g_pChatDialog->isVisible())
+		{
+			m_ChatDialogRect = g_pChatDialog->geometry();
+			g_pChatDialog->hide();
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////
 // Setup Demod parameters and clamp to limits
 /////////////////////////////////////////////////////////////////////
 void MainWindow::SetupDemod(int index)
 {
+	if(m_DemodMode != index)
+	{
+		if(DEMOD_PSK == index)
+			SetChatDialogState(true);
+		else
+			SetChatDialogState(false);
+	}
 	m_DemodMode = index;
 	ui->framePlot->SetDemodRanges(
 			m_DemodSettings[m_DemodMode].LowCutmin,
@@ -1062,6 +1115,7 @@ void MainWindow::SetupDemod(int index)
 	m_pSdrInterface->SetDemodFreq(m_CenterFrequency - m_DemodFrequency);
 	UpdateInfoBox();
 	ui->frameMeter->SetSquelchPos( m_DemodSettings[m_DemodMode].SquelchValue );
+	ui->framePlot->SetClickResolution(m_DemodSettings[m_DemodMode].FreqClickResolution);
 }
 
 
@@ -1078,6 +1132,8 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_AM].LowCutmax = -500;
 	m_DemodSettings[DEMOD_AM].LowCutmin = -10000;
 	m_DemodSettings[DEMOD_AM].Symetric = true;
+	m_DemodSettings[DEMOD_AM].DefFreqClickResolution = 1000;
+	m_DemodSettings[DEMOD_AM].FilterClickResolution = 100;
 
 	m_DemodSettings[DEMOD_SAM].txt = tr("AM");
 	m_DemodSettings[DEMOD_SAM].HiCutmin = 100;
@@ -1085,6 +1141,8 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_SAM].LowCutmax = -100;
 	m_DemodSettings[DEMOD_SAM].LowCutmin = -10000;
 	m_DemodSettings[DEMOD_SAM].Symetric = false;
+	m_DemodSettings[DEMOD_SAM].DefFreqClickResolution = 1000;
+	m_DemodSettings[DEMOD_SAM].FilterClickResolution = 100;
 
 	m_DemodSettings[DEMOD_FM].txt = tr("FM");
 	m_DemodSettings[DEMOD_FM].HiCutmin = 5000;
@@ -1092,6 +1150,8 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_FM].LowCutmax = -5000;
 	m_DemodSettings[DEMOD_FM].LowCutmin = -15000;
 	m_DemodSettings[DEMOD_FM].Symetric = true;
+	m_DemodSettings[DEMOD_FM].DefFreqClickResolution = 5000;
+	m_DemodSettings[DEMOD_FM].FilterClickResolution = 5000;
 
 	m_DemodSettings[DEMOD_WFM].txt = tr("WFM");
 	m_DemodSettings[DEMOD_WFM].HiCutmin = 100000;
@@ -1099,6 +1159,8 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_WFM].LowCutmax = -100000;
 	m_DemodSettings[DEMOD_WFM].LowCutmin = -100000;
 	m_DemodSettings[DEMOD_WFM].Symetric = true;
+	m_DemodSettings[DEMOD_WFM].DefFreqClickResolution = 100000;
+	m_DemodSettings[DEMOD_WFM].FilterClickResolution = 10000;
 
 	m_DemodSettings[DEMOD_USB].txt = tr("USB");
 	m_DemodSettings[DEMOD_USB].HiCutmin = 500;
@@ -1106,6 +1168,8 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_USB].LowCutmax = 200;
 	m_DemodSettings[DEMOD_USB].LowCutmin = 0;
 	m_DemodSettings[DEMOD_USB].Symetric = false;
+	m_DemodSettings[DEMOD_USB].DefFreqClickResolution = 100;
+	m_DemodSettings[DEMOD_USB].FilterClickResolution = 100;
 
 	m_DemodSettings[DEMOD_LSB].txt = tr("LSB");
 	m_DemodSettings[DEMOD_LSB].HiCutmin = -200;
@@ -1113,6 +1177,8 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_LSB].LowCutmax = -500;
 	m_DemodSettings[DEMOD_LSB].LowCutmin = -20000;
 	m_DemodSettings[DEMOD_LSB].Symetric = false;
+	m_DemodSettings[DEMOD_LSB].DefFreqClickResolution = 100;
+	m_DemodSettings[DEMOD_LSB].FilterClickResolution = 100;
 
 	m_DemodSettings[DEMOD_CWU].txt = tr("CWU");
 	m_DemodSettings[DEMOD_CWU].HiCutmin = 50;
@@ -1120,6 +1186,8 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_CWU].LowCutmax = -50;
 	m_DemodSettings[DEMOD_CWU].LowCutmin = -1000;
 	m_DemodSettings[DEMOD_CWU].Symetric = false;
+	m_DemodSettings[DEMOD_CWU].DefFreqClickResolution = 10;
+	m_DemodSettings[DEMOD_CWU].FilterClickResolution = 50;
 
 	m_DemodSettings[DEMOD_CWL].txt = tr("CWL");
 	m_DemodSettings[DEMOD_CWL].HiCutmin = 50;
@@ -1127,6 +1195,15 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_CWL].LowCutmax = -50;
 	m_DemodSettings[DEMOD_CWL].LowCutmin = -1000;
 	m_DemodSettings[DEMOD_CWL].Symetric = false;
+	m_DemodSettings[DEMOD_CWL].DefFreqClickResolution = 10;
+	m_DemodSettings[DEMOD_CWL].FilterClickResolution = 50;
 
-	m_pSdrInterface->SetDemod(m_DemodMode, m_DemodSettings[m_DemodMode]);
+	m_DemodSettings[DEMOD_PSK].txt = tr("PSK");
+	m_DemodSettings[DEMOD_PSK].HiCutmin = 50;
+	m_DemodSettings[DEMOD_PSK].HiCutmax = 50;
+	m_DemodSettings[DEMOD_PSK].LowCutmax = -50;
+	m_DemodSettings[DEMOD_PSK].LowCutmin = -50;
+	m_DemodSettings[DEMOD_PSK].Symetric = true;
+	m_DemodSettings[DEMOD_PSK].DefFreqClickResolution = 1;
+	m_DemodSettings[DEMOD_PSK].FilterClickResolution = 5;
 }
