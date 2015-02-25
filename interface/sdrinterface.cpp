@@ -282,7 +282,7 @@ CAscpTxMsg TxMsg;
 					m_RadioType = SDRIP;
 				else if("NetSDR" == m_DeviceName)
 					m_RadioType = NETSDR;
-				if("CloudSDR" == m_DeviceName)
+				if( ("CloudSDR" == m_DeviceName) || ("CloudSDR-IQ" == m_DeviceName) )
 					m_RadioType = CLOUDSDR;
 				if( (SDRIP==m_RadioType) || (NETSDR==m_RadioType) || (CLOUDSDR==m_RadioType))
 				{
@@ -955,8 +955,9 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 	//accumulate samples into m_DataBuf until have enough to perform an FFT
 	for(int i=0; i<NumSamples; i++)
 	{
-		m_DataBuf[m_FftBufPos].re = pIQData[i].re - m_NCOSpurOffsetI;
-		m_DataBuf[m_FftBufPos++].im = pIQData[i].im - m_NCOSpurOffsetQ;
+		pIQData[i].re = pIQData[i].re - m_NCOSpurOffsetI;
+		pIQData[i].im = pIQData[i].im - m_NCOSpurOffsetQ;
+		m_DataBuf[m_FftBufPos++] = pIQData[i];
 		if(m_FftBufPos >= (m_FftSize) )
 		{
 			m_FftBufPos = 0;
