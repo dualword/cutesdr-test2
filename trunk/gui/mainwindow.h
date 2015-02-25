@@ -13,6 +13,7 @@
 #include "interface/sdrinterface.h"
 #include <QHostAddress>
 #include "gui/demodsetupdlg.h"
+#include "gui/chatdialog.h"
 #include "rdsdecode.h"
 
 
@@ -69,6 +70,7 @@ private:
 	void writeSettings();
 	void UpdateInfoBox();
 	void InitDemodSettings();
+	void SetChatDialogState(int state);
 
 	/////////////////////////
 	//Persistant Settings Variables saved
@@ -89,7 +91,6 @@ private:
 	qint32 m_BandwidthIndex;
 	qint32 m_SoundInIndex;
 	qint32 m_SoundOutIndex;
-	qint32 m_ClickResolution;
 	qint32 m_MaxDisplayRate;
 	qint32 m_VertScaleIndex;
 	qint32 m_dBStepSize;
@@ -116,6 +117,8 @@ private:
 	QTimer *m_pTimer;
 	CSdrInterface* m_pSdrInterface;
 	CDemodSetupDlg* m_pDemodSetupDlg;
+	QRect m_ChatDialogRect;
+
 	CRdsDecode m_RdsDecode;
 	qint32 m_KeepAliveTimer;
 	Ui::MainWindow *ui;

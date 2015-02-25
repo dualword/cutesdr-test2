@@ -47,6 +47,7 @@
 #include "dsp/datatypes.h"
 #include "dsp/fft.h"
 #include "dsp/wfmmod.h"
+#include "dsp/pskmod.h"
 
 
 extern TYPEREAL g_TestValue;
@@ -68,6 +69,11 @@ extern TYPEREAL g_TestValue;
 #define PROFILE_7 7
 
 #define NUM_PROFILES 8
+
+#define GENMODE_NORMAL 0
+#define GENMODE_WFM 1
+#define GENMODE_PSK 2
+#define NUM_GENMODES 3
 
 
 #define TEST_FFTSIZE 2048
@@ -105,10 +111,12 @@ public:
 	void CreateGeneratorSamples(int length, TYPECPX* pBuf, TYPEREAL samplerate);
 	void CreateGeneratorSamples(int length, TYPEREAL* pBuf, TYPEREAL samplerate);
 	// overloaded data display routines
-	void DisplayData(int n, TYPEREAL* pBuf, TYPEREAL samplerate, int profile);
-	void DisplayData(int n, TYPECPX* pBuf, TYPEREAL samplerate, int profile);
-	void DisplayData(int n, TYPEMONO16* pBuf, TYPEREAL samplerate, int profile);
-	void DisplayData(int n, TYPESTEREO16* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayData(int n, TYPEREAL Scale, TYPEREAL* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayData(int n, TYPEREAL Scale, TYPECPX* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayData(int n, TYPEREAL Scale, TYPEMONO16* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayData(int n, TYPEREAL Scale, TYPESTEREO16* pBuf, TYPEREAL samplerate, int profile);
+	void DisplayDualData(int n, TYPEREAL Scale1, TYPEREAL Scale2,
+							TYPEREAL* pBuf1, TYPEREAL* pBuf2, TYPEREAL samplerate, int profile);
 
 	void SendDebugTxt(QString Str){ if(m_Active) emit SendTxt(Str);}
 
@@ -118,7 +126,7 @@ public:
 	bool m_PeakOn;
 	bool m_NewDataIsCpx;
 	bool m_CurrentDataIsCpx;
-	bool m_UseFmGen;
+	int m_GenMode;
 	int m_Profile;
 	int m_TrigIndex;
 	int m_DisplayRate;
@@ -141,7 +149,7 @@ public slots:
 	void OnTimer();
 
 	void OnGenOn(bool On);
-	void OnFmGen(bool On);
+	void OnGenMode(int GenMode);
 	void OnTimeDisplay(bool timemode);
 	void OnEnablePeak(bool enablepeak);
 	void OnSweepStart(int start);
@@ -179,6 +187,7 @@ private:
 	void MakeFrequencyStrs();
 	void ChkForTrigger(qint32 sample);
 	quint64 rdtsctime();
+	bool m_StartupFlag;
 	QPixmap m_2DPixmap;
 	QPixmap m_OverlayPixmap;
 	QSize m_Size;
@@ -225,6 +234,7 @@ private:
 	CFft m_Fft;
 	QFile m_File;
 	CWFmMod* m_pWFmMod;
+	CPskMod* m_pPskMod;
 
 };
 

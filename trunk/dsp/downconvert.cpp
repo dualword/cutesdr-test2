@@ -281,7 +281,7 @@ TYPEREAL*	pdSinAns  = &dASMSin;
 	{
 		n = m_pDecimatorPtrs[j++]->DecBy2(n, pInData, pInData);
 //if(1==j)
-//g_pTestBench->DisplayData(n, (TYPECPX*)pInData, 615385/2.0);
+//g_pTestBench->DisplayData(n, 1.0, (TYPECPX*)pInData, 615385/2.0);
 	}
 	m_Mutex.unlock();
 	for(i=0; i<n; i++)

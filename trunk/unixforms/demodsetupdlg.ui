@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>351</width>
-    <height>322</height>
+    <height>344</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>290</y>
+     <y>310</y>
      <width>81</width>
      <height>23</height>
     </rect>
@@ -35,7 +35,7 @@
      <x>10</x>
      <y>10</y>
      <width>101</width>
-     <height>251</height>
+     <height>261</height>
     </rect>
    </property>
    <property name="title">
@@ -46,7 +46,7 @@
      <rect>
       <x>20</x>
       <y>21</y>
-      <width>68</width>
+      <width>58</width>
       <height>231</height>
      </rect>
     </property>
@@ -107,14 +107,21 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QRadioButton" name="PSKradioButton">
+       <property name="text">
+        <string>PSK</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
   <widget class="QSpinBox" name="spinBoxOffset">
    <property name="geometry">
     <rect>
-     <x>140</x>
-     <y>260</y>
+     <x>110</x>
+     <y>280</y>
      <width>151</width>
      <height>22</height>
     </rect>
@@ -246,7 +253,7 @@
      <rect>
       <x>90</x>
       <y>30</y>
-      <width>141</width>
+      <width>131</width>
       <height>17</height>
      </rect>
     </property>
@@ -262,13 +269,19 @@
    <property name="geometry">
     <rect>
      <x>140</x>
-     <y>230</y>
+     <y>240</y>
      <width>160</width>
      <height>21</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-160</number>
+   </property>
+   <property name="maximum">
+    <number>0</number>
+   </property>
    <property name="value">
-    <number>50</number>
+    <number>-160</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -284,19 +297,16 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>210</y>
+     <y>220</y>
      <width>91</width>
      <height>20</height>
     </rect>
    </property>
    <property name="toolTip">
-    <string>Squelch Control</string>
+    <string>FM Squelch Control</string>
    </property>
    <property name="text">
     <string>Squelch</string>
-   </property>
-   <property name="textFormat">
-    <enum>Qt::AutoText</enum>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>
@@ -537,6 +547,22 @@
     <hint type="destinationlabel">
      <x>175</x>
      <y>154</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>PSKradioButton</sender>
+   <signal>clicked()</signal>
+   <receiver>CDemodSetupDlg</receiver>
+   <slot>ModeChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>57</x>
+     <y>243</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>76</x>
+     <y>292</y>
     </hint>
    </hints>
   </connection>

@@ -36,6 +36,7 @@
 #ifndef DEMODULATOR_H
 #define DEMODULATOR_H
 
+#include <QObject>
 #include <QString>
 #include "dsp/downconvert.h"
 #include "dsp/fastfir.h"
@@ -46,6 +47,7 @@
 #include "dsp/fmdemod.h"
 #include "dsp/wfmdemod.h"
 #include "dsp/ssbdemod.h"
+#include "dsp/pskdemod.h"
 
 #define DEMOD_AM 0		//defines for supported demod modes
 #define DEMOD_SAM 1
@@ -55,8 +57,9 @@
 #define DEMOD_CWU 5
 #define DEMOD_CWL 6
 #define DEMOD_WFM 7
+#define DEMOD_PSK 9
 
-#define NUM_DEMODS 8	//manually update if modify number of demod types
+#define NUM_DEMODS 10	//manually update if modify number of demod types
 
 #define MAX_INBUFSIZE 250000	//maximum size of demod input buffer
 								//pick so that worst case decimation leaves
@@ -71,7 +74,9 @@ typedef struct _sdmd
 	int LowCut;
 	int LowCutmin;	//not saved in settings
 	int LowCutmax;	//not saved in settings
-	int FilterClickResolution;
+	int DefFreqClickResolution;//not saved in settings
+	int FreqClickResolution;
+	int FilterClickResolution;//not saved in settings
 	int Offset;
 	int SquelchValue;
 	int AgcSlope;
@@ -87,7 +92,7 @@ typedef struct _sdmd
 class CDemodulator
 {
 public:
-	CDemodulator();
+	CDemodulator( QObject *parent = 0);
 	virtual ~CDemodulator();
 
 	void SetInputSampleRate(TYPEREAL InputRate);
@@ -106,6 +111,8 @@ public:
 
 	void SetUSFmVersion(bool USFm){m_USFm = USFm;}
 	bool GetUSFmVersion(){return m_USFm;}
+	void SetPskMode(int index);
+
 
 	//access to WFM mode status
 	int GetStereoLock(int* pPilotLock){ if(m_pWFmDemod) return m_pWFmDemod->GetStereoLock(pPilotLock); else return false;}
@@ -133,11 +140,14 @@ private:
 	int m_DemodMode;
 	int m_InBufPos;
 	int m_InBufLimit;
+	int m_PskRate;
 	//pointers to all the various implemented demodulator classes
+	QObject* m_pChatDialog;
 	CAmDemod* m_pAmDemod;
 	CSamDemod* m_pSamDemod;
 	CFmDemod* m_pFmDemod;
 	CWFmDemod* m_pWFmDemod;
+	CPskDemod* m_pPskDemod;
 	CSsbDemod* m_pSsbDemod;	//includes CW modes
 };
 

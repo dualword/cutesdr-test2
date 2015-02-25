@@ -259,7 +259,7 @@ TYPESTEREO16 RData[OUTQSIZE];	//buffer to hold resampled data
 	numsamples = m_OutResampler.Resample(numsamples, TEST_ERROR*m_OutRatio *(1.0+m_RateCorrection),
 										 pData, RData, m_Gain);
 
-g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
+g_pTestBench->DisplayData(numsamples, 1.0, RData, SOUNDCARD_RATE, PROFILE_5);
 
 	m_Mutex.lock();
 	for( int i=0; i<numsamples; i++)
@@ -301,7 +301,7 @@ TYPEMONO16 RData[OUTQSIZE];	//buffer to hold resampled data
 	numsamples = m_OutResampler.Resample(numsamples, TEST_ERROR*m_OutRatio *(1.0+m_RateCorrection),
 										 pData, RData, m_Gain);
 
-g_pTestBench->DisplayData(numsamples, RData, SOUNDCARD_RATE, PROFILE_5);
+g_pTestBench->DisplayData(numsamples, 1.0, RData, SOUNDCARD_RATE, PROFILE_5);
 
 	m_Mutex.lock();
 	for( int i=0; i<numsamples; i++)

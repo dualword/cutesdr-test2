@@ -289,7 +289,7 @@ qDebug()<<"RDS Rate = "<< m_RdsOutputRate;
 int CWFmDemod::ProcessData(int InLength, TYPECPX* pInData, TYPEREAL* pOutData)
 {
 	m_MonoLPFilter.ProcessFilter(InLength,pInData, pInData);
-g_pTestBench->DisplayData(InLength, pInData, m_SampleRate,PROFILE_2);
+g_pTestBench->DisplayData(InLength, 1.0, pInData, m_SampleRate,PROFILE_2);
 	for(int i=0; i<InLength; i++)
 	{
 		m_D0 = pInData[i];
@@ -304,7 +304,7 @@ g_pTestBench->DisplayData(InLength, pInData, m_SampleRate,PROFILE_2);
 	if(m_pDecBy2C)
 		InLength = m_pDecBy2C->DecBy2(InLength, pOutData, pOutData);
 
-//g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
+//g_pTestBench->DisplayData(InLength, 1.0, m_RawFm, m_SampleRate,PROFILE_2);
 
 	m_LPFilter.ProcessFilter( InLength, pOutData, pOutData);	//rolloff audio above 15KHz
 	ProcessDeemphasisFilter(InLength, pOutData, pOutData);		//50 or 75uSec de-emphasis one pole filter
@@ -346,13 +346,13 @@ TYPEREAL LminusR;
 	}
 //StopPerformance(InLength);
 
-g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
+g_pTestBench->DisplayData(InLength, 1.0, m_RawFm, m_SampleRate,PROFILE_2);
 	//create complex data from demodulator real data
 	m_HilbertFilter.ProcessFilter(InLength, m_RawFm, m_CpxRawFm);	//~173 nSec/sample
 
 //m_fileWriter.write( InLength, m_CpxRawFm);
 
-//g_pTestBench->DisplayData(InLength, m_CpxRawFm, m_SampleRate,PROFILE_3);
+//g_pTestBench->DisplayData(InLength, 1.0, m_CpxRawFm, m_SampleRate,PROFILE_3);
 
 	m_PilotBPFilter.ProcessFilter(InLength, m_CpxRawFm, pInData);//~173 nSec/sample, use input buffer for complex output storage
 	if(ProcessPilotPll(InLength, pInData) )
@@ -381,25 +381,25 @@ g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
 	int length = m_RdsDownConvert.ProcessData(InLength, m_CpxRawFm, m_RdsRaw);
 
 	//filter baseband RDS signal
-//g_pTestBench->DisplayData(length, m_RdsRaw, m_RdsOutputRate, PROFILE_3);
+//g_pTestBench->DisplayData(length, 1.0, m_RdsRaw, m_RdsOutputRate, PROFILE_3);
 	m_RdsBPFilter.ProcessFilter(length, m_RdsRaw, m_RdsRaw);
 //g_pTestBench->DisplayData(length, m_RdsRaw, m_RdsOutputRate, PROFILE_3);
 
 	//PLL to remove any rotation since may not be phase locked to 19KHz Pilot or may not even have pilot
 	ProcessRdsPll(length, m_RdsRaw, m_RdsMag);
-//g_pTestBench->DisplayData(length, m_RdsMag, m_RdsOutputRate, PROFILE_3);
+//g_pTestBench->DisplayData(length, 1.0, m_RdsMag, m_RdsOutputRate, PROFILE_3);
 
 	//run matched filter correlator to extract the bi-phase data bits
 	m_RdsMatchedFilter.ProcessFilter(length,m_RdsMag,m_RdsData);
-//g_pTestBench->DisplayData(length, m_RdsData, m_RdsOutputRate, PROFILE_6);
+//g_pTestBench->DisplayData(length, 1.0, m_RdsData, m_RdsOutputRate, PROFILE_6);
 	//create bit sync signal in m_RdsMag[] by squaring data
 	for(int i=0; i<length; i++)
 		m_RdsMag[i] = m_RdsData[i]* m_RdsData[i];	//has high energy at the bit clock rate and 2x bit rate
 
-//g_pTestBench->DisplayData(length, m_RdsMag, m_RdsOutputRate, PROFILE_6);
+//g_pTestBench->DisplayData(length, 1.0, m_RdsMag, m_RdsOutputRate, PROFILE_6);
 	//run Hi-Q resonator filter that create a sin wave that will lock to BitRate clock and not 2X rate
 	m_RdsBitSyncFilter.ProcessFilter(length, m_RdsMag, m_RdsMag);
-//g_pTestBench->DisplayData(length, m_RdsMag, m_RdsOutputRate, PROFILE_6);
+//g_pTestBench->DisplayData(length, 1.0, m_RdsMag, m_RdsOutputRate, PROFILE_6);
 	//now loop through samples to determine where bit position is and extract binary digital data
 	for(int i=0; i<length; i++)
 	{
@@ -435,9 +435,9 @@ g_pTestBench->DisplayData(InLength, m_RawFm, m_SampleRate,PROFILE_2);
 		m_RdsLastSyncSlope = Slope;
 		m_RdsRaw[i].im = Data;
 	}
-//g_pTestBench->DisplayData(length, m_RdsRaw, m_RdsOutputRate, PROFILE_3);	//display rds data and sample point
+//g_pTestBench->DisplayData(length, 1.0, m_RdsRaw, m_RdsOutputRate, PROFILE_3);	//display rds data and sample point
 
-//g_pTestBench->DisplayData(length, m_RdsData, m_RdsOutputRate, PROFILE_3);
+//g_pTestBench->DisplayData(length, 1.0, m_RdsData, m_RdsOutputRate, PROFILE_3);
 
 	//decimate by 2's down close to final audio rate
 	if(m_pDecBy2A)
@@ -658,7 +658,7 @@ TYPECPX tmp;
 		pOutData[i] = tmp.im;
 	}
 	m_RdsNcoPhase = MFMOD(m_RdsNcoPhase, K_2PI);	//keep radian counter bounded
-//g_pTestBench->DisplayData(InLength, m_RdsData, m_RdsOutputRate, PROFILE_6);
+//g_pTestBench->DisplayData(InLength, 1.0, m_RdsData, m_RdsOutputRate, PROFILE_6);
 }
 
 

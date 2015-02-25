@@ -314,7 +314,7 @@ TYPEREAL Beta;
 #if 0		//debug hack to write m_Coef to a file for analysis
 	QDir::setCurrent("d:/");
 	QFile File;
-	File.setFileName("LPcoef.txt");
+	File.setFileName("BPSKcoef.txt");
 	if(File.open(QIODevice::WriteOnly))
 	{
 		qDebug()<<"file Opened OK";

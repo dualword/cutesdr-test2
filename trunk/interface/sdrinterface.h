@@ -149,6 +149,7 @@ public:
 	void SetSpectrumInversion(bool Invert){m_InvertSpectrum = Invert;}
 	void SetUSFmVersion(bool USFm){m_USFm = USFm;}
 	bool GetUSFmVersion(){return m_USFm;}
+	void SetPskMode(int Index);
 
 	//access to WFM mode status/data
 	int GetStereoLock(int* pPilotLock){ return m_Demodulator.GetStereoLock(pPilotLock);}

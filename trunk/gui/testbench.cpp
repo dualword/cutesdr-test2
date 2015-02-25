@@ -42,6 +42,7 @@
 #include "testbench.h"
 #include "ui_testbench.h"
 #include <QDebug>
+#include "dsp/psktables.h"
 
 CTestBench* g_pTestBench = NULL;		//pointer to this class is global so everybody can access
 TYPEREAL g_TestValue= 0.0;
@@ -75,16 +76,11 @@ TYPEREAL g_TestValue= 0.0;
 
 
 //list of defined profiles
-const char* PROF_STR[NUM_PROFILES] =
+const char* PROF_STR[NUM_GENMODES][NUM_PROFILES] =
 {
-	"Off",
-	"PreFilter",
-	"PostFilter",
-	"PostAGC",
-	"PostDemod",
-	"Soundcard",
-	"Profile 6",
-	"Noise Blanker"
+	{"Off",	"PreFilter","PostFilter","PostAGC","PostDemod","Soundcard","Profile 6","Noise Blanker"},
+	{"Off",	"PreFilter","PostFilter","PostAGC","PostDemod","Soundcard","Profile 6","Noise Blanker"},
+	{"Off",	"PreFilter","PostFilter","PostBit","PostDemod","Soundcard","Profile 6","Noise Blanker"}
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -94,6 +90,7 @@ CTestBench::CTestBench(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CTestBench)
 {
+	m_StartupFlag = true;
     m_Active = false;
 	m_2DPixmap = QPixmap(0,0);
 	m_OverlayPixmap = QPixmap(0,0);
@@ -128,6 +125,9 @@ CTestBench::CTestBench(QWidget *parent) :
 	m_PulseTimer = 0.0;
 
 	m_pWFmMod = NULL;
+	m_pPskMod = NULL;
+	m_GenMode = GENMODE_NORMAL;
+
 
 	connect(this, SIGNAL(ResetSignal()), this,  SLOT( Reset() ) );
 	connect(this, SIGNAL(NewFftData()), this,  SLOT( DrawFftPlot() ) );
@@ -161,7 +161,7 @@ CTestBench::CTestBench(QWidget *parent) :
 #endif
 
 	m_pWFmMod = new CWFmMod();
-
+	m_pPskMod = new CPskMod();
 }
 
 CTestBench::~CTestBench()
@@ -170,7 +170,9 @@ CTestBench::~CTestBench()
 		m_File.close();
 	if(m_pWFmMod)
 		delete m_pWFmMod;
-    delete ui;
+	if(m_pPskMod)
+		delete m_pPskMod;
+	delete ui;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -215,9 +217,14 @@ void CTestBench::Init()
 
 	tmp = m_Profile;
 	for(int i=0; i<NUM_PROFILES; i++)
-		ui->comboBoxProfile->addItem(PROF_STR[i],i);
+		ui->comboBoxProfile->addItem(PROF_STR[m_GenMode][i],i);
 	m_Profile = tmp;
 	ui->comboBoxProfile->setCurrentIndex(m_Profile);
+
+	ui->comboBoxGenMode->addItem("Normal",0);
+	ui->comboBoxGenMode->addItem("WFM",1);
+	ui->comboBoxGenMode->addItem("PSK",2);
+	ui->comboBoxGenMode->setCurrentIndex(m_GenMode);
 
 	ui->spinBoxStart->setValue(m_SweepStartFrequency/1000.0);
 	ui->spinBoxStop->setValue(m_SweepStopFrequency/1000.0);
@@ -230,7 +237,6 @@ void CTestBench::Init()
 	ui->spinBoxRate->setValue(m_DisplayRate);
 
 	ui->checkBoxGen->setChecked(m_GenOn);
-	ui->checkBoxFm->setChecked(m_UseFmGen);
 	ui->checkBoxPeak->setChecked(m_PeakOn);
 	ui->spinBoxAmp->setValue((int)m_SignalPower);
 	ui->spinBoxNoise->setValue((int)m_NoisePower);
@@ -238,6 +244,7 @@ void CTestBench::Init()
 	ui->spinBoxPulsePeriod->setValue((int)(1000.0*m_PulsePeriod));
 
 	Reset();
+	m_StartupFlag = false;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -245,35 +252,42 @@ void CTestBench::Init()
 //////////////////////////////////////////////////////////////////////
 void CTestBench::OnSweepStart(int start)
 {
+	if(m_StartupFlag)
+		return;
 	m_SweepStartFrequency = (TYPEREAL)start*1000.0;
 	m_SweepFrequency = m_SweepStartFrequency;
 	m_SweepAcc = 0.0;
-	if(m_UseFmGen)
+	if(GENMODE_WFM == m_GenMode)
 		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
 }
 
 void CTestBench::OnSweepStop(int stop)
 {
+	if(m_StartupFlag)
+		return;
 	m_SweepStopFrequency = (TYPEREAL)stop*1000.0;
 	m_SweepFrequency = m_SweepStartFrequency;
 	m_SweepAcc = 0.0;
-	if(m_UseFmGen)
+	if(GENMODE_WFM == m_GenMode)
 		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
 }
 
 void CTestBench::OnSweepRate(int rate)
 {
+	if(m_StartupFlag)
+		return;
 	m_SweepRate = (TYPEREAL)rate; // Hz/sec
 	m_SweepAcc = 0.0;
 	m_SweepRateInc = m_SweepRate/m_GenSampleRate;
-	if(m_UseFmGen)
+	if(GENMODE_WFM == m_GenMode)
 		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
 
 }
 
-
 void CTestBench::OnDisplayRate(int rate)
 {
+	if(m_StartupFlag)
+		return;
 	m_DisplayRate = rate;
 	if(m_TimeDisplay)
 	{
@@ -288,6 +302,8 @@ void CTestBench::OnDisplayRate(int rate)
 
 void CTestBench::OnVertRange(int range )
 {
+	if(m_StartupFlag)
+		return;
 	m_VertRange = range;
 	ui->spinBoxThresh->setMaximum(m_VertRange/2);
 	ui->spinBoxThresh->setMinimum(-m_VertRange/2);
@@ -297,6 +313,8 @@ void CTestBench::OnVertRange(int range )
 
 void CTestBench::OnHorzSpan(int span)
 {
+	if(m_StartupFlag)
+		return;
 	m_HorzSpan = span;
 	if(m_TimeDisplay)
 	{
@@ -309,18 +327,24 @@ void CTestBench::OnHorzSpan(int span)
 
 void CTestBench::OnTimeDisplay(bool timemode)
 {
+	if(m_StartupFlag)
+		return;
 	m_TimeDisplay = timemode;
 	Reset();
 }
 
 void CTestBench::OnTriggerMode(int trigindex)
 {
+	if(m_StartupFlag)
+		return;
 	m_TrigIndex = trigindex;
 	Reset();
 }
 
 void CTestBench::OnTrigLevel(int level)
 {
+	if(m_StartupFlag)
+		return;
 	m_TrigLevel = level;
 	if(m_TimeDisplay)
 		DrawTimeOverlay();
@@ -328,45 +352,62 @@ void CTestBench::OnTrigLevel(int level)
 
 void CTestBench::OnProfile(int profindex)
 {
+	if(m_StartupFlag)
+		return;
 	m_Profile = profindex;
 
 }
 
 void CTestBench::OnGenOn(bool On)
 {
+	if(m_StartupFlag)
+		return;
 	m_GenOn = On;
 }
 
-void CTestBench::OnFmGen(bool On)
+void CTestBench::OnGenMode(int GenMode)
 {
-	m_UseFmGen = On;
+	if(m_StartupFlag)
+		return;
+	m_GenMode = GenMode;
+qDebug()<<"GenMode="<<m_GenMode;
+	m_GenSampleRate = 1;
 }
-
 
 void CTestBench::OnPulseWidth(int pwidth)
 {
+	if(m_StartupFlag)
+		return;
 	m_PulseWidth = (TYPEREAL)pwidth * .001;
 }
 
 void CTestBench::OnPulsePeriod(int pperiod)
 {
+	if(m_StartupFlag)
+		return;
 	m_PulsePeriod = (TYPEREAL)pperiod * .001;
 }
 
 void CTestBench::OnSignalPwr(int pwr)
 {
+	if(m_StartupFlag)
+		return;
 	m_SignalPower = pwr;
 	m_SignalAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_SignalPower/20.0);
 }
 
 void CTestBench::OnNoisePwr(int pwr)
 {
+	if(m_StartupFlag)
+		return;
 	m_NoisePower = pwr;
 	m_NoiseAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_NoisePower/20.0);
 }
 
 void CTestBench::OnEnablePeak(bool enablepeak)
 {
+	if(m_StartupFlag)
+		return;
 	for( int i=0; i<TB_MAX_SCREENSIZE; i++)
 	{
 		m_FftPkBuf[i] = m_Rect.height();	//set pk buffer to minimum screen posistion
@@ -375,8 +416,6 @@ void CTestBench::OnEnablePeak(bool enablepeak)
 	}
 	m_PeakOn = enablepeak;
 }
-
-
 
 //////////////////////////////////////////////////////////////////////
 // Call to Create 'length' complex sweep/pulse/noise generator samples
@@ -395,10 +434,15 @@ TYPEREAL u2;
 	if(m_GenSampleRate != samplerate)
 	{	//reset things if sample rate changes on the fly
 		m_GenSampleRate = samplerate;
-		if(m_UseFmGen)
+		if(GENMODE_WFM == m_GenMode)
 		{
 			m_pWFmMod->SetSampleRate(m_GenSampleRate);
 			m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
+		}
+		else if(GENMODE_PSK == m_GenMode)
+		{
+//			m_pPskMod->Init(m_GenSampleRate, 31.25, BPSK_MODE);
+			m_pPskMod->Init(m_GenSampleRate, 62.5, BPSK_MODE);
 		}
 		emit ResetSignal();
 	}
@@ -453,46 +497,50 @@ TYPEREAL u2;
 	return;
 #endif
 
-	if(m_UseFmGen)
-		m_pWFmMod->GenerateData(length, m_SignalAmplitude, pBuf);
-
-	for(i=0; i<length; i++)
+	if(GENMODE_NORMAL == m_GenMode)
 	{
 		TYPEREAL amp = m_SignalAmplitude;
-		if(m_PulseWidth > 0.0)
-		{	//if pulse width is >0 create pulse modulation
-			m_PulseTimer += (1.0/m_GenSampleRate);
-			if(m_PulseTimer > m_PulsePeriod)
-				m_PulseTimer = 0.0;
-			if(m_PulseTimer > m_PulseWidth)
-				amp = 0.0;
-		}
-
+		for(i=0; i<length; i++)
+		{
+			if(m_PulseWidth > 0.0)
+			{	//if pulse width is >0 create pulse modulation
+				m_PulseTimer += (1.0/m_GenSampleRate);
+				if(m_PulseTimer > m_PulsePeriod)
+					m_PulseTimer = 0.0;
+				if(m_PulseTimer > m_PulseWidth)
+					amp = 0.0;
+			}
 #if 0		//way to skip over passband for filter alias testing
 if( (m_SweepFrequency>-31250) && (m_SweepFrequency<31250) )
 {
-	m_SweepFrequency = 31250;
-	amp = 0.0;
-	m_Fft.ResetFFT();
-	m_DisplaySkipCounter = -2;
+m_SweepFrequency = 31250;
+amp = 0.0;
+m_Fft.ResetFFT();
+m_DisplaySkipCounter = -2;
 }
 #endif
-
-	if(!m_UseFmGen)
-	{
-		//create complex sin/cos signal
-		pBuf[i].re = amp*MCOS(m_SweepAcc);
-		pBuf[i].im = amp*MSIN(m_SweepAcc);
-		//inc phase accummulator with normalized freqeuency step
-
-
-		m_SweepAcc += ( m_SweepFrequency*m_SweepFreqNorm );
-		m_SweepFrequency += m_SweepRateInc;	//inc sweep frequency
-		if(m_SweepFrequency >= m_SweepStopFrequency)	//reached end of sweep?
-			m_SweepRateInc = 0.0;						//stop sweep when end is reached
-//			m_SweepFrequency = m_SweepStartFrequency;	//restart sweep when end is reached
+			//create complex sin/cos signal
+			pBuf[i].re = amp*MCOS(m_SweepAcc);
+			pBuf[i].im = amp*MSIN(m_SweepAcc);
+			//inc phase accummulator with normalized freqeuency step
+			m_SweepAcc += ( m_SweepFrequency*m_SweepFreqNorm );
+			m_SweepFrequency += m_SweepRateInc;	//inc sweep frequency
+			if(m_SweepFrequency >= m_SweepStopFrequency)	//reached end of sweep?
+				m_SweepRateInc = 0.0;						//stop sweep when end is reached
+	//			m_SweepFrequency = m_SweepStartFrequency;	//restart sweep when end is reached
+		}
 	}
-
+	else if(GENMODE_WFM == m_GenMode)
+	{
+		m_pWFmMod->GenerateData(length, m_SignalAmplitude, pBuf);
+	}
+	else if(GENMODE_PSK == m_GenMode)
+	{
+		m_pPskMod->GenerateData(length, m_SignalAmplitude, pBuf);
+	}
+	//add in noise to signal
+	for(i=0; i<length; i++)
+	{
 		//////////////////  Gaussian Noise generator
 		// Generate two uniform random numbers between -1 and +1
 		// that are inside the unit circle
@@ -594,7 +642,7 @@ int i;
 	m_SweepFreqNorm = K_2PI/m_GenSampleRate;
 	m_SweepAcc = 0.0;
 	m_SweepRateInc = m_SweepRate/m_GenSampleRate;
-	if(m_UseFmGen)
+	if(GENMODE_WFM == m_GenMode)
 		m_pWFmMod->SetSweep(m_SweepFreqNorm,m_SweepFrequency,m_SweepStopFrequency,m_SweepRateInc);
 	m_SignalAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_SignalPower/20.0);
 	m_NoiseAmplitude = MAX_AMPLITUDE*MPOW(10.0, m_NoisePower/20.0);
@@ -648,7 +696,7 @@ int i;
 //Called by thread so no GUI calls!
 // COMPLEX Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPECPX* pBuf, TYPEREAL samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPEREAL Scale, TYPECPX* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -664,7 +712,8 @@ void CTestBench::DisplayData(int length, TYPECPX* pBuf, TYPEREAL samplerate, int
 		//accumulate samples into m_FftInBuf until have enough to perform an FFT
 		for(int i=0; i<length; i++)
 		{
-			m_FftInBuf[m_FftBufPos++] = pBuf[i];
+			m_FftInBuf[m_FftBufPos].re = Scale*pBuf[i].re;
+			m_FftInBuf[m_FftBufPos++].im = Scale*pBuf[i].im;
 			if(m_FftBufPos >= TEST_FFTSIZE )
 			{
 				m_FftBufPos = 0;
@@ -688,9 +737,9 @@ void CTestBench::DisplayData(int length, TYPECPX* pBuf, TYPEREAL samplerate, int
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
-				ChkForTrigger( (int)pBuf[i].re );
-				m_TimeBuf1[m_TimeScrnPos] = (int)pBuf[i].re;
-				m_TimeBuf2[m_TimeScrnPos++] = (int)pBuf[i].im;
+				ChkForTrigger( (int)(pBuf[i].re*Scale) );
+				m_TimeBuf1[m_TimeScrnPos] = (int)(pBuf[i].re*Scale);
+				m_TimeBuf2[m_TimeScrnPos++] = (int)(pBuf[i].im*Scale);
 				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
 				{
@@ -708,7 +757,7 @@ void CTestBench::DisplayData(int length, TYPECPX* pBuf, TYPEREAL samplerate, int
 //Called by thread so no GUI calls!
 // REAL Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPEREAL* pBuf, TYPEREAL samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPEREAL Scale, TYPEREAL* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -724,7 +773,7 @@ void CTestBench::DisplayData(int length, TYPEREAL* pBuf, TYPEREAL samplerate, in
 		//accumulate samples into m_FftInBuf until have enough to perform an FFT
 		for(int i=0; i<length; i++)
 		{
-			m_FftInBuf[m_FftBufPos].re = pBuf[i];
+			m_FftInBuf[m_FftBufPos].re = pBuf[i]*Scale;
 			m_FftInBuf[m_FftBufPos++].im = 0.0;
 			if(m_FftBufPos >= TEST_FFTSIZE )
 			{
@@ -747,8 +796,8 @@ void CTestBench::DisplayData(int length, TYPEREAL* pBuf, TYPEREAL samplerate, in
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
-				ChkForTrigger( (int)pBuf[i] );
-				m_TimeBuf1[m_TimeScrnPos] = (int)pBuf[i];
+				ChkForTrigger( (int)(pBuf[i]*Scale) );
+				m_TimeBuf1[m_TimeScrnPos] = (int)(pBuf[i]*Scale);
 				m_TimeBuf2[m_TimeScrnPos++] = 0;
 				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
@@ -767,7 +816,7 @@ void CTestBench::DisplayData(int length, TYPEREAL* pBuf, TYPEREAL samplerate, in
 //Called by thread so no GUI calls!
 // MONO 16 bit Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, TYPEREAL samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPEREAL Scale, TYPEMONO16* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -783,8 +832,8 @@ void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, TYPEREAL samplerate, 
 		//accumulate samples into m_FftInBuf until have enough to perform an FFT
 		for(int i=0; i<length; i++)
 		{
-			m_FftInBuf[m_FftBufPos].re = (TYPEREAL)pBuf[i];
-			m_FftInBuf[m_FftBufPos++].im = (TYPEREAL)pBuf[i];
+			m_FftInBuf[m_FftBufPos].re = Scale *(TYPEREAL)pBuf[i];
+			m_FftInBuf[m_FftBufPos++].im = Scale *(TYPEREAL)pBuf[i];
 			if(m_FftBufPos >= TEST_FFTSIZE )
 			{
 				m_FftBufPos = 0;
@@ -806,8 +855,8 @@ void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, TYPEREAL samplerate, 
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
-				ChkForTrigger( (int)pBuf[i<<1] );
-				m_TimeBuf1[m_TimeScrnPos] = (int)pBuf[i];
+				ChkForTrigger( (int)( (TYPEREAL)pBuf[i<<1] * Scale) );
+				m_TimeBuf1[m_TimeScrnPos] = (int)(Scale * (TYPEREAL)pBuf[i] );
 				m_TimeBuf2[m_TimeScrnPos++] = 0;
 				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
@@ -826,7 +875,7 @@ void CTestBench::DisplayData(int length, TYPEMONO16* pBuf, TYPEREAL samplerate, 
 //Called by thread so no GUI calls!
 // STEREO 16 bit Data version.
 //////////////////////////////////////////////////////////////////////
-void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, TYPEREAL samplerate, int profile)
+void CTestBench::DisplayData(int length, TYPEREAL Scale, TYPESTEREO16* pBuf, TYPEREAL samplerate, int profile)
 {
 	if(!m_Active || (profile!=m_Profile) )
 		return;
@@ -842,8 +891,8 @@ void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, TYPEREAL samplerate
 		//accumulate samples into m_FftInBuf until have enough to perform an FFT
 		for(int i=0; i<length; i++)
 		{
-			m_FftInBuf[m_FftBufPos].re = (TYPEREAL)pBuf[i].re;
-			m_FftInBuf[m_FftBufPos++].im = (TYPEREAL)pBuf[i].im;
+			m_FftInBuf[m_FftBufPos].re = (TYPEREAL)pBuf[i].re * Scale;
+			m_FftInBuf[m_FftBufPos++].im = (TYPEREAL)pBuf[i].im * Scale;
 			if(m_FftBufPos >= TEST_FFTSIZE )
 			{
 				m_FftBufPos = 0;
@@ -865,9 +914,9 @@ void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, TYPEREAL samplerate
 			m_TimeInPos++;
 			while(intime >= scrntime)
 			{
-				ChkForTrigger( (int)pBuf[i].re );
-				m_TimeBuf1[m_TimeScrnPos] = pBuf[i].re;
-				m_TimeBuf2[m_TimeScrnPos++] = pBuf[i].im;
+				ChkForTrigger( (int)(pBuf[i].re*Scale) );
+				m_TimeBuf1[m_TimeScrnPos] = (int)(Scale * (TYPEREAL)pBuf[i].re);
+				m_TimeBuf2[m_TimeScrnPos++] = (int)(Scale * (TYPEREAL)pBuf[i].im);
 				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
 				if( m_TimeScrnPos >= m_Rect.width() )
 				{
@@ -880,6 +929,70 @@ void CTestBench::DisplayData(int length, TYPESTEREO16* pBuf, TYPEREAL samplerate
 		}
 	}
 }
+
+//////////////////////////////////////////////////////////////////////
+// Called to display the input pBuf1 and pBuf2.
+//Called by thread so no GUI calls!
+// Real Data only.  FFT on pBuf1 only
+//////////////////////////////////////////////////////////////////////
+void CTestBench::DisplayDualData(int length, TYPEREAL Scale1, TYPEREAL Scale2,
+					TYPEREAL* pBuf1, TYPEREAL* pBuf2, TYPEREAL samplerate, int profile)
+{
+	if(!m_Active || (profile!=m_Profile) )
+		return;
+	if(m_DisplaySampleRate != samplerate)
+	{
+		m_DisplaySampleRate = samplerate;
+		emit ResetSignal();
+		return;
+	}
+	m_NewDataIsCpx = true;
+	if(! m_TimeDisplay)
+	{	//if displaying frequency domain data
+		//accumulate samples into m_FftInBuf until have enough to perform an FFT
+		for(int i=0; i<length; i++)
+		{
+			m_FftInBuf[m_FftBufPos].re = Scale1*pBuf1[i];
+			m_FftInBuf[m_FftBufPos++].im = 0.0;
+			if(m_FftBufPos >= TEST_FFTSIZE )
+			{
+				m_FftBufPos = 0;
+				if(++m_DisplaySkipCounter >= m_DisplaySkipValue )
+				{
+					m_DisplaySkipCounter = 0;
+					m_Fft.PutInDisplayFFT( TEST_FFTSIZE, m_FftInBuf);
+					emit NewFftData();
+				}
+			}
+		}
+	}
+	else
+	{	//if displaying time domain data
+		for(int i=0; i<length; i++)
+		{
+			//calc to time variables, one in sample time units and
+			//one in screen pixel units
+			TYPEREAL intime = (TYPEREAL)m_TimeInPos/samplerate;
+			TYPEREAL scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
+			m_TimeInPos++;
+			while(intime >= scrntime)
+			{
+				ChkForTrigger( (int)(pBuf1[i]*Scale1) );
+				m_TimeBuf1[m_TimeScrnPos] = (int)(pBuf1[i]*Scale1);
+				m_TimeBuf2[m_TimeScrnPos++] = (int)(pBuf2[i]*Scale2);
+				scrntime = (TYPEREAL)m_TimeScrnPos*m_TimeScrnPixel;
+				if( m_TimeScrnPos >= m_Rect.width() )
+				{
+					m_TimeScrnPos = 0;
+					m_TimeInPos = 0;
+					break;
+				}
+			}
+		}
+	}
+
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // Called to check for O'Scope display trigger condition and manage trigger capture logic.
@@ -970,7 +1083,8 @@ void CTestBench::ChkForTrigger(qint32 sample)
 //////////////////////////////////////////////////////////////////////
 void CTestBench::GotTxt(QString Str)
 {
-	ui->textEdit->append(Str);
+	ui->textEdit->insertPlainText(Str);
+	ui->textEdit->ensureCursorVisible();
 }
 
 /////////////////////////////////////////////////////////////////////
