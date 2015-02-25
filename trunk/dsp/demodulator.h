@@ -92,7 +92,7 @@ typedef struct _sdmd
 class CDemodulator
 {
 public:
-	CDemodulator( QObject *parent = 0);
+	CDemodulator();
 	virtual ~CDemodulator();
 
 	void SetInputSampleRate(TYPEREAL InputRate);
@@ -136,13 +136,12 @@ private:
 	TYPECPX* m_pDemodInBuf;
 	TYPECPX* m_pDemodTmpBuf;
 	TYPEREAL m_CW_Offset;
+	TYPEREAL m_PskRate;
 	bool m_USFm;
 	int m_DemodMode;
 	int m_InBufPos;
 	int m_InBufLimit;
-	int m_PskRate;
 	//pointers to all the various implemented demodulator classes
-	QObject* m_pChatDialog;
 	CAmDemod* m_pAmDemod;
 	CSamDemod* m_pSamDemod;
 	CFmDemod* m_pFmDemod;

@@ -45,8 +45,7 @@
 //////////////////////////////////////////////////////////////////
 //	Constructor/Destructor
 //////////////////////////////////////////////////////////////////
-CDemodulator::CDemodulator(QObject *parent) :
-	m_pChatDialog(parent)
+CDemodulator::CDemodulator()
 {
 	m_DesiredMaxOutputBandwidth = 48000.0;
 	m_DownConverterOutputRate = 48000.0;
