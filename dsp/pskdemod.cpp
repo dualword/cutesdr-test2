@@ -41,7 +41,7 @@
 
 
 
-#define SQ_THRESHOLD 0.9	//squelch threshold(probably should make it user adjustable)
+#define SQ_THRESHOLD 0.7	//squelch threshold(probably should make it user adjustable)
 #define OUT_AUDIO_SHIFT 700.0	//audio monitor tone shift frequency in Hz
 
 
@@ -75,10 +75,10 @@ void CPskDemod::SetPskParams(TYPEREAL InSampleRate, TYPEREAL SymbRate, int Mode)
 	m_DecCnt = 0;
 qDebug()<<"InSample rate = "<<InSampleRate<< "PSKSample rate = "<<m_SampleRate;
 //create bit filter as LP filter with passband ~Symbol rate(not perfect but is close)
-	int taps = m_BitFir.InitLPFilter(0, 1.0, 60.0, SymbRate, SymbRate*2.0, m_SampleRate);//initialize BIT FIR filter
+	int taps = m_BitFir.InitLPFilter(0, 1.0, 60.0, SymbRate/2.0, SymbRate, m_SampleRate);//initialize BIT FIR filter
 qDebug()<<"PSK Bit rate, taps = "<<SymbRate << taps;
 //create AFC filter as LP filter with passband ~2*Symbol Rate
-	taps = m_FreqFir.InitLPFilter(0, 1.0, 30.0, SymbRate*2.0, SymbRate*4.0, m_SampleRate);//initialize LP AFC FIR filter
+	taps = m_FreqFir.InitLPFilter(0, 1.0, 30.0, SymbRate, SymbRate*2.0, m_SampleRate);//initialize LP AFC FIR filter
 qDebug()<<"Freq FIR taps = "<< taps;
 	m_PrevSymbol.re = 0.0;
 	m_PrevSymbol.im = 0.0;
