@@ -14,6 +14,7 @@
 //	2011-08-07  Added WFM Support
 //	2012-06-01  fixed threading issue with m_TxMsg
 //	2013-04-13  Added CloudSDR support, fixed network closing bug with pending msgs
+//	2015-03-26  Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -282,7 +283,7 @@ CAscpTxMsg TxMsg;
 					m_RadioType = SDRIP;
 				else if("NetSDR" == m_DeviceName)
 					m_RadioType = NETSDR;
-				if( ("CloudSDR" == m_DeviceName) || ("CloudSDR-IQ" == m_DeviceName) )
+				if( ("CloudSDR" == m_DeviceName) || ("CloudIQ" == m_DeviceName) )
 					m_RadioType = CLOUDSDR;
 				if( (SDRIP==m_RadioType) || (NETSDR==m_RadioType) || (CLOUDSDR==m_RadioType))
 				{
@@ -593,6 +594,11 @@ CAscpTxMsg TxMsg;
             TxMsg.AddParm32((quint32)m_SampleRate);
             SendAscpMsg(&TxMsg);
 
+			TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
+			TxMsg.AddCItem(CI_RX_OUTPUT_PARAMS);
+			TxMsg.AddParm8(CI_RX_OUTPUT_PARAMS_SMALL_MTU);
+			SendAscpMsg(&TxMsg);
+
             TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
             TxMsg.AddCItem(CI_RX_STATE);
             TxMsg.AddParm8(RX_STATE_DATACOMPLEX);
@@ -603,6 +609,8 @@ CAscpTxMsg TxMsg;
                 TxMsg.AddParm8(MODE_CONTIGUOUS16);
             TxMsg.AddParm8(0);
             SendAscpMsg(&TxMsg);
+
+			emit SendUdpKeepalive();
 
 			m_NCOSpurOffsetI = 0.0;		//don't need for netsdr
 			m_NCOSpurOffsetQ = 0.0;

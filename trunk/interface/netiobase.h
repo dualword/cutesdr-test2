@@ -51,7 +51,6 @@ class CUdp : public CThreadWrapper
 public:
 	CUdp(QObject *parent = 0);
 	~CUdp();
-	void SendUdpData(char* pBuf, qint32 Length);
 
 signals:
 
@@ -59,6 +58,7 @@ private slots:
 	void StartUdpSlot(quint32 ServerAdr, quint32 ClientAdr, quint16 ServerPort);
 	void StopUdpSlot();
 	void GotUdpData();
+	void SendUdpKeepaliveSlot();
 	void ThreadInit();	//overrided function is called by new thread when started
 	void ThreadExit();	//overrided function is called by new thread when stopped
 
@@ -93,13 +93,13 @@ public:
 	virtual void ParseAscpMsg( CAscpRxMsg* pMsg){Q_UNUSED(pMsg)}
 	virtual void ProcessUdpData(char* pBuf, qint64 Length){Q_UNUSED(pBuf);Q_UNUSED(Length)}
 	void SendAscpMsg(CAscpTxMsg* pMsg);
-	void SendUdpData(char* pBuf, qint32 Length);
 
 	eStatus m_Status;
 
 signals:
 	void StartUdp(quint32 ServerAdr, quint32 ClientAdr, quint16 ServerPort);
 	void StopUdp();
+	void SendUdpKeepalive();
 	void NewStatus(int status);	//emitted when sdr status changes
 
 public slots:

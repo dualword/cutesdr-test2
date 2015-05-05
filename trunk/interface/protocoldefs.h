@@ -211,6 +211,8 @@
 #define CI_RX_OUTPUT_PARAMS 0x00C4
  #define CI_RX_OUTPUT_PARAMS_REQLEN 4
  #define CI_RX_OUTPUT_PARAMS_SETRESPLEN 5
+  #define CI_RX_OUTPUT_PARAMS_LARGE_MTU 0	//Large UDP packets (1444 bytes(24bit data) or 1028 bytes(16bit data) ) (default)
+  #define CI_RX_OUTPUT_PARAMS_SMALL_MTU 1	//1 == Small UDP packets (388 bytes(24bit data) or 516 bytes(16bit data) )
 
 #define CI_RX_UDP_OUTPUT_PARAMS 0x00C5
  #define CI_RX_UDP_OUTPUT_PARAMS_REQLEN 4
