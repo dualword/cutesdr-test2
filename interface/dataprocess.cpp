@@ -9,6 +9,7 @@
 // History:
 //	2013-02-05  Initial creation MSW
 //	2013-07-28  Added single/double precision math macros
+//	2015-03-26  Added  support for small MTU
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
 //Copyright 2010 Moe Wheatley. All rights reserved.
@@ -48,8 +49,10 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PKT_LENGTH_24 1444
-#define PKT_LENGTH_16 1028
+#define PKT_LENGTH_24_BIG 1444		//defines for UDP packetsizes
+#define PKT_LENGTH_16_BIG 1028		//for different possible MTU's
+#define PKT_LENGTH_24_SMALL 388
+#define PKT_LENGTH_16_SMALL 516
 
 #define IN_QUEUE_SIZE 1000
 #define QUEUE_BUF_LENGTH 256	//maximum number of possible complex samples in UDP packets
@@ -143,9 +146,9 @@ TYPECPX cpxtmp;
 	m_Mutex.lock();
 	data.all = 0;
 	//use packet length to determine whether 24 or 16 bit data format
-	if(PKT_LENGTH_24 == Length)
+	if( (PKT_LENGTH_24_BIG == Length) || (PKT_LENGTH_24_SMALL == Length) )
 	{	//24 bit I/Q data
-		m_PacketSize = (PKT_LENGTH_24-4)/6;		//number of complex samples in packet
+		m_PacketSize = (Length-4)/6;		//number of complex samples in packet
 		seq.bytes.b0 = pBuf[2];
 		seq.bytes.b1 = pBuf[3];
 		if(0==seq.all)	//is first packet after started
@@ -171,9 +174,9 @@ TYPECPX cpxtmp;
 			m_pInQueue[m_InHead][j] = cpxtmp;
 		}
 	}
-	else if(PKT_LENGTH_16 == Length)
+	else if( (PKT_LENGTH_16_BIG == Length) || (PKT_LENGTH_16_SMALL == Length) )
 	{	//16 bit I/Q data
-		m_PacketSize = (PKT_LENGTH_16-4)/4;	//number of complex samples in packet
+		m_PacketSize = (Length-4)/4;	//number of complex samples in packet
 		seq.bytes.b0 = pBuf[2];
 		seq.bytes.b1 = pBuf[3];
 		if(0==seq.all)	//is first packet after started

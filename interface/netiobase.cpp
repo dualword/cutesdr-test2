@@ -7,6 +7,7 @@
 //	2012-12-12  Initial creation MSW
 //	2013-02-05  Modified for CuteSDR. Now TCP runs in gui thread to simplify
 //	2013-07-28  fixed DisconnectFromServerSlot bug
+//	2015-03-26  Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -78,6 +79,7 @@ void CUdp::ThreadInit()	//override called by new thread when started
 	connect(m_pUdpSocket, SIGNAL(readyRead()), this, SLOT(GotUdpData()));
 	connect(m_pParent, SIGNAL(StartUdp(quint32, quint32, quint16) ), this, SLOT( StartUdpSlot(quint32, quint32, quint16) ) );
 	connect(m_pParent, SIGNAL(StopUdp() ), this, SLOT( StopUdpSlot() ) );
+	connect(m_pParent, SIGNAL(SendUdpKeepalive() ), this, SLOT( SendUdpKeepaliveSlot() ) );
 qDebug()<<"UDP Thread "<<this->thread()->currentThread();
 }
 
@@ -148,19 +150,15 @@ char pBuf[2000];
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Called send UDP data (notused by CuteSDR)
+// slot Called send UDP data keepalive
 ////////////////////////////////////////////////////////////////////////
-void CUdp::SendUdpData(char* pBuf, qint32 Length)
+void CUdp::SendUdpKeepaliveSlot()
 {
-qint64 sent=0;
+char DummyData = 0x5A;
 	if( m_pThread->isRunning() )
 	{
 		if( m_pUdpSocket->isValid())
-			sent = m_pUdpSocket->writeDatagram(pBuf, Length,m_ServerIPAdr,m_ServerPort);
-		if(sent != (qint64)Length)
-			qDebug()<<"UDP Send Error"<<sent;
-//		else
-//			qDebug()<<sent;
+			m_pUdpSocket->writeDatagram(&DummyData, 1, m_ServerIPAdr, m_ServerPort);
 	}
 }
 
@@ -273,15 +271,6 @@ quint8 pBuf[10000];
 			AssembleAscpMsg(pBuf, n);
 		}
 	}
-}
-
-////////////////////////////////////////////////////////////////////////
-// Called to send UDP data (not used by CuteSDR)
-////////////////////////////////////////////////////////////////////////
-void CNetio::SendUdpData(char* pBuf, qint32 Length)
-{
-	if(m_pTcpClient->isValid())
-		m_pUdpIo->SendUdpData(pBuf, Length);
 }
 
 

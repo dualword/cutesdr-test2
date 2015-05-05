@@ -22,6 +22,7 @@
 //	2014-09-22  ver 1.15 Modified Thread Launcher to deal with closing resources from thread context
 //	2015-02-05  ver 1.15a Added CloudSDR discover fields. no need for release now
 //	2015-02-25  ver 1.16 Added CloudSDR-IQ and added PSK digital decoder
+//	2015-03-26  ver 1.17 Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
