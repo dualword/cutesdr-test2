@@ -326,7 +326,6 @@ CAscpTxMsg TxMsg;
 			case CI_GENERAL_OPTIONS:
 				break;
 			case CI_GENERAL_SECURITY_CODE:
-//qDebug()<<"security = "<<pMsg->GetParm16();
 				break;
 			case CI_GENERAL_STATUS_CODE:	//used as keepalive ack
 				m_KeepAliveCounter = 0;

@@ -23,6 +23,7 @@
 //	2015-02-05  ver 1.15a Added CloudSDR discover fields. no need for release now
 //	2015-02-25  ver 1.16 Added CloudSDR-IQ and added PSK digital decoder
 //	2015-03-26  ver 1.17 Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
+//	2015-06-09  ver 1.18 Fixed discovery issue with CloudIQ
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -69,7 +70,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.16")
+#define PROGRAM_TITLE_VERSION tr(" 1.18")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170

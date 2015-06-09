@@ -379,7 +379,7 @@ static char TEST[] = "PSK Test 0123@$%^\b\b\b\b456789 abcdefghijklmnopqrstuvwxyz
 //ch = rand()&0x7F;
 //ch = test++;
 ch = TEST[inx++];
-if(inx>= sizeof(TEST))
+if((unsigned int)inx>= sizeof(TEST))
 	inx = 0;
 			if(	(ch == TXTOG_CODE) && m_NeedShutoff)
 			{

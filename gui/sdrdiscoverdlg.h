@@ -113,7 +113,9 @@ typedef struct __attribute__ ((__packed__)) _DISCOVER_MSG_CLOUDSDR
 	char gpslon[33];			//up to 32 character NULL terminated Longitude string
 	unsigned char tcptimeout;	//TCP Connection timeout in minutes(0==no timeout)
 	unsigned char uartuse;		//UART use mode 0==normal  1==Monitor   2 = Debug
-	unsigned char future[128];	//future use
+	unsigned char antselrangemin[4];	//RF port 2 range min== 3,2,1,0
+	unsigned char antselrangemax[4];	//RF port 2 range max== 3,2,1,0
+	unsigned char future[119];	//future use
 }tDiscover_CLOUDSDR;
 
 #define STATUS_BIT_CONNECTED (1)

@@ -165,7 +165,7 @@ char Buf[2048];	//buffer to hold received UDP packet
 					InUse = true;
 			}
 			else if((QString(m_DiscovermsgCommon[index].name ) == "CloudSDR" ) ||
-					(QString(m_DiscovermsgCommon[index].name ) == "CloudSDR-IQ" ) )
+					(QString(m_DiscovermsgCommon[index].name ) == "CloudIQ" ) )
 			{ ///get all information from CloudSDR
 				memcpy((void*)&m_DiscovermsgCloudSDR[index], (void*)Buf, sizeof(tDiscover_CLOUDSDR) );
 				if(m_DiscovermsgCloudSDR[index].status & (STATUS_BIT_CONNECTED|STATUS_BIT_RUNNING))
