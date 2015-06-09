@@ -64,8 +64,6 @@
 
 
 #define CI_GENERAL_SECURITY_CODE 0x000B
- #define CI_GENERAL_SECURITY_CODE_REQLEN 8
- #define CI_GENERAL_SECURITY_CODE_SETRESPLEN 8
 
 /*  Receiver Specific Control Items  */
 //defines for message channel ID for RX1 or RX2 used in many of the Rx control item messages
