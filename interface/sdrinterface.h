@@ -123,7 +123,7 @@ public:
 
 	void SetSdrBandwidthIndex(qint32 bwindex);
 	TYPEREAL GetSdrSampleRate(){return m_SampleRate;}
-	quint32 GetSdrMaxBandwidth(){return m_SampleRate;}
+	TYPEREAL GetSdrMaxBandwidth(){return m_SampleRate;}
 
 	void SetFftSize(qint32 size);
 	quint32 GetSdrFftSize(){return m_FftSize;}

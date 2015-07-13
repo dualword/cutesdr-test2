@@ -160,7 +160,6 @@ macx {
 }
 win32 {
 	SOURCES +=
-	LIBS += -lws2_32
 	RC_FILE = cutesdr.rc
 }
 

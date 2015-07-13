@@ -595,7 +595,10 @@ CAscpTxMsg TxMsg;
 
 			TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
 			TxMsg.AddCItem(CI_RX_OUTPUT_PARAMS);
-			TxMsg.AddParm8(CI_RX_OUTPUT_PARAMS_SMALL_MTU);
+			if(m_SampleRate>100000)
+				TxMsg.AddParm8(CI_RX_OUTPUT_PARAMS_LARGE_MTU);
+			else
+				TxMsg.AddParm8(CI_RX_OUTPUT_PARAMS_SMALL_MTU);
 			SendAscpMsg(&TxMsg);
 
             TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
@@ -658,6 +661,11 @@ CAscpTxMsg TxMsg;
     TxMsg.AddParm8(0);
     TxMsg.AddParm8(0);
     SendAscpMsg(&TxMsg);
+
+	TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
+	TxMsg.AddCItem(CI_RX_OUTPUT_PARAMS);
+	TxMsg.AddParm8(CI_RX_OUTPUT_PARAMS_LARGE_MTU);
+	SendAscpMsg(&TxMsg);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

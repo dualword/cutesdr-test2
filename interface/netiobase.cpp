@@ -8,6 +8,7 @@
 //	2013-02-05  Modified for CuteSDR. Now TCP runs in gui thread to simplify
 //	2013-07-28  fixed DisconnectFromServerSlot bug
 //	2015-03-26  Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
+//	2015-07-13  removed windsock dependency, Changed a few threading issues
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -44,15 +45,11 @@
 #include <QDebug>
 #include "netiobase.h"
 
-#ifdef Q_OS_WIN
- #include "winsock2.h"
-#endif
-
-
 #define MSGSTATE_HDR1 0		//ASCP msg assembly states
 #define MSGSTATE_HDR2 1
 #define MSGSTATE_DATA 2
 
+#define RCVBUF_SIZE_UDP 2097152
 
 //*********    C U d p  I m p l e m e n t a t i o n       ***********
 /////////////////////////////////////////////////////////////////////
@@ -65,8 +62,8 @@ qDebug()<<"CUdp constructor";
 
 CUdp::~CUdp()
 {
-qDebug()<<"CUdp destructor";
 	CleanupThread();	//tell thread to cleanup after itself by calling ThreadExit()
+qDebug()<<"CUdp destructor";
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -74,9 +71,7 @@ qDebug()<<"CUdp destructor";
 ////////////////////////////////////////////////////////////////////////
 void CUdp::ThreadInit()	//override called by new thread when started
 {
-	m_pThread->setPriority(QThread::TimeCriticalPriority);
 	m_pUdpSocket = new QUdpSocket;
-	connect(m_pUdpSocket, SIGNAL(readyRead()), this, SLOT(GotUdpData()));
 	connect(m_pParent, SIGNAL(StartUdp(quint32, quint32, quint16) ), this, SLOT( StartUdpSlot(quint32, quint32, quint16) ) );
 	connect(m_pParent, SIGNAL(StopUdp() ), this, SLOT( StopUdpSlot() ) );
 	connect(m_pParent, SIGNAL(SendUdpKeepalive() ), this, SLOT( SendUdpKeepaliveSlot() ) );
@@ -88,6 +83,7 @@ qDebug()<<"UDP Thread "<<this->thread()->currentThread();
 /////////////////////////////////////////////////////////////////////
 void CUdp::ThreadExit()
 {
+	disconnect();
 	if(m_pUdpSocket)
 		delete m_pUdpSocket;
 }
@@ -101,12 +97,12 @@ QHostAddress CIPAdr(ClientAdr);
 	m_ServerIPAdr.setAddress(ServerAdr);
 	m_ServerPort = ServerPort;
 
+	m_pThread->setPriority(QThread::HighestPriority);
 	if(m_pUdpSocket->bind( ServerPort ) )
 	{
-#ifdef Q_OS_WIN
-		int v = 2000000;	//need to bump socket memory buffer size for higher speeds
-		::setsockopt(m_pUdpSocket->socketDescriptor(), SOL_SOCKET, SO_RCVBUF, (char *)&v, sizeof(v));
-#endif
+		//need to bump socket memory buffer size for higher speeds
+		m_pUdpSocket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, RCVBUF_SIZE_UDP);
+		connect(m_pUdpSocket, SIGNAL(readyRead()), this, SLOT(GotUdpData()));
 		qDebug()<<"Udp Bind ok"<<CIPAdr<< ServerPort;
 	}
 	else
@@ -121,13 +117,11 @@ QHostAddress CIPAdr(ClientAdr);
 void CUdp::StopUdpSlot()
 {
 	qDebug()<<"Stop Udp";
-	m_Mutex.lock();
 	if(m_pUdpSocket->isValid())
 	{
 		m_pUdpSocket->flush();
 		m_pUdpSocket->close();
 	}
-	m_Mutex.unlock();
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -135,16 +129,23 @@ void CUdp::StopUdpSlot()
 ////////////////////////////////////////////////////////////////////////
 void CUdp::GotUdpData()
 {
-char pBuf[2000];
+char pBuf[20000];
 	//loop while there are still datagrams to get
 	while( m_pUdpSocket->hasPendingDatagrams() )
 	{
 		qint64 n = m_pUdpSocket->pendingDatagramSize();
-		if(n<2000)
+		if(n<20000)
 		{
 			m_pUdpSocket->readDatagram(pBuf, n);
 			((CNetio*)m_pParent)->ProcessUdpData(pBuf, n);
-//qDebug("%X %X\r\n",(unsigned char)pBuf[3], (unsigned char)pBuf[2]);
+#if 0
+static unsigned char seq=0;
+if(seq!=(unsigned char)pBuf[3])
+{
+	seq = (unsigned char)pBuf[3];
+	qDebug("%X %u",(unsigned char)pBuf[3], (unsigned int)n);
+}
+#endif
 		}
 	}
 }
@@ -186,7 +187,6 @@ qDebug()<<"CNetio destructor";
 		m_pTcpClient->close();
 	}
 	disconnect();
-	m_pUdpIo->disconnect();
 	if(m_pTcpClient)
 		delete m_pTcpClient;
 	if(m_pUdpIo)
