@@ -134,7 +134,8 @@ FORMS += macforms/mainwindow.ui \
 	macforms/testbench.ui \
 	macforms/sliderctrl.ui \
 	macforms/aboutdlg.ui \
-	macforms/noiseprocdlg.ui
+	macforms/noiseprocdlg.ui \
+	macforms/chatdialog.ui
 }
 
 unix:!macx {
@@ -149,7 +150,8 @@ FORMS += unixforms/mainwindow.ui \
 	unixforms/testbench.ui \
 	unixforms/sliderctrl.ui \
 	unixforms/aboutdlg.ui \
-	unixforms/noiseprocdlg.ui
+	unixforms/noiseprocdlg.ui \
+	unixforms/chatdialog.ui
 }
 unix:SOURCES +=
 unix:!macx:SOURCES +=
