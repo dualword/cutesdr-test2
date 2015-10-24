@@ -45,6 +45,8 @@ private slots:
 	void OnDemodDlg();
 	void OnNoiseProcDlg();
 	void OnVolumeSlider(int value);
+	void OnRecordSetupDlg();
+	void OnRecord();
 
 	void OnRun();
 	void OnSpanChanged(int spanKhz);
@@ -71,6 +73,7 @@ private:
 	void UpdateInfoBox();
 	void InitDemodSettings();
 	void SetChatDialogState(int state);
+	void StopRecord();
 
 	/////////////////////////
 	//Persistant Settings Variables saved
@@ -102,11 +105,15 @@ private:
 	qint32 m_Volume;
 	qint32 m_Percent2DScreen;
 	qint32 m_DemodMode;
+	qint32 m_RecordMode;
 	TYPEREAL m_NCOSpurOffsetI;	//NCO spur reduction variables
 	TYPEREAL m_NCOSpurOffsetQ;
 	tNoiseProcdInfo m_NoiseProcSettings;
+	QString m_RecordFilePath;
+
 
 	bool m_FreqChanged;
+	bool m_Recording;
 	QRect m_TestBenchRect;
 	QString m_Str;
 	QString m_Str2;

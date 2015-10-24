@@ -75,6 +75,9 @@ void CSdrSetupDlg::InitDlg()
 	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(3)/1000 )+ " KHz  ";
 	m_Str2 = QString().number(m_pSdrInterface->GetSampleRateFromIndex(3)/1000.0)+ " Ksps";
 	ui->radioButtonRate3->setText(m_Str1 + m_Str2 );
+	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(4)/1000 )+ " KHz  ";
+	m_Str2 = QString().number(m_pSdrInterface->GetSampleRateFromIndex(4)/1000.0)+ " Ksps";
+	ui->radioButtonRate4->setText(m_Str1 + m_Str2 );
 
 	if(0==m_RfGain)
 		ui->radioButtonAttn0->setChecked(true);
@@ -93,6 +96,8 @@ void CSdrSetupDlg::InitDlg()
 		ui->radioButtonRate2->setChecked(true);
 	else if(3 == m_BandwidthIndex)
 		ui->radioButtonRate3->setChecked(true);
+	else if(4 == m_BandwidthIndex)
+		ui->radioButtonRate4->setChecked(true);
 
 	if(m_USFm)
 		ui->checkBoxUSFmVer->setChecked(true);
@@ -127,6 +132,8 @@ void CSdrSetupDlg::accept()
 		m_BandwidthIndex = 2;
 	else if(ui->radioButtonRate3->isChecked())
 		m_BandwidthIndex = 3;
+	else if(ui->radioButtonRate4->isChecked())
+		m_BandwidthIndex = 4;
 
 	if( ui->checkBoxUSFmVer->isChecked() )
 		m_USFm = true;

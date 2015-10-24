@@ -50,11 +50,12 @@
 #include <QDebug>
 
 #define SPUR_CAL_MAXSAMPLES 300000
-#define MAX_SAMPLERATES 4
+#define MAX_SAMPLERATES 5
 
 //Tables to get various parameters based on the gui sdrsetup samplerate index value
 const quint32 SDRIQ_MAXBW[MAX_SAMPLERATES] =
 {
+	25000,
 	50000,
 	100000,
 	150000,
@@ -63,6 +64,7 @@ const quint32 SDRIQ_MAXBW[MAX_SAMPLERATES] =
 
 const quint32 SDRIQ_6620FILTERS[MAX_SAMPLERATES] =
 {
+	Cad6620::BWKHZ_25,
 	Cad6620::BWKHZ_50,
 	Cad6620::BWKHZ_100,
 	Cad6620::BWKHZ_150,
@@ -72,6 +74,7 @@ const quint32 SDRIQ_6620FILTERS[MAX_SAMPLERATES] =
 const TYPEREAL SDRIQ_6620FILTERGAIN[MAX_SAMPLERATES] =
 {
 	0.0,
+	0.0,
 	8.0,
 	11.0,
 	22.0
@@ -79,6 +82,7 @@ const TYPEREAL SDRIQ_6620FILTERGAIN[MAX_SAMPLERATES] =
 
 const TYPEREAL SDRIQ_SAMPLERATE[MAX_SAMPLERATES] =
 {
+	(66666666.6667/2400.0),
 	(66666666.6667/1200.0),
 	(66666666.6667/600.0),
 	(66666666.6667/420.0),
@@ -88,7 +92,7 @@ const TYPEREAL SDRIQ_SAMPLERATE[MAX_SAMPLERATES] =
 const quint32 NETSDR_MAXBW[MAX_SAMPLERATES] =
 {
 	50000,
-//	100000,
+	100000,
 	200000,
 	500000,
 	1600000
@@ -97,6 +101,7 @@ const quint32 NETSDR_MAXBW[MAX_SAMPLERATES] =
 const TYPEREAL NETSDR_SAMPLERATE[MAX_SAMPLERATES] =
 {
 	(80.0e6/1280.0),
+	(80.0e6/640.0),
 	(80.0e6/320.0),
 	(80.0e6/128.0),
 	(80.0e6/40.0)
@@ -105,6 +110,7 @@ const TYPEREAL NETSDR_SAMPLERATE[MAX_SAMPLERATES] =
 const quint32 SDRIP_MAXBW[MAX_SAMPLERATES] =
 {
 	50000,
+	100000,
 	200000,
 	500000,
 	1800000
@@ -113,6 +119,7 @@ const quint32 SDRIP_MAXBW[MAX_SAMPLERATES] =
 const TYPEREAL SDRIP_SAMPLERATE[MAX_SAMPLERATES] =
 {
 	(80.0e6/1280.0),
+	(80.0e6/640.0),
 	(80.0e6/320.0),
 	(80.0e6/130.0),
 	(80.0e6/40.0)
@@ -121,17 +128,19 @@ const TYPEREAL SDRIP_SAMPLERATE[MAX_SAMPLERATES] =
 const quint32 CLOUDSDR_MAXBW[MAX_SAMPLERATES] =
 {
 	40000,
+	100000,
 	200000,
 	500000,
-	1000000
+	1500000
 };
 
 const TYPEREAL CLOUDSDR_SAMPLERATE[MAX_SAMPLERATES] =
 {
 	(122.88e6/2560.0),
+	(122.88e6/984.0),
 	(122.88e6/500.0),
 	(122.88e6/200.0),
-	(122.88e6/100.0)
+	(122.88e6/68.0)
 };
 
 
@@ -141,6 +150,9 @@ const TYPEREAL CLOUDSDR_SAMPLERATE[MAX_SAMPLERATES] =
 CSdrInterface::CSdrInterface()
 {
 	m_Running = false;
+	m_FileRecordActive = false;
+	m_RecordMode = RECORDMODE_AUDIO;
+	m_24BitData = false;
 	m_BootRev = 0.0;
 	m_AppRev = 0.0;
 	m_FftBufPos = 0;
@@ -169,6 +181,7 @@ CSdrInterface::CSdrInterface()
 	SetFftAve(1);
 	m_pSoundCardOut = new CSoundOut();
 	m_pdataProcess = new CDataProcess(this);
+	m_pWaveFileWriter = new CWaveFileWriter;
 	m_Status = NOT_CONNECTED;
 	m_ChannelMode = CI_RX_CHAN_SETUP_SINGLE_1;	//default channel settings for NetSDR
 	m_Channel = CI_RX_CHAN_1;
@@ -177,6 +190,14 @@ CSdrInterface::CSdrInterface()
 CSdrInterface::~CSdrInterface()
 {
 qDebug()<<"CSdrInterface destructor";
+	if(m_pWaveFileWriter)
+	{
+		if(m_FileRecordActive)
+			StopFileRecord();
+		if(m_pWaveFileWriter->isOpen())
+			m_pWaveFileWriter->Close();
+		delete m_pWaveFileWriter;
+	}
 	if(m_pSoundCardOut)
 	{
 		delete m_pSoundCardOut;
@@ -187,6 +208,44 @@ qDebug()<<"CSdrInterface destructor";
 		delete m_pdataProcess;
 		m_pdataProcess = NULL;
 	}
+
+}
+
+////////////////////////////////////////////////////////////////////////
+// Start/Stop wav file recording
+////////////////////////////////////////////////////////////////////////
+bool CSdrInterface::StartFileRecord(QString Filename, int RecordMode, qint64 CenterFreq)
+{
+bool ret = false;
+	m_RecordMode = RecordMode;
+	if(	m_Running )
+	{
+		if(RECORDMODE_IQ == m_RecordMode)
+		{
+			if(m_pWaveFileWriter->Open(Filename, true, m_SampleRate, m_24BitData, CenterFreq) )
+			{
+				m_FileRecordActive = true;
+				ret = true;
+qDebug()<<"Start Record";
+			}
+		}
+		else
+		{
+			if(m_pWaveFileWriter->Open(Filename, false, 48000, false, CenterFreq) )
+			{
+				m_FileRecordActive = true;
+				ret = true;
+			}
+		}
+	}
+	return ret;
+}
+
+void CSdrInterface::StopFileRecord()
+{
+qDebug()<<"Stop Record";
+	m_pWaveFileWriter->Close();
+	m_FileRecordActive = false;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -299,6 +358,8 @@ CAscpTxMsg TxMsg;
 			case CI_GENERAL_INTERFACE_VERSION:
 				break;
 			case CI_GENERAL_HARDFIRM_VERSION:
+//qDebug()<<"=" <<pMsg->GetParm16()<<pMsg->GetParm8();
+#if 1
 				if(pMsg->GetParm8() == 0)
 				{
 					m_BootRev = (float)pMsg->GetParm16()/100.0;
@@ -309,6 +370,7 @@ CAscpTxMsg TxMsg;
 					m_BandwidthIndex = -1;	//force update of sample rate logic
 					emit NewInfoData();
 				}
+#endif
 				break;
 			case CI_RX_STATE:
 				pMsg->GetParm8();
@@ -485,12 +547,12 @@ CAscpTxMsg TxMsg;
 
     TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM);
     TxMsg.AddCItem(CI_GENERAL_HARDFIRM_VERSION);
-    TxMsg.AddParm8(0);
+	TxMsg.AddParm8(0);
     SendAscpMsg(&TxMsg);
 
     TxMsg.InitTxMsg(TYPE_HOST_REQ_CITEM);
     TxMsg.AddCItem(CI_GENERAL_HARDFIRM_VERSION);
-    TxMsg.AddParm8(1);
+	TxMsg.AddParm8(1);
     SendAscpMsg(&TxMsg);
 
 	m_BaseFrequencyRangeMin = 0;		//load default frequency ranges
@@ -606,10 +668,16 @@ CAscpTxMsg TxMsg;
             TxMsg.AddParm8(RX_STATE_DATACOMPLEX);
             TxMsg.AddParm8(RX_STATE_ON);
 			if(m_SampleRate<1500000.0)
+			{
                 TxMsg.AddParm8(MODE_CONTIGUOUS24);
+				m_24BitData = true;
+			}
 			else
+			{
                 TxMsg.AddParm8(MODE_CONTIGUOUS16);
-            TxMsg.AddParm8(0);
+				m_24BitData = false;
+			}
+			TxMsg.AddParm8(0);
             SendAscpMsg(&TxMsg);
 
 			emit SendUdpKeepalive();
@@ -628,6 +696,7 @@ CAscpTxMsg TxMsg;
             TxMsg.AddParm32(24);
             SendAscpMsg(&TxMsg);
 
+			m_24BitData = false;
             TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
             TxMsg.AddCItem(CI_RX_STATE);
             TxMsg.AddParm8(RX_STATE_COMPLEX_HF);
@@ -652,7 +721,9 @@ CAscpTxMsg TxMsg;
 void CSdrInterface::StopSdr()
 {
 CAscpTxMsg TxMsg;
-    m_Running = false;
+	if(m_FileRecordActive)
+		StopFileRecord();
+	m_Running = false;
 	m_pSoundCardOut->Stop();
     TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
     TxMsg.AddCItem(CI_RX_STATE);
@@ -963,6 +1034,7 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 	}
 
 	g_pTestBench->CreateGeneratorSamples(NumSamples, (TYPECPX*)pIQData, m_SampleRate);
+
 	m_NoiseProc.ProcessBlanker(NumSamples, (TYPECPX*)pIQData, (TYPECPX*)pIQData);
 
 	if(m_NcoSpurCalActive)	//if performing NCO spur calibration
@@ -1001,5 +1073,15 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 		n = m_Demodulator.ProcessData(NumSamples, pIQData, (TYPEREAL*)SoundBuf);
 		if(m_pSoundCardOut)
 			m_pSoundCardOut->PutOutQueue(n, (TYPEREAL*)SoundBuf);
+	}
+}
+
+void CSdrInterface::ProcessUdpData(char* pBuf, qint64 Length)
+{
+	if(m_pdataProcess) m_pdataProcess->PutInQ(pBuf,Length);
+	if( (m_FileRecordActive) && (RECORDMODE_IQ == m_RecordMode) )
+	{
+		if(!m_pWaveFileWriter->Write(Length-4, (qint8*)(pBuf+4) ))	//write packet minus header
+			StopFileRecord();
 	}
 }

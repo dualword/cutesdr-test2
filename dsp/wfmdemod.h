@@ -150,9 +150,6 @@ private:
 	int m_BGroupOffset;
 	int m_BlockErrors;
 	quint16 m_BlockData[4];
-
-	WaveFileWriter m_fileWriter;
-
 };
 
 #endif // WFMDEMOD_H

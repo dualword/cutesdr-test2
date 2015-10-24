@@ -45,7 +45,12 @@
 #include "dsp/noiseproc.h"
 #include "interface/soundout.h"
 #include "interface/protocoldefs.h"
+#include "interface/wavefilewriter.h"
 #include "dataprocess.h"
+
+
+#define RECORDMODE_AUDIO 0
+#define RECORDMODE_IQ 1
 
 
 /////////////////////////////////////////////////////////////////////
@@ -78,7 +83,7 @@ public:
 	// virtual functioncalled by TCP thread with new msg from radio to parse
 	void ParseAscpMsg(CAscpRxMsg *pMsg);
 	//virtual function called by UDP thread with new raw data to process
-	void ProcessUdpData(char* pBuf, qint64 Length){if(m_pdataProcess) m_pdataProcess->PutInQ(pBuf,Length);}
+	void ProcessUdpData(char* pBuf, qint64 Length);
 	//called by DataProcess thread with new I/Q data samples to process
 	void ProcessIQData( TYPECPX* pIQData, int NumSamples);
 
@@ -115,6 +120,9 @@ public:
 
 	int GetRateError(){return m_pSoundCardOut->GetRateError();}
 	void SetVolume(qint32 vol){ m_pSoundCardOut->SetVolume(vol); }
+
+	bool StartFileRecord(QString Filename, int RecordMode, qint64 CenterFreq);
+	void StopFileRecord();
 
 	void SetChannelMode(qint32 channelmode);
 
@@ -171,6 +179,8 @@ private:
 	bool m_StereoOut;
 	bool m_InvertSpectrum;
 	bool m_USFm;
+	bool m_FileRecordActive;
+	bool m_24BitData;
 	qint32 m_BandwidthIndex;
 	qint32 m_DisplaySkipCounter;
 	qint32 m_DisplaySkipValue;
@@ -184,6 +194,8 @@ private:
 	qint32 m_SoundInIndex;
 	qint32 m_SoundOutIndex;
 	qint32 m_ChannelMode;
+	qint32 m_RecordMode;
+
 	quint8 m_Channel;
 	quint64 m_CurrentFrequency;
 	quint64 m_BaseFrequencyRangeMin;
@@ -207,6 +219,8 @@ private:
 	CNoiseProc m_NoiseProc;
 	CSoundOut* m_pSoundCardOut;
 	CDataProcess* m_pdataProcess;
+	CWaveFileWriter* m_pWaveFileWriter;
+
 
 CIir m_Iir;
 

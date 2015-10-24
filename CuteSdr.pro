@@ -29,6 +29,7 @@ SOURCES += gui/main.cpp \
 	gui/aboutdlg.cpp \
 	gui/rdsdecode.cpp \
 	gui/chatdialog.cpp \
+	gui/recordsetupdlg.cpp \
 	interface/soundout.cpp \
     interface/sdrinterface.cpp \
     interface/netiobase.cpp \
@@ -72,6 +73,7 @@ HEADERS  += gui/mainwindow.h \
 	gui/aboutdlg.h \
 	gui/rdsdecode.h \
 	gui/chatdialog.h \
+	gui/recordsetupdlg.h \
 	interface/soundout.h \
     interface/sdrinterface.h \
     interface/protocoldefs.h \
@@ -105,6 +107,7 @@ HEADERS  += gui/mainwindow.h \
 	dsp/psktables.h \
 	dsp/rbdsconstants.h
 
+
 #Use separate forms for each OS
 win32 {
 FORMS += winforms/mainwindow.ui \
@@ -119,7 +122,8 @@ FORMS += winforms/mainwindow.ui \
 	winforms/sliderctrl.ui \
 	winforms/aboutdlg.ui \
 	winforms/noiseprocdlg.ui  \
-	winforms/chatdialog.ui
+	winforms/chatdialog.ui \
+	winforms/recordsetupdlg.ui
 }
 
 macx {
@@ -135,7 +139,8 @@ FORMS += macforms/mainwindow.ui \
 	macforms/sliderctrl.ui \
 	macforms/aboutdlg.ui \
 	macforms/noiseprocdlg.ui \
-	macforms/chatdialog.ui
+	macforms/chatdialog.ui \
+	macforms/recordsetupdlg.ui
 }
 
 unix:!macx {
@@ -151,7 +156,8 @@ FORMS += unixforms/mainwindow.ui \
 	unixforms/sliderctrl.ui \
 	unixforms/aboutdlg.ui \
 	unixforms/noiseprocdlg.ui \
-	unixforms/chatdialog.ui
+	unixforms/chatdialog.ui \
+	unixforms/recordsetupdlg.ui
 }
 unix:SOURCES +=
 unix:!macx:SOURCES +=

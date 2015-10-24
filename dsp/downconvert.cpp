@@ -187,6 +187,7 @@ TYPEREAL f = InRate;
 	{
 		m_InRate = InRate;
 		m_MaxBW = MaxBW;
+		m_Mutex.lock();
 		DeleteFilters();
 		//loop until closest output rate is found and list of pointers to decimate by 2 stages is generated
 		while( (f > 400000.0)  )
@@ -195,6 +196,7 @@ TYPEREAL f = InRate;
 			f /= 2.0;
 		}
 		m_OutputRate = f;
+		m_Mutex.unlock();
 		SetFrequency(m_NcoFreq);
 	}
 	return m_OutputRate;

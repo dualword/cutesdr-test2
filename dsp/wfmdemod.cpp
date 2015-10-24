@@ -187,7 +187,6 @@ CWFmDemod::CWFmDemod(TYPEREAL samplerate) : m_SampleRate(samplerate)
 	format.setSampleRate(245760);
 	format.setCodec("audio/pcm");
 	format.setSampleType(QAudioFormat::SignedInt);
-//	m_fileWriter.open("d:\\fmdemod.wav", format);
 }
 
 CWFmDemod::~CWFmDemod()
@@ -198,7 +197,6 @@ CWFmDemod::~CWFmDemod()
 		delete m_pDecBy2B;
 	if(m_pDecBy2C)
 		delete m_pDecBy2C;
-//	m_fileWriter.close();
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -350,7 +348,6 @@ g_pTestBench->DisplayData(InLength, 1.0, m_RawFm, m_SampleRate,PROFILE_2);
 	//create complex data from demodulator real data
 	m_HilbertFilter.ProcessFilter(InLength, m_RawFm, m_CpxRawFm);	//~173 nSec/sample
 
-//m_fileWriter.write( InLength, m_CpxRawFm);
 
 //g_pTestBench->DisplayData(InLength, 1.0, m_CpxRawFm, m_SampleRate,PROFILE_3);
 
