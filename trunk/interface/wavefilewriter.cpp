@@ -38,180 +38,244 @@
 **
 ****************************************************************************/
 
-#include "wavefilewriter.h"
 #include <QDebug>
+#include <QDateTime>
+#include "wavefilewriter.h"
 
 
 #define MAX_WAVE_BUF 16384
 
+
 struct chunk
 {
-    char        id[4];
-    quint32     size;
+	char        id[4];
+	quint32     size;
 };
 
 struct RIFFHeader
 {
-    chunk       descriptor;     // "RIFF"
-    char        type[4];        // "WAVE"
+	chunk       descriptor;     // "RIFF"
+	char        type[4];        // "WAVE"
 };
 
 struct WAVEHeader
 {
-    chunk       descriptor;
-    quint16     audioFormat;
-    quint16     numChannels;
-    quint32     sampleRate;
-    quint32     byteRate;
-    quint16     blockAlign;
-    quint16     bitsPerSample;
+	chunk       descriptor;
+	quint16     audioFormat;
+	quint16     numChannels;
+	quint32     sampleRate;
+	quint32     byteRate;
+	quint16     blockAlign;
+	quint16     bitsPerSample;
+};
+
+struct AUXINFO
+{
+	chunk       descriptor;
+	sSYSTEMTIME StartTime;
+	sSYSTEMTIME StopTime;
+	quint32 CenterFreq;
+	quint32 ADFrequency;
+	quint32 IFFrequency;
+	quint32 Bandwidth;
+	quint32 IQOffset;
+	quint32 DBOffset;
+	quint32 MaxVal;			//added max abs() for file normalization
+	quint32 Unused4;
+	quint32 Unused5;
+	quint32 Unused6;
 };
 
 struct DATAHeader
 {
-    chunk       descriptor;
+	chunk       descriptor;
 };
 
 struct CombinedHeader
 {
-    RIFFHeader  riff;
-    WAVEHeader  wave;
-    DATAHeader  data;
+	RIFFHeader  riff;
+	WAVEHeader  wave;
+	AUXINFO		auxi;
+	DATAHeader  data;
 };
-static const int HeaderLength = sizeof(CombinedHeader);
 
+///////////////////////////////////////////////////////////////////////////////////////
+/// Constructor/Destructor
+///////////////////////////////////////////////////////////////////////////////////////
+CWaveFileWriter::CWaveFileWriter(QObject *parent)
+	: QObject(parent)
+{
+	m_HeaderLength = sizeof(CombinedHeader);
+	qDebug()<<"Header length = "<<m_HeaderLength;
+}
 
-WaveFileWriter::WaveFileWriter(QObject *parent)
-    : QObject(parent)
-    , m_dataLength(0)
+CWaveFileWriter::~CWaveFileWriter()
 {
 }
 
-WaveFileWriter::~WaveFileWriter()
+bool CWaveFileWriter::Open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq)
 {
-    close();
+	if (m_File.isOpen())
+		return false; // file already open
+	QDateTime datetime = QDateTime::currentDateTimeUtc();
+	QString Time = datetime.toString("yyyy-MM-dd_HH-mm-ss");
+	fileName.remove(".wav", Qt::CaseInsensitive);
+	m_DataLength = 0;
+	m_CenterFrequency = CenterFreq;
+	if(complex)
+		m_Format.setChannelCount(2);
+	else
+		m_Format.setChannelCount(1);
+	if(Data24Bit)
+		m_Format.setSampleSize(24);
+	else
+		m_Format.setSampleSize(16);
+	m_Format.setSampleType(QAudioFormat::SignedInt);
+	m_Format.setByteOrder(QAudioFormat::LittleEndian);
+	m_Format.setSampleRate(Rate);
+	m_File.setFileName(fileName+Time+".wav");
+	if (!m_File.open(QIODevice::WriteOnly))
+		return false; // unable to open file for writing
+
+	if (!WriteHeader(m_Format))
+		return false;
+
+   return true;
 }
 
-bool WaveFileWriter::open(const QString& fileName, const QAudioFormat& format)
+void CWaveFileWriter::Close()
 {
-    if (file.isOpen())
-        return false; // file already open
-
-    if (format.codec() != "audio/pcm" || format.sampleType() != QAudioFormat::SignedInt)
-        return false; // data format is not supported
-
-    file.setFileName(fileName);
-    if (!file.open(QIODevice::WriteOnly))
-        return false; // unable to open file for writing
-
-    if (!writeHeader(format))
-        return false;
-
-    m_format = format;
-    return true;
+	if (m_File.isOpen())
+	{
+		WriteDataLength();
+		m_DataLength = 0;
+		m_File.close();
+	}
 }
 
-bool WaveFileWriter::write(const QAudioBuffer &buffer)
+void CWaveFileWriter::GetSytemTimeStructure(sSYSTEMTIME& systime)
 {
-    if (buffer.format() != m_format)
-        return false; // buffer format has changed
-
-    qint64 written = file.write((const char *)buffer.constData(), buffer.byteCount());
-    m_dataLength += written;
-    return written == buffer.byteCount();
+	QDateTime datetime = QDateTime::currentDateTimeUtc();
+	systime.wYear = datetime.date().year();
+	systime.wMonth = datetime.date().month();
+	systime.wDay = datetime.date().day();
+	systime.wDayOfWeek = datetime.date().dayOfWeek();
+	if(7 == systime.wDayOfWeek )	//make 1 to 7 instead of 0 to 6
+		systime.wDayOfWeek  = 0;
+	systime.wHour = datetime.time().hour();
+	systime.wMinute = datetime.time().minute();
+	systime.wSecond = datetime.time().second();
+	systime.wMilliseconds = datetime.time().msec();
 }
 
-bool WaveFileWriter::write(int Length,  TYPECPX* buffer)
+bool CWaveFileWriter::WriteHeader(const QAudioFormat &format)
+{
+	// check if format is supported
+	if (format.byteOrder() == QAudioFormat::BigEndian || m_Format.sampleType() != QAudioFormat::SignedInt)
+		return false;
+
+	CombinedHeader header;
+	memset(&header, 0, m_HeaderLength);
+
+	GetSytemTimeStructure(header.auxi.StartTime);
+	GetSytemTimeStructure(header.auxi.StopTime);
+
+	// RIFF header
+	memcpy(header.riff.descriptor.id, "RIFF", 4);
+	header.riff.descriptor.size = 0; // this will be updated with correct duration:
+									 // m_dataLength + HeaderLength - 8
+	// WAVE header
+	memcpy(header.riff.type, "WAVE", 4);
+	memcpy(header.wave.descriptor.id, "fmt ", 4);
+	header.wave.descriptor.size = (quint32)sizeof(WAVEHeader)-sizeof(chunk);
+	header.wave.audioFormat = 1;
+	header.wave.numChannels = (quint16)m_Format.channelCount();
+	header.wave.sampleRate = (quint32)m_Format.sampleRate();
+	header.wave.byteRate = (quint32)(m_Format.sampleRate() * format.channelCount() * format.sampleSize() / 8);
+	header.wave.blockAlign = (quint16)(m_Format.channelCount() * format.sampleSize() / 8);
+	header.wave.bitsPerSample = (quint16)m_Format.sampleSize();
+
+	// auxi header
+	memcpy(header.auxi.descriptor.id, "auxi", 4);
+	header.auxi.descriptor.size = (quint32)sizeof(AUXINFO)-sizeof(chunk);
+	header.auxi.ADFrequency = 122880000;
+	if(2 == header.wave.numChannels)
+		header.auxi.Bandwidth = header.wave.sampleRate;
+	else
+		header.auxi.Bandwidth = header.wave.sampleRate/2;
+	header.auxi.CenterFreq = (quint32)m_CenterFrequency;
+	header.auxi.IFFrequency = 0;
+	header.auxi.IQOffset = 0;
+	if(8 == header.wave.bitsPerSample)
+		header.auxi.MaxVal = 127;
+	else
+		header.auxi.MaxVal = 32767;
+
+	// DATA header
+	memcpy(header.data.descriptor.id,"data", 4);
+	header.data.descriptor.size = 0; // this will be updated with correct data length: m_dataLength
+
+	return (m_File.write(reinterpret_cast<const char *>(&header), m_HeaderLength) == m_HeaderLength);
+}
+
+bool CWaveFileWriter::WriteDataLength()
+{
+	if (m_File.isSequential())
+		return false;
+
+   // seek to RIFF header size, see header.riff.descriptor.size above
+	if (!m_File.seek(4))
+		return false;
+
+	quint32 length = m_DataLength + m_HeaderLength - 8;
+	if (m_File.write(reinterpret_cast<const char *>(&length), 4) != 4)
+		return false;
+
+	sSYSTEMTIME StopTime;
+	GetSytemTimeStructure(StopTime);
+
+	// seek to aux header stop systime field
+	if (!m_File.seek( sizeof(RIFFHeader)+sizeof(WAVEHeader)+sizeof(chunk)+sizeof(sSYSTEMTIME) ) )
+		return false;
+	if (m_File.write(reinterpret_cast<const char *>(&StopTime), sizeof(sSYSTEMTIME)) != sizeof(sSYSTEMTIME))
+		return false;
+
+	// seek to DATA header size
+	if (!m_File.seek(sizeof(RIFFHeader)+sizeof(WAVEHeader)+sizeof(AUXINFO)+4))
+		return false;
+
+	return m_File.write(reinterpret_cast<const char *>(&m_DataLength), 4) == 4;
+}
+
+bool CWaveFileWriter::Write(int NumSamples,  qint16* buffer)
 {
 qint64 BytesToWrite = 0;
-tBtoS data;
+tsTemp data;
 char pBuf[MAX_WAVE_BUF];
-	if( 0 == Length)
+	if( 0 == NumSamples)
 		return false;
-	data.bytes.b0 = 0;
-	for(int i=0; i<Length; i++)
+	if (!m_File.isOpen())
+		return false; // file not open
+	for(int i=0; i<NumSamples; i++)
 	{
-		data.all = buffer[i].re;
-		pBuf[BytesToWrite++] = data.bytes.b0;
-		pBuf[BytesToWrite++] = data.bytes.b1;
-		data.all = buffer[i].im;
-		pBuf[BytesToWrite++] = data.bytes.b0;
-		pBuf[BytesToWrite++] = data.bytes.b1;
+		data.both = buffer[i];
+		pBuf[BytesToWrite++] = data.bytes.lsb;
+		pBuf[BytesToWrite++] = data.bytes.msb;
 	}
-	qint64 written = file.write((const char *)pBuf, BytesToWrite );
-	m_dataLength += written;
+	qint64 written = m_File.write((const char *)pBuf, BytesToWrite );
+	m_DataLength += written;
 	return written == BytesToWrite;
 }
 
-bool WaveFileWriter::close()
+// direct write of byte data into wave file
+bool CWaveFileWriter::Write(int Length,  qint8* pbuf)
 {
-	bool result = false;
-    if (file.isOpen()) {
-        Q_ASSERT(m_dataLength < INT_MAX);
-        result = writeDataLength();
-		m_dataLength = 0;
-        file.close();
-    }
-    return result;
+	if( 0 == Length)
+		return false;
+	if (!m_File.isOpen())
+		return false; // file not open
+	qint64 written = m_File.write((const char *)pbuf, Length );
+	m_DataLength += written;
+	return written == Length;
 }
 
-bool WaveFileWriter::writeHeader(const QAudioFormat &format)
-{
-    // check if format is supported
-    if (format.byteOrder() == QAudioFormat::BigEndian || format.sampleType() != QAudioFormat::SignedInt)
-        return false;
-
-    CombinedHeader header;
-    memset(&header, 0, HeaderLength);
-
-#ifndef Q_LITTLE_ENDIAN
-    // only implemented for LITTLE ENDIAN
-    return false;
-#else
-    // RIFF header
-    memcpy(header.riff.descriptor.id, "RIFF", 4);
-    header.riff.descriptor.size = 0; // this will be updated with correct duration:
-                                     // m_dataLength + HeaderLength - 8
-    // WAVE header
-    memcpy(header.riff.type, "WAVE", 4);
-    memcpy(header.wave.descriptor.id, "fmt ", 4);
-    header.wave.descriptor.size = quint32(16);
-    header.wave.audioFormat = quint16(1);
-    header.wave.numChannels = quint16(format.channelCount());
-    header.wave.sampleRate = quint32(format.sampleRate());
-    header.wave.byteRate = quint32(format.sampleRate() * format.channelCount() * format.sampleSize() / 8);
-    header.wave.blockAlign = quint16(format.channelCount() * format.sampleSize() / 8);
-    header.wave.bitsPerSample = quint16(format.sampleSize());
-
-    // DATA header
-    memcpy(header.data.descriptor.id,"data", 4);
-    header.data.descriptor.size = 0; // this will be updated with correct data length: m_dataLength
-
-	return (file.write(reinterpret_cast<const char *>(&header), HeaderLength) == HeaderLength);
-#endif
-}
-
-bool WaveFileWriter::writeDataLength()
-{
-#ifndef Q_LITTLE_ENDIAN
-    // only implemented for LITTLE ENDIAN
-    return false;
-#endif
-
-	if (file.isSequential())
-        return false;
-
-   // seek to RIFF header size, see header.riff.descriptor.size above
-    if (!file.seek(4))
-        return false;
-
-    quint32 length = m_dataLength + HeaderLength - 8;
-    if (file.write(reinterpret_cast<const char *>(&length), 4) != 4)
-        return false;
-
-    // seek to DATA header size, see header.data.descriptor.size above
-    if (!file.seek(40))
-        return false;
-
-    return file.write(reinterpret_cast<const char *>(&m_dataLength), 4) == 4;
-}

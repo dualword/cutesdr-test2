@@ -41,45 +41,70 @@
 #ifndef WAVEFILEWRITER_H
 #define WAVEFILEWRITER_H
 
-#include <QAudioBuffer>
-#include <QFile>
 #include <QObject>
+#include <QFile>
+#include <QAudioFormat>
 #include "dsp/datatypes.h"
 
 
-
-
-class WaveFileWriter : public QObject
+typedef union
 {
-    Q_OBJECT
-
-public:
-    explicit WaveFileWriter(QObject *parent = 0);
-    ~WaveFileWriter();
-
-    bool open(const QString &fileName, const QAudioFormat &format);
-	bool write(const QAudioBuffer &buffer);
-	bool write( int Length, TYPECPX* buffer);
-	bool close();
-    bool isOpen() const { return file.isOpen(); }
-
-private:
-	typedef union
+	struct ss1
 	{
-		struct bs
-		{
-			unsigned char b0;
-			unsigned char b1;
-		}bytes;
-		signed short sall;
-		unsigned short all;
-	}tBtoS;
-	bool writeHeader(const QAudioFormat &format);
-	bool writeDataLength();
+		quint8 b0;
+		quint8 b1;
+		quint8 b2;
+		quint8 b3;
+	}bytes;
+	qint32 all;
+}tiTemp;
 
-    QFile file;
-    QAudioFormat m_format;
-    qint64 m_dataLength;
+typedef union
+{
+	struct ss2
+	{
+		quint8 lsb;
+		quint8 msb;
+	}bytes;
+	qint16 both;
+}tsTemp;
+
+struct sSYSTEMTIME
+{
+	quint16 wYear;
+	quint16 wMonth;
+	quint16 wDayOfWeek;
+	quint16 wDay;
+	quint16 wHour;
+	quint16 wMinute;
+	quint16 wSecond;
+	quint16 wMilliseconds;
 };
 
+class CWaveFileWriter : public QObject
+{
+	Q_OBJECT
+public:
+	explicit CWaveFileWriter(QObject *parent = 0);
+	~CWaveFileWriter();
+	bool Open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq);
+	void Close();
+	bool Write( int NumSamples, qint16* buffer);
+	bool Write( int NumSamples, qint8* buffer);
+	bool isOpen() const { return m_File.isOpen(); }
+
+
+private:
+
+	bool WriteHeader(const QAudioFormat &format);
+	bool WriteDataLength();
+	void GetSytemTimeStructure(sSYSTEMTIME& systime);
+
+	QFile m_File;
+	QAudioFormat m_Format;
+	qint64 m_HeaderLength;
+	qint64 m_DataLength;
+	qint64 m_CenterFrequency;
+
+};
 #endif // WAVEFILEWRITER_H

@@ -24,6 +24,7 @@
 //	2015-02-25  ver 1.16 Added CloudSDR-IQ and added PSK digital decoder
 //	2015-03-26  ver 1.17 Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
 //	2015-06-09  ver 1.18 Fixed discovery issue with CloudIQ
+//	2015-08-27  ver 1.19 Changed Cloudxx max BW to 1.5MHz, added wav file saving
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -65,12 +66,13 @@
 #include "gui/sounddlg.h"
 #include "gui/displaydlg.h"
 #include "gui/aboutdlg.h"
+#include "gui/recordsetupdlg.h"
 #include "interface/perform.h"
 
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.18")
+#define PROGRAM_TITLE_VERSION tr(" 1.19b1")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -132,6 +134,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionAlwaysOnTop, SIGNAL(triggered()), this, SLOT(AlwaysOnTop()));
 	connect(ui->actionDemod_Setup, SIGNAL(triggered()), this, SLOT(OnDemodDlg()));
 	connect(ui->actionNoise_Processing, SIGNAL(triggered()), this, SLOT(OnNoiseProcDlg()));
+	connect(ui->actionRecordSetup,SIGNAL(triggered()), this, SLOT(OnRecordSetupDlg()));
 
 	connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(OnAbout()));
 
@@ -244,6 +247,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	if(DEMOD_PSK == m_DemodMode)
 		SetChatDialogState(true);
+
+	StopRecord();
+
 }
 
 MainWindow::~MainWindow()
@@ -334,7 +340,7 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("InvertSpectrum"),m_InvertSpectrum);
 	settings.setValue(tr("USFm"),m_USFm);
 	settings.setValue(tr("UseCursorText"),m_UseCursorText);
-
+	settings.setValue("RecordFilePath", m_RecordFilePath);
 
 	//Get NCO spur offsets and save
 	m_pSdrInterface->ManageNCOSpurOffsets(CSdrInterface::NCOSPUR_CMD_READ,
@@ -345,6 +351,8 @@ void MainWindow::writeSettings()
 
 	settings.setValue(tr("DemodFrequency"),(int)m_DemodFrequency);
 	settings.setValue(tr("DemodMode"),m_DemodMode);
+	settings.setValue(tr("RecordMode"),m_RecordMode);
+
 
 	settings.setValue(tr("NBOn"),m_NoiseProcSettings.NBOn);
 	settings.setValue(tr("NBThreshold"),m_NoiseProcSettings.NBThreshold);
@@ -447,7 +455,9 @@ void MainWindow::readSettings()
 	m_NoiseProcSettings.NBWidth = settings.value(tr("NBWidth"),50).toInt();
 
 	m_DemodMode = settings.value(tr("DemodMode"), DEMOD_AM).toInt();
+	m_RecordMode = settings.value(tr("RecordMode"), 0).toInt();
 	m_DemodFrequency = (qint64)settings.value(tr("DemodFrequency"), 15000000).toUInt();
+	m_RecordFilePath = settings.value("RecordFilePath",QCoreApplication::applicationDirPath()+"/Record.wav").toString();
 
 	settings.endGroup();
 
@@ -763,6 +773,59 @@ CNoiseProcDlg dlg(this);
 	dlg.exec();
 }
 
+/////////////////////////////////////////////////////////////////////
+// Called by Record Setup Menu event
+/////////////////////////////////////////////////////////////////////
+void MainWindow::OnRecordSetupDlg()
+{
+CRecordSetupDlg dlg(this);
+	dlg.m_RecordMode = m_RecordMode;
+	dlg.m_RecordFilePath = m_RecordFilePath;
+	dlg.Init();
+	if( dlg.exec() )
+	{
+		m_RecordFilePath = dlg.m_RecordFilePath;
+		if(m_RecordMode != dlg.m_RecordMode)
+		{
+			if(CSdrInterface::RUNNING == m_Status)
+			{
+				m_pSdrInterface->StopSdr();
+				ui->framePlot->SetRunningState(false);
+			}
+			m_RecordMode = dlg.m_RecordMode;
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////
+// Called by Record Button event
+/////////////////////////////////////////////////////////////////////
+void MainWindow::OnRecord()
+{
+	if(m_Recording)
+	{
+		StopRecord();
+	}
+	else
+	{
+		if(m_pSdrInterface->StartFileRecord(m_RecordFilePath, m_RecordMode, m_CenterFrequency) )
+		{
+			m_Recording = true;
+			ui->pushButtonRecord->setText("Stop Record");
+			ui->pushButtonRecord->setStyleSheet("background-color: rgb(255, 0, 0);");
+		}
+	}
+}
+/////////////////////////////////////////////////////////////////////
+// Called to stop file recording
+/////////////////////////////////////////////////////////////////////
+void MainWindow::StopRecord()
+{
+	m_pSdrInterface->StopFileRecord();
+	m_Recording = false;
+	ui->pushButtonRecord->setText("Start Record");
+	ui->pushButtonRecord->setStyleSheet("background-color: rgb(180, 180, 180);");
+}
 
 /////////////////////////////////////////////////////////////////////
 // Called to update the information text box
@@ -795,6 +858,7 @@ void MainWindow::OnRun()
 	}
 	else if(CSdrInterface::RUNNING == m_Status)
 	{
+		StopRecord();
 		m_pSdrInterface->StopSdr();
 		ui->framePlot->SetRunningState(false);
 		ReadPerformance();
