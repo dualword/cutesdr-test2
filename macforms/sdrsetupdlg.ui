@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>373</width>
-    <height>221</height>
+    <width>356</width>
+    <height>223</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>170</y>
+     <y>190</y>
      <width>191</width>
      <height>32</height>
     </rect>
@@ -33,10 +33,15 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>40</y>
+     <y>50</y>
      <width>201</width>
-     <height>111</height>
+     <height>131</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
    </property>
    <property name="title">
     <string>Bandwidth / Sample Rate</string>
@@ -47,7 +52,7 @@
       <x>20</x>
       <y>60</y>
       <width>171</width>
-      <height>21</height>
+      <height>17</height>
      </rect>
     </property>
     <property name="text">
@@ -60,7 +65,7 @@
       <x>20</x>
       <y>40</y>
       <width>171</width>
-      <height>21</height>
+      <height>17</height>
      </rect>
     </property>
     <property name="text">
@@ -73,7 +78,7 @@
       <x>20</x>
       <y>20</y>
       <width>171</width>
-      <height>21</height>
+      <height>17</height>
      </rect>
     </property>
     <property name="text">
@@ -86,13 +91,21 @@
       <x>20</x>
       <y>80</y>
       <width>171</width>
-      <height>20</height>
+      <height>17</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>13</pointsize>
-     </font>
+    <property name="text">
+     <string>1000 KHz</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButtonRate4">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>100</y>
+      <width>171</width>
+      <height>17</height>
+     </rect>
     </property>
     <property name="text">
      <string>2000 KHz</string>
@@ -104,9 +117,14 @@
     <rect>
      <x>220</x>
      <y>10</y>
-     <width>141</width>
+     <width>131</width>
      <height>111</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+    </font>
    </property>
    <property name="title">
     <string>RF Gain/Attn</string>
@@ -117,7 +135,7 @@
       <x>10</x>
       <y>20</y>
       <width>82</width>
-      <height>21</height>
+      <height>17</height>
      </rect>
     </property>
     <property name="text">
@@ -130,7 +148,7 @@
       <x>10</x>
       <y>40</y>
       <width>82</width>
-      <height>21</height>
+      <height>17</height>
      </rect>
     </property>
     <property name="text">
@@ -143,7 +161,7 @@
       <x>10</x>
       <y>60</y>
       <width>82</width>
-      <height>21</height>
+      <height>17</height>
      </rect>
     </property>
     <property name="text">
@@ -155,12 +173,17 @@
      <rect>
       <x>10</x>
       <y>80</y>
-      <width>131</width>
-      <height>21</height>
+      <width>121</width>
+      <height>17</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
     <property name="text">
-     <string>-30 dB(or Auto)</string>
+     <string>-30 dB(or auto)</string>
     </property>
    </widget>
   </widget>
@@ -192,6 +215,11 @@
      <height>17</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>Invert Spectrum</string>
    </property>
@@ -200,10 +228,15 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>180</y>
+     <y>190</y>
      <width>111</width>
      <height>17</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>US FM Version</string>

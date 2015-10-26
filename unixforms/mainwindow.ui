@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>572</width>
-    <height>265</height>
+    <height>275</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -79,7 +79,7 @@
         <property name="minimumSize">
          <size>
           <width>520</width>
-          <height>92</height>
+          <height>110</height>
          </size>
         </property>
         <property name="title">
@@ -128,7 +128,7 @@
            <x>320</x>
            <y>50</y>
            <width>71</width>
-           <height>30</height>
+           <height>41</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -184,9 +184,9 @@
         <widget class="QSpinBox" name="SpanspinBox">
          <property name="geometry">
           <rect>
-           <x>-1</x>
+           <x>10</x>
            <y>60</y>
-           <width>131</width>
+           <width>120</width>
            <height>22</height>
           </rect>
          </property>
@@ -204,9 +204,8 @@
          </property>
          <property name="font">
           <font>
-           <family>Ubuntu</family>
+           <family>MS Shell Dlg 2</family>
            <weight>50</weight>
-           <italic>false</italic>
            <bold>false</bold>
           </font>
          </property>
@@ -264,7 +263,7 @@
          <property name="geometry">
           <rect>
            <x>140</x>
-           <y>70</y>
+           <y>80</y>
            <width>171</width>
            <height>20</height>
           </rect>
@@ -300,9 +299,9 @@
         <widget class="QSpinBox" name="MaxdBspinBox">
          <property name="geometry">
           <rect>
-           <x>-1</x>
+           <x>10</x>
            <y>0</y>
-           <width>131</width>
+           <width>120</width>
            <height>22</height>
           </rect>
          </property>
@@ -405,6 +404,48 @@
           <number>1</number>
          </property>
         </widget>
+        <widget class="QPushButton" name="pushButtonRecord">
+         <property name="geometry">
+          <rect>
+           <x>410</x>
+           <y>80</y>
+           <width>100</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>3</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+           <kerning>false</kerning>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>Start?Stop wav file record</string>
+         </property>
+         <property name="text">
+          <string>File Record</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
        </widget>
       </item>
       <item>
@@ -430,7 +471,7 @@
      <x>0</x>
      <y>0</y>
      <width>572</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -451,6 +492,7 @@
     <addaction name="actionSoundCard"/>
     <addaction name="actionSDR"/>
     <addaction name="actionDisplay"/>
+    <addaction name="actionRecordSetup"/>
    </widget>
    <widget class="QMenu" name="menuDemod">
     <property name="title">
@@ -534,6 +576,11 @@
     <string>Noise Processing</string>
    </property>
   </action>
+  <action name="actionRecordSetup">
+   <property name="text">
+    <string>Record Setup</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -544,15 +591,15 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>CPlotter</class>
-   <extends>QFrame</extends>
-   <header>gui/plotter.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>CMeter</class>
    <extends>QFrame</extends>
    <header>gui/meter.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CPlotter</class>
+   <extends>QFrame</extends>
+   <header>gui/plotter.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -565,8 +612,8 @@
    <slot>OnRun()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>549</x>
-     <y>338</y>
+     <x>416</x>
+     <y>227</y>
     </hint>
     <hint type="destinationlabel">
      <x>314</x>
@@ -597,8 +644,8 @@
    <slot>OnMaxdBChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>418</x>
-     <y>165</y>
+     <x>155</x>
+     <y>158</y>
     </hint>
     <hint type="destinationlabel">
      <x>523</x>
@@ -613,8 +660,8 @@
    <slot>OnVertScaleChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>87</x>
-     <y>164</y>
+     <x>113</x>
+     <y>186</y>
     </hint>
     <hint type="destinationlabel">
      <x>53</x>
@@ -629,12 +676,28 @@
    <slot>OnVolumeSlider(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>665</x>
-     <y>209</y>
+     <x>536</x>
+     <y>212</y>
     </hint>
     <hint type="destinationlabel">
      <x>509</x>
      <y>215</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonRecord</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OnRecord()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>482</x>
+     <y>237</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>563</x>
+     <y>227</y>
     </hint>
    </hints>
   </connection>
@@ -650,5 +713,6 @@
   <slot>OnNcoSpur()</slot>
   <slot>OnVolumeSlider(int)</slot>
   <slot>OnMenuBar(QAction*)</slot>
+  <slot>OnRecord()</slot>
  </slots>
 </ui>
