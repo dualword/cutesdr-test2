@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>356</width>
-    <height>202</height>
+    <height>223</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,15 +17,10 @@
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>150</y>
+     <y>190</y>
      <width>191</width>
      <height>32</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -39,14 +34,9 @@
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>171</width>
-     <height>111</height>
+     <width>201</width>
+     <height>141</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
    </property>
    <property name="title">
     <string>Bandwidth / Sample Rate</string>
@@ -100,6 +90,19 @@
      </rect>
     </property>
     <property name="text">
+     <string>1000 KHz</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButtonRate4">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>100</y>
+      <width>171</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
      <string>2000 KHz</string>
     </property>
    </widget>
@@ -107,16 +110,11 @@
   <widget class="QGroupBox" name="groupBoxGain">
    <property name="geometry">
     <rect>
-     <x>199</x>
+     <x>220</x>
      <y>10</y>
-     <width>141</width>
+     <width>131</width>
      <height>111</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
    </property>
    <property name="title">
     <string>RF Gain/Attn</string>
@@ -124,7 +122,7 @@
    <widget class="QRadioButton" name="radioButtonAttn0">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>10</x>
       <y>20</y>
       <width>82</width>
       <height>17</height>
@@ -137,7 +135,7 @@
    <widget class="QRadioButton" name="radioButtonAttn10">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>10</x>
       <y>40</y>
       <width>82</width>
       <height>17</height>
@@ -150,7 +148,7 @@
    <widget class="QRadioButton" name="radioButtonAttn20">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>10</x>
       <y>60</y>
       <width>82</width>
       <height>17</height>
@@ -163,30 +161,25 @@
    <widget class="QRadioButton" name="radioButtonAttn30">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>10</x>
       <y>80</y>
-      <width>141</width>
+      <width>121</width>
       <height>17</height>
      </rect>
     </property>
     <property name="text">
-     <string>-30 dB(or Auto)</string>
+     <string>-30 dB(or auto)</string>
     </property>
    </widget>
   </widget>
   <widget class="QLabel" name="labelRadioType">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>40</x>
      <y>10</y>
-     <width>141</width>
+     <width>121</width>
      <height>21</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
    </property>
    <property name="frameShape">
     <enum>QFrame::NoFrame</enum>
@@ -201,16 +194,11 @@
   <widget class="QCheckBox" name="checkBoxInvert">
    <property name="geometry">
     <rect>
-     <x>190</x>
+     <x>230</x>
      <y>130</y>
-     <width>151</width>
+     <width>121</width>
      <height>17</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
    </property>
    <property name="text">
     <string>Invert Spectrum</string>
@@ -220,15 +208,10 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>170</y>
-     <width>141</width>
+     <y>200</y>
+     <width>111</width>
      <height>17</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
    </property>
    <property name="text">
     <string>US FM Version</string>
