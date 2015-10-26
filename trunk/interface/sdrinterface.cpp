@@ -15,6 +15,7 @@
 //	2012-06-01  fixed threading issue with m_TxMsg
 //	2013-04-13  Added CloudSDR support, fixed network closing bug with pending msgs
 //	2015-03-26  Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
+//	2015-10-26  Added Files saving functionality
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -226,15 +227,16 @@ bool ret = false;
 			{
 				m_FileRecordActive = true;
 				ret = true;
-qDebug()<<"Start Record";
+qDebug()<<"Start IQ Record";
 			}
 		}
 		else
 		{
-			if(m_pWaveFileWriter->Open(Filename, false, 48000, false, CenterFreq) )
+			if(m_pWaveFileWriter->Open(Filename, m_StereoOut, 48000, false, CenterFreq) )
 			{
 				m_FileRecordActive = true;
 				ret = true;
+qDebug()<<"Start Audio Record";
 			}
 		}
 	}
@@ -1066,13 +1068,27 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 	{
 		n = m_Demodulator.ProcessData(NumSamples, pIQData, SoundBuf);
 		if(m_pSoundCardOut)
-			m_pSoundCardOut->PutOutQueue(n, SoundBuf);
+		{
+			n = m_pSoundCardOut->PutOutQueue(n, SoundBuf);
+			if( m_FileRecordActive && (RECORDMODE_AUDIO == m_RecordMode) )
+			{	//write stereo audio to file if active
+				if(!m_pWaveFileWriter->Write(n*4, (qint8*)m_pSoundCardOut->m_RData ))
+					StopFileRecord();
+			}
+		}
 	}
 	else
 	{
 		n = m_Demodulator.ProcessData(NumSamples, pIQData, (TYPEREAL*)SoundBuf);
 		if(m_pSoundCardOut)
-			m_pSoundCardOut->PutOutQueue(n, (TYPEREAL*)SoundBuf);
+		{
+			n = m_pSoundCardOut->PutOutQueue(n, (TYPEREAL*)SoundBuf);
+			if( m_FileRecordActive && (RECORDMODE_AUDIO == m_RecordMode) )
+			{	//write mono audio to file if active
+				if(!m_pWaveFileWriter->Write(n*2, (qint8*)m_pSoundCardOut->m_RData ))
+					StopFileRecord();
+			}
+		}
 	}
 }
 
@@ -1080,7 +1096,7 @@ void CSdrInterface::ProcessUdpData(char* pBuf, qint64 Length)
 {
 	if(m_pdataProcess) m_pdataProcess->PutInQ(pBuf,Length);
 	if( (m_FileRecordActive) && (RECORDMODE_IQ == m_RecordMode) )
-	{
+	{	//write IQ data to file if active
 		if(!m_pWaveFileWriter->Write(Length-4, (qint8*)(pBuf+4) ))	//write packet minus header
 			StopFileRecord();
 	}

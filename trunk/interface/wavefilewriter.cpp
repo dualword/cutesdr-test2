@@ -5,6 +5,8 @@
 **
 ** This file is part of the examples of the Qt Toolkit.
 **
+** Modified by  Moe Wheatley 2015
+**
 ** $QT_BEGIN_LICENSE:BSD$
 ** You may use this file under the terms of the BSD license as follows:
 **
@@ -70,7 +72,7 @@ struct WAVEHeader
 };
 
 struct AUXINFO
-{
+{	//custom chunk used by Spectravue for additional file information
 	chunk       descriptor;
 	sSYSTEMTIME StartTime;
 	sSYSTEMTIME StopTime;
@@ -80,7 +82,7 @@ struct AUXINFO
 	quint32 Bandwidth;
 	quint32 IQOffset;
 	quint32 DBOffset;
-	quint32 MaxVal;			//added max abs() for file normalization
+	quint32 MaxVal;
 	quint32 Unused4;
 	quint32 Unused5;
 	quint32 Unused6;
@@ -113,6 +115,10 @@ CWaveFileWriter::~CWaveFileWriter()
 {
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+/// Open wave file for writing
+/// returns trus if opened ok
+///////////////////////////////////////////////////////////////////////////////////////
 bool CWaveFileWriter::Open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq)
 {
 	if (m_File.isOpen())
@@ -143,16 +149,24 @@ bool CWaveFileWriter::Open( QString fileName, bool complex, int Rate, bool Data2
    return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+/// update wav header and close file
+///////////////////////////////////////////////////////////////////////////////////////
 void CWaveFileWriter::Close()
 {
 	if (m_File.isOpen())
 	{
+		m_Mutex.lock();
 		WriteDataLength();
 		m_DataLength = 0;
 		m_File.close();
+		m_Mutex.unlock();
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+/// fill in time structure with current UTC time/data
+///////////////////////////////////////////////////////////////////////////////////////
 void CWaveFileWriter::GetSytemTimeStructure(sSYSTEMTIME& systime)
 {
 	QDateTime datetime = QDateTime::currentDateTimeUtc();
@@ -168,6 +182,9 @@ void CWaveFileWriter::GetSytemTimeStructure(sSYSTEMTIME& systime)
 	systime.wMilliseconds = datetime.time().msec();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+/// Write wav header information to file
+///////////////////////////////////////////////////////////////////////////////////////
 bool CWaveFileWriter::WriteHeader(const QAudioFormat &format)
 {
 	// check if format is supported
@@ -218,6 +235,9 @@ bool CWaveFileWriter::WriteHeader(const QAudioFormat &format)
 	return (m_File.write(reinterpret_cast<const char *>(&header), m_HeaderLength) == m_HeaderLength);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+/// Called before closing wav file to write length and stop time into header
+///////////////////////////////////////////////////////////////////////////////////////
 bool CWaveFileWriter::WriteDataLength()
 {
 	if (m_File.isSequential())
@@ -243,39 +263,23 @@ bool CWaveFileWriter::WriteDataLength()
 	// seek to DATA header size
 	if (!m_File.seek(sizeof(RIFFHeader)+sizeof(WAVEHeader)+sizeof(AUXINFO)+4))
 		return false;
-
 	return m_File.write(reinterpret_cast<const char *>(&m_DataLength), 4) == 4;
 }
 
-bool CWaveFileWriter::Write(int NumSamples,  qint16* buffer)
-{
-qint64 BytesToWrite = 0;
-tsTemp data;
-char pBuf[MAX_WAVE_BUF];
-	if( 0 == NumSamples)
-		return false;
-	if (!m_File.isOpen())
-		return false; // file not open
-	for(int i=0; i<NumSamples; i++)
-	{
-		data.both = buffer[i];
-		pBuf[BytesToWrite++] = data.bytes.lsb;
-		pBuf[BytesToWrite++] = data.bytes.msb;
-	}
-	qint64 written = m_File.write((const char *)pBuf, BytesToWrite );
-	m_DataLength += written;
-	return written == BytesToWrite;
-}
-
-// direct write of byte data into wave file
+///////////////////////////////////////////////////////////////////////////////////////
+/// Direct Write of byte data into wave file. Up to caller to know data size and
+///  number of channels. returns true if writes ok
+///////////////////////////////////////////////////////////////////////////////////////
 bool CWaveFileWriter::Write(int Length,  qint8* pbuf)
 {
 	if( 0 == Length)
-		return false;
+		return true;
 	if (!m_File.isOpen())
 		return false; // file not open
+	m_Mutex.lock();
 	qint64 written = m_File.write((const char *)pbuf, Length );
 	m_DataLength += written;
+	m_Mutex.unlock();
 	return written == Length;
 }
 

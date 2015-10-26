@@ -57,11 +57,13 @@ public:
 					{emit StartSig(OutDevIndx, StereoOut, UsrDataRate);}
 	void Stop(){emit StopSig();}	//stops soundcard output
 
-	void PutOutQueue(int numsamples, TYPEREAL* pData );
-	void PutOutQueue(int numsamples, TYPECPX* pData );
+	int PutOutQueue(int numsamples, TYPEREAL* pData );
+	int PutOutQueue(int numsamples, TYPECPX* pData );
 	void ChangeUserDataRate(TYPEREAL UsrDataRate);
 	void SetVolume(qint32 vol);
 	int GetRateError(){return (int)m_PpmError;}
+
+	TYPESTEREO16 m_RData[OUTQSIZE];	//exposed buffer holding 48ksps resampled data
 
 signals:
 	void StartSig(int OutDevIndx, bool StereoOut, double UsrDataRate);
