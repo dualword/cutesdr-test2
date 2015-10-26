@@ -5,6 +5,8 @@
 **
 ** This file is part of the examples of the Qt Toolkit.
 **
+** ** Modified by  Moe Wheatley 2015
+**
 ** $QT_BEGIN_LICENSE:BSD$
 ** You may use this file under the terms of the BSD license as follows:
 **
@@ -44,6 +46,7 @@
 #include <QObject>
 #include <QFile>
 #include <QAudioFormat>
+#include <QMutex>
 #include "dsp/datatypes.h"
 
 
@@ -89,22 +92,19 @@ public:
 	~CWaveFileWriter();
 	bool Open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq);
 	void Close();
-	bool Write( int NumSamples, qint16* buffer);
 	bool Write( int NumSamples, qint8* buffer);
 	bool isOpen() const { return m_File.isOpen(); }
 
-
 private:
-
 	bool WriteHeader(const QAudioFormat &format);
 	bool WriteDataLength();
 	void GetSytemTimeStructure(sSYSTEMTIME& systime);
 
 	QFile m_File;
 	QAudioFormat m_Format;
+	QMutex m_Mutex;
 	qint64 m_HeaderLength;
 	qint64 m_DataLength;
 	qint64 m_CenterFrequency;
-
 };
 #endif // WAVEFILEWRITER_H

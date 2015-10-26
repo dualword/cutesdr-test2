@@ -10,6 +10,7 @@
 // History:
 //	2010-09-15  Initial creation MSW
 //	2013-01-31  Changed Threading method, removed blocking mode
+//	2015-10-26  Changed OutQueue routines to return number of resampled data
 /////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -70,7 +71,7 @@ CSoundOut::CSoundOut()
 	m_RateCorrection = 0.0;
 	m_Gain = 1.0;
 	m_Startup = true;
-qDebug()<<"GUI Thread "<<this->thread()->currentThread();
+//qDebug()<<"GUI Thread "<<this->thread()->currentThread();
 }
 
 CSoundOut::~CSoundOut()
@@ -87,7 +88,7 @@ void CSoundOut::ThreadInit()	//overrided funciton is called by new thread when s
 	//use event loop to service external calls.
 	connect(this,SIGNAL( StartSig(int, bool, double) ), this, SLOT(StartSlot(int, bool, double) ) );
 	connect(this,SIGNAL( StopSig()), this, SLOT(StopSlot()) );
-qDebug()<<"Soundout Thread Init "<<this->thread()->currentThread();
+//qDebug()<<"Soundout Thread Init "<<this->thread()->currentThread();
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -104,7 +105,7 @@ void CSoundOut::ThreadExit()
 void CSoundOut::StartSlot(int OutDevIndx, bool StereoOut, double UsrDataRate)
 {
 QAudioDeviceInfo  DeviceInfo;
-qDebug()<<"Soundout Thread "<<this->thread()->currentThread();
+//qDebug()<<"Soundout Thread "<<this->thread()->currentThread();
 	m_pThread->setPriority(QThread::HighestPriority);
 	m_StereoOut = StereoOut;
 	//Get required soundcard from list
@@ -248,23 +249,24 @@ void CSoundOut::GetNewData()
 ////////////////////////////////////////////////////////////////
 //Called by application to put COMPLEX input into
 // STEREO 2 channel soundcard output queue
+// Returns number of resampled samples sent to sound card
 ////////////////////////////////////////////////////////////////
-void CSoundOut::PutOutQueue(int numsamples, TYPECPX* pData )
+int CSoundOut::PutOutQueue(int numsamples, TYPECPX* pData )
 {
-TYPESTEREO16 RData[OUTQSIZE];	//buffer to hold resampled data
-
+int NumResamples;
 	if( 0==numsamples )
-		return;
-	//Call Resampler to match sample rates between radio and sound card
-	numsamples = m_OutResampler.Resample(numsamples, TEST_ERROR*m_OutRatio *(1.0+m_RateCorrection),
-										 pData, RData, m_Gain);
+		return 0;
 
-g_pTestBench->DisplayData(numsamples, 1.0, RData, SOUNDCARD_RATE, PROFILE_5);
+	//Call Resampler to match sample rates between radio and sound card
+	NumResamples = m_OutResampler.Resample(numsamples, TEST_ERROR*m_OutRatio *(1.0+m_RateCorrection),
+										 pData, m_RData, m_Gain);
+
+g_pTestBench->DisplayData(NumResamples, 1.0, m_RData, SOUNDCARD_RATE, PROFILE_5);
 
 	m_Mutex.lock();
-	for( int i=0; i<numsamples; i++)
+	for( int i=0; i<NumResamples; i++)
 	{
-		m_OutQueueStereo[m_OutQHead++] = RData[i];
+		m_OutQueueStereo[m_OutQHead++] = m_RData[i];
 		if(m_OutQHead >= OUTQSIZE)
 			m_OutQHead = 0;
 		m_OutQLevel++;
@@ -284,29 +286,30 @@ g_pTestBench->DisplayData(numsamples, 1.0, RData, SOUNDCARD_RATE, PROFILE_5);
 	//calculate average Queue fill level
 	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(TYPEREAL)m_OutQLevel;
 	m_Mutex.unlock();
+	return NumResamples;
 }
 
 ////////////////////////////////////////////////////////////////
 //Called by application to put REAL soundcard output samples
 //into MONO soundcard queue
+// Returns number of resampled samples sent to sound card
 ////////////////////////////////////////////////////////////////
-void CSoundOut::PutOutQueue(int numsamples, TYPEREAL* pData )
+int CSoundOut::PutOutQueue(int numsamples, TYPEREAL* pData )
 {
-TYPEMONO16 RData[OUTQSIZE];	//buffer to hold resampled data
-
+int NumResamples;
 	if( 0==numsamples )
-		return;
+		return 0;
 
 	//Call Resampler to match sample rates between radio and sound card
-	numsamples = m_OutResampler.Resample(numsamples, TEST_ERROR*m_OutRatio *(1.0+m_RateCorrection),
-										 pData, RData, m_Gain);
+	NumResamples = m_OutResampler.Resample(numsamples, TEST_ERROR*m_OutRatio *(1.0+m_RateCorrection),
+										 pData, (TYPEMONO16*)m_RData, m_Gain);
 
-g_pTestBench->DisplayData(numsamples, 1.0, RData, SOUNDCARD_RATE, PROFILE_5);
+g_pTestBench->DisplayData(NumResamples, 1.0, (TYPEMONO16*)m_RData, SOUNDCARD_RATE, PROFILE_5);
 
 	m_Mutex.lock();
-	for( int i=0; i<numsamples; i++)
+	for( int i=0; i<NumResamples; i++)
 	{
-		m_OutQueueMono[m_OutQHead++] = RData[i];
+		m_OutQueueMono[m_OutQHead++] = ((TYPEMONO16*)m_RData)[i];
 		if(m_OutQHead >= OUTQSIZE)
 			m_OutQHead = 0;
 		m_OutQLevel++;
@@ -326,6 +329,7 @@ g_pTestBench->DisplayData(numsamples, 1.0, RData, SOUNDCARD_RATE, PROFILE_5);
 	//calculate average Queue fill level
 	m_AveOutQLevel = (1.0-FILTERQLEVEL_ALPHA)*m_AveOutQLevel + FILTERQLEVEL_ALPHA*(TYPEREAL)m_OutQLevel;
 	m_Mutex.unlock();
+	return NumResamples;
 }
 
 ////////////////////////////////////////////////////////////////
