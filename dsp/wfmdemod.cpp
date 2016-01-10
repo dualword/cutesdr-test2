@@ -8,6 +8,7 @@
 //	2011-09-17  Initial release
 //	2013-07-28  Added single/double precision math macros
 //	2014-09-22  Added some test code to output to a wav file
+//	2016-01-10  removed x86 assembly code
 //////////////////////////////////////////////////////////////////////
 
 //==========================================================================================
@@ -632,12 +633,8 @@ TYPEREAL Cos;
 TYPECPX tmp;
 	for(int i=0; i<InLength; i++)
 	{
-#if 1
-		asm volatile ("fsincos" : "=%&t" (Cos), "=%&u" (Sin) : "0" (m_RdsNcoPhase));	//126nS
-#else
 		Sin = MSIN(m_RdsNcoPhase);		//178ns for sin/cos calc
 		Cos = MCOS(m_RdsNcoPhase);
-#endif
 		//complex multiply input sample by NCO's  sin and cos
 		tmp.re = Cos * pInData[i].re - Sin * pInData[i].im;
 		tmp.im = Cos * pInData[i].im + Sin * pInData[i].re;
