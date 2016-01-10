@@ -25,6 +25,8 @@
 //	2015-03-26  ver 1.17 Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
 //	2015-06-09  ver 1.18 Fixed discovery issue with CloudIQ
 //	2015-08-27  ver 1.19 Changed Cloudxx max BW to 1.5MHz, added wav file saving
+//	2016-01-10  ver 1.20b1 Removed x86 assembly code in wfmdemod, added settings saving in OnExit() (thanks alex for fix)
+
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -72,7 +74,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.19")
+#define PROGRAM_TITLE_VERSION tr(" 1.20b1")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -108,8 +110,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	InitDemodSettings();	//must be before readSettings to set some defualts
 	readSettings();			//read persistent settings
 
+#ifndef __arm__
 	ui->actionAlwaysOnTop->setChecked(m_AlwaysOnTop);
 	AlwaysOnTop();
+#endif
 
 	//create Demod setup menu for non-modal use(can leave up and still access rest of program)
 	m_pDemodSetupDlg = new CDemodSetupDlg(this);
@@ -282,6 +286,7 @@ void MainWindow::closeEvent(QCloseEvent *)
 /////////////////////////////////////////////////////////////////////
 void MainWindow::AlwaysOnTop()
 {
+#ifndef __arm__
 	m_AlwaysOnTop = ui->actionAlwaysOnTop->isChecked();
 	Qt::WindowFlags flags = this->windowFlags();
 
@@ -290,6 +295,7 @@ void MainWindow::AlwaysOnTop()
 	else
 		this->setWindowFlags( (flags & ~Qt::WindowStaysOnTopHint) | Qt::WindowStaysOnBottomHint  | Qt::CustomizeWindowHint );
 	this->show();
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -587,6 +593,9 @@ CAboutDlg dlg(this,PROGRAM_TITLE_VERSION);
 /////////////////////////////////////////////////////////////////////
 void MainWindow::OnExit()
 {
+	writeSettings();
+	if(m_pSdrInterface)
+		m_pSdrInterface->StopIO();
 	qApp->exit(0);
 }
 
