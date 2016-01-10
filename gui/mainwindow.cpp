@@ -26,6 +26,7 @@
 //	2015-06-09  ver 1.18 Fixed discovery issue with CloudIQ
 //	2015-08-27  ver 1.19 Changed Cloudxx max BW to 1.5MHz, added wav file saving
 //	2016-01-10  ver 1.20b1 Removed x86 assembly code in wfmdemod, added settings saving in OnExit() (thanks alex for fix)
+//	2016-01-10  ver 1.20b2 Removed another x86 assembly code in wfmdemod changed StayOnTop inhibit for Linux
 
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
@@ -74,7 +75,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.20b1")
+#define PROGRAM_TITLE_VERSION tr(" 1.20b2")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -110,7 +111,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	InitDemodSettings();	//must be before readSettings to set some defualts
 	readSettings();			//read persistent settings
 
-#ifndef __arm__
+#ifndef Q_OS_LINUX
 	ui->actionAlwaysOnTop->setChecked(m_AlwaysOnTop);
 	AlwaysOnTop();
 #endif
@@ -286,7 +287,7 @@ void MainWindow::closeEvent(QCloseEvent *)
 /////////////////////////////////////////////////////////////////////
 void MainWindow::AlwaysOnTop()
 {
-#ifndef __arm__
+#ifndef Q_OS_LINUX
 	m_AlwaysOnTop = ui->actionAlwaysOnTop->isChecked();
 	Qt::WindowFlags flags = this->windowFlags();
 
