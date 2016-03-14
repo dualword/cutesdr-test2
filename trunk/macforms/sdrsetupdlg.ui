@@ -6,19 +6,22 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>356</width>
-    <height>223</height>
+    <width>359</width>
+    <height>228</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>SDR Setup</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>190</y>
-     <width>191</width>
+     <y>180</y>
+     <width>171</width>
      <height>32</height>
     </rect>
    </property>
@@ -30,23 +33,24 @@
    </property>
   </widget>
   <widget class="QGroupBox" name="groupBoxRate">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>50</y>
-     <width>201</width>
-     <height>131</height>
+     <y>40</y>
+     <width>191</width>
+     <height>141</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>12</pointsize>
-    </font>
    </property>
    <property name="title">
     <string>Bandwidth / Sample Rate</string>
    </property>
    <widget class="QRadioButton" name="radioButtonRate2">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -60,6 +64,9 @@
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate1">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -73,6 +80,9 @@
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate0">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -86,6 +96,9 @@
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate3">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -99,6 +112,9 @@
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate4">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -113,6 +129,9 @@
    </widget>
   </widget>
   <widget class="QGroupBox" name="groupBoxGain">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>220</x>
@@ -121,15 +140,13 @@
      <height>111</height>
     </rect>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>11</pointsize>
-    </font>
-   </property>
    <property name="title">
     <string>RF Gain/Attn</string>
    </property>
    <widget class="QRadioButton" name="radioButtonAttn0">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -143,6 +160,9 @@
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonAttn10">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -156,6 +176,9 @@
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonAttn20">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -169,6 +192,9 @@
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonAttn30">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -177,17 +203,15 @@
       <height>17</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
     <property name="text">
      <string>-30 dB(or auto)</string>
     </property>
    </widget>
   </widget>
   <widget class="QLabel" name="labelRadioType">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>40</x>
@@ -207,6 +231,9 @@
    </property>
   </widget>
   <widget class="QCheckBox" name="checkBoxInvert">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>230</x>
@@ -215,16 +242,14 @@
      <height>17</height>
     </rect>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>12</pointsize>
-    </font>
-   </property>
    <property name="text">
     <string>Invert Spectrum</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="checkBoxUSFmVer">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -232,11 +257,6 @@
      <width>111</width>
      <height>17</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>12</pointsize>
-    </font>
    </property>
    <property name="text">
     <string>US FM Version</string>
@@ -252,8 +272,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>108</x>
+     <y>251</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -268,8 +288,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>166</x>
+     <y>271</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -346,5 +366,10 @@
   <slot>SelectNetSDR()</slot>
   <slot>SelectSDRIQ()</slot>
   <slot>RfGainChanged()</slot>
+  <slot>OnTone1Changed(int)</slot>
+  <slot>OnTone2Changed(int)</slot>
+  <slot>OnEnableTones(bool)</slot>
+  <slot>OnTone1Amp(double)</slot>
+  <slot>OnTone2Amp(double)</slot>
  </slots>
 </ui>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>351</width>
-    <height>344</height>
+    <height>358</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>190</x>
      <y>310</y>
      <width>81</width>
      <height>23</height>
@@ -120,7 +120,7 @@
   <widget class="QSpinBox" name="spinBoxOffset">
    <property name="geometry">
     <rect>
-     <x>110</x>
+     <x>170</x>
      <y>280</y>
      <width>151</width>
      <height>22</height>

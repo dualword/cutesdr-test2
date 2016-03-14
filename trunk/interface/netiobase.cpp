@@ -72,6 +72,7 @@ qDebug()<<"CUdp destructor";
 void CUdp::ThreadInit()	//override called by new thread when started
 {
 	m_pUdpSocket = new QUdpSocket;
+	m_pUdpFwdSocket = new QUdpSocket;
 	connect(m_pParent, SIGNAL(StartUdp(quint32, quint32, quint16) ), this, SLOT( StartUdpSlot(quint32, quint32, quint16) ) );
 	connect(m_pParent, SIGNAL(StopUdp() ), this, SLOT( StopUdpSlot() ) );
 	connect(m_pParent, SIGNAL(SendUdpKeepalive() ), this, SLOT( SendUdpKeepaliveSlot() ) );
@@ -86,6 +87,8 @@ void CUdp::ThreadExit()
 	disconnect();
 	if(m_pUdpSocket)
 		delete m_pUdpSocket;
+	if(m_pUdpFwdSocket)
+		delete m_pUdpFwdSocket;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -109,6 +112,7 @@ QHostAddress CIPAdr(ClientAdr);
 	{
 		qDebug()<<"Udp Bind fail"<<CIPAdr << ServerPort<<m_pUdpSocket->errorString().toLocal8Bit();
 	}
+	m_pUdpFwdSocket->bind( m_FwdPort );
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -138,6 +142,9 @@ char pBuf[20000];
 		{
 			m_pUdpSocket->readDatagram(pBuf, n);
 			((CNetio*)m_pParent)->ProcessUdpData(pBuf, n);
+			if(m_UseUdpFwd)
+				if( m_pUdpFwdSocket->isValid())
+					m_pUdpFwdSocket->writeDatagram(pBuf, n, m_IPFwdAdr, m_FwdPort);
 #if 0
 static unsigned char seq=0;
 if(seq!=(unsigned char)pBuf[3])

@@ -51,6 +51,8 @@ class CUdp : public CThreadWrapper
 public:
 	CUdp(QObject *parent = 0);
 	~CUdp();
+	void SetForwardingParameters(bool UseUdpFwd, QHostAddress IPFwdAdr, quint16 FwdPort)
+						{m_UseUdpFwd = UseUdpFwd; m_IPFwdAdr = IPFwdAdr; m_FwdPort = FwdPort;}
 
 signals:
 
@@ -67,6 +69,10 @@ private:
 	QUdpSocket* m_pUdpSocket;
 	QHostAddress m_ServerIPAdr;
 	quint16 m_ServerPort;
+	QUdpSocket* m_pUdpFwdSocket;
+	bool m_UseUdpFwd;
+	QHostAddress m_IPFwdAdr;
+	quint16 m_FwdPort;
 };
 
 /////////////////////////////////////////////////////
@@ -90,6 +96,8 @@ public:
 
 	void ConnectToServer(QHostAddress IPAdr, quint16 Port);
 	void SendStatus(eStatus status);
+	void SetForwardingParameters(bool UseUdpFwd, QHostAddress IPFwdAdr, quint16 FwdPort)
+					{m_pUdpIo->SetForwardingParameters(UseUdpFwd, IPFwdAdr, FwdPort);}
 	virtual void ParseAscpMsg( CAscpRxMsg* pMsg){Q_UNUSED(pMsg)}
 	virtual void ProcessUdpData(char* pBuf, qint64 Length){Q_UNUSED(pBuf);Q_UNUSED(Length)}
 	void SendAscpMsg(CAscpTxMsg* pMsg);

@@ -13,7 +13,7 @@
 #include <math.h>
 
 //comment out to use single precision math
-#define USE_DOUBLE_PRECISION
+//#define USE_DOUBLE_PRECISION
 
 
 //define single or double precision reals and complex types

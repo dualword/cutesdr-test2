@@ -85,11 +85,14 @@ private:
 	bool m_InvertSpectrum;
 	bool m_USFm;
 	bool m_UseCursorText;
+	bool m_UseUdpFwd;
 	qint64 m_CenterFrequency;
 	qint64 m_DemodFrequency;
 	quint32 m_SpanFrequency;
 	QHostAddress m_IPAdr;
 	quint32 m_Port;
+	QHostAddress m_IPFwdAdr;
+	quint32 m_FwdPort;
 	qint32 m_RadioType;
 	qint32 m_BandwidthIndex;
 	qint32 m_SoundInIndex;

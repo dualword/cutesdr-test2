@@ -24,6 +24,9 @@ public:
 
 	QHostAddress m_IPAdr;
 	quint32 m_Port;
+	bool m_UseUdpFwd;
+	QHostAddress m_IPFwdAdr;
+	quint32 m_FwdPort;
 	QString m_ActiveDevice;
 	bool m_DirtyFlag;
 

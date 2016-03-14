@@ -40,6 +40,7 @@
 #include "gui/sdrsetupdlg.h"
 #include "ui_sdrsetupdlg.h"
 #include "gui/mainwindow.h"
+#include "QSpinBox.h"
 #include <QDebug>
 
 CSdrSetupDlg::CSdrSetupDlg(QWidget *parent, CSdrInterface* pSdrInterface) :
@@ -106,6 +107,7 @@ void CSdrSetupDlg::InitDlg()
 
 	ui->labelRadioType->setText(m_pSdrInterface->m_DeviceName);
 }
+
 
 void CSdrSetupDlg::RfGainChanged()
 {
