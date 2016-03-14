@@ -27,13 +27,15 @@ public:
 	bool GetSpectrumInversion(){return ui->checkBoxInvert->checkState();}
 
 	void InitDlg();
+	bool m_USFm;
 	qint32 m_RfGain;
 	qint32 m_BandwidthIndex;
-	bool m_USFm;
+
 
 public slots:
 	void accept();
 	void RfGainChanged();
+
 
 private:
 	CSdrInterface* m_pSdrInterface;

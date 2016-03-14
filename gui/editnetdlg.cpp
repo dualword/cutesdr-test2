@@ -81,9 +81,11 @@ void CEditNetDlg::InitDlg()
 {
 	ui.IPEditwidget_IP->SetIP(m_IPAdr.toIPv4Address());
 	ui.lineEdit_TCPPort->setText(QString().number( m_Port ));
+	ui.IPEditwidget_IPFwd->SetIP(m_IPFwdAdr.toIPv4Address());
+	ui.lineEdit_UDPPort->setText(QString().number( m_FwdPort ));
 	ui.label_SDR->setText(m_ActiveDevice);
+	ui.checkBoxFwdUDP->setChecked(m_UseUdpFwd);
 	m_DirtyFlag = false;
-
 }
 
 void CEditNetDlg::FindSdrs()
@@ -115,17 +117,28 @@ quint32 ip;
 	}
 }
 
-
 //Called when OK button pressed so get all the dialog data
 void CEditNetDlg::accept()
 {	//OK was pressed so get all data from edit controls
-quint32 ip;
+	quint32 ip;
 	m_DirtyFlag |= ui.IPEditwidget_IP->GetIP(ip);
 	m_IPAdr.setAddress(ip);
+	m_DirtyFlag |= ui.IPEditwidget_IPFwd->GetIP(ip);
+	m_IPFwdAdr.setAddress(ip);
+	if(ui.checkBoxFwdUDP->checkState() != m_UseUdpFwd)
+	{
+		m_UseUdpFwd = ui.checkBoxFwdUDP->checkState();
+		m_DirtyFlag = true;
+	}
 	if(ui.lineEdit_TCPPort->isModified())
 	{
 		m_DirtyFlag = true;
 		m_Port = ui.lineEdit_TCPPort->text().toUInt();
+	}
+	if(ui.lineEdit_UDPPort->isModified())
+	{
+		m_DirtyFlag = true;
+		m_FwdPort = ui.lineEdit_UDPPort->text().toUInt();
 	}
 	QDialog::accept();
 }

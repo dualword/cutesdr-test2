@@ -75,7 +75,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.20b2")
+#define PROGRAM_TITLE_VERSION tr(" 1.20b3")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -347,7 +347,12 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("InvertSpectrum"),m_InvertSpectrum);
 	settings.setValue(tr("USFm"),m_USFm);
 	settings.setValue(tr("UseCursorText"),m_UseCursorText);
+
 	settings.setValue("RecordFilePath", m_RecordFilePath);
+	settings.setValue("UseUdpFwd", m_UseUdpFwd);
+	settings.setValue(tr("IPFwdAdr"),m_IPFwdAdr.toIPv4Address());
+	settings.setValue(tr("FwdPort"),m_FwdPort);
+
 
 	//Get NCO spur offsets and save
 	m_pSdrInterface->ManageNCOSpurOffsets(CSdrInterface::NCOSPUR_CMD_READ,
@@ -433,6 +438,8 @@ void MainWindow::readSettings()
 	m_SpanFrequency = settings.value(tr("SpanFrequency"), 100000).toUInt();
 	m_IPAdr.setAddress(settings.value(tr("IPAdr"), 0xC0A80164).toInt() );
 	m_Port = settings.value(tr("Port"), 50000).toUInt();
+	m_IPFwdAdr.setAddress(settings.value(tr("IPFwdAdr"), 0xC0A80164).toInt() );
+	m_FwdPort = settings.value(tr("FwdPort"), 50010).toUInt();
 	m_RfGain = settings.value(tr("RfGain"), 0).toInt();
 	m_BandwidthIndex = settings.value(tr("BandwidthIndex"), 0).toInt();
 	m_SoundInIndex = settings.value(tr("SoundInIndex"), 0).toInt();
@@ -456,6 +463,8 @@ void MainWindow::readSettings()
 	m_InvertSpectrum = settings.value(tr("InvertSpectrum"), false).toBool();
 	m_USFm = settings.value(tr("USFm"), true).toBool();
 	m_UseCursorText = settings.value(tr("UseCursorText"), false).toBool();
+
+	m_UseUdpFwd = settings.value(tr("UseUdpFwd"), false).toBool();
 
 	m_NoiseProcSettings.NBOn = settings.value(tr("NBOn"), false).toBool();
 	m_NoiseProcSettings.NBThreshold = settings.value(tr("NBThreshold"),0).toInt();
@@ -695,6 +704,7 @@ void MainWindow::OnSdrDlg()
 CSdrSetupDlg dlg(this,m_pSdrInterface);
 	dlg.m_BandwidthIndex = m_BandwidthIndex;
 	dlg.m_USFm = m_USFm;
+
 	dlg.InitDlg();
 	dlg.SetSpectrumInversion(m_InvertSpectrum);
 	if( dlg.exec() )
@@ -742,7 +752,10 @@ void MainWindow::OnNetworkDlg()
 CEditNetDlg dlg(this);
 	dlg.m_IPAdr = m_IPAdr;
 	dlg.m_Port = m_Port;
+	dlg.m_IPFwdAdr = m_IPFwdAdr;
+	dlg.m_FwdPort = m_FwdPort;
 	dlg.m_ActiveDevice = m_ActiveDevice;
+	dlg.m_UseUdpFwd = m_UseUdpFwd;
 	dlg.InitDlg();
 	if( dlg.exec() )
 	{
@@ -756,6 +769,9 @@ CEditNetDlg dlg(this);
 			m_pSdrInterface->StopIO();
 			m_IPAdr = dlg.m_IPAdr;
 			m_Port = dlg.m_Port;
+			m_IPFwdAdr = dlg.m_IPFwdAdr;
+			m_FwdPort = dlg.m_FwdPort;
+			m_UseUdpFwd = dlg.m_UseUdpFwd;
 			m_ActiveDevice = dlg.m_ActiveDevice;
 		}
 	}
@@ -859,6 +875,7 @@ void MainWindow::OnRun()
 	{
 		m_CenterFrequency = m_pSdrInterface->SetRxFreq(m_CenterFrequency);
 		m_pSdrInterface->SetDemodFreq(m_CenterFrequency - m_DemodFrequency);
+		m_pSdrInterface->SetForwardingParameters( m_UseUdpFwd, m_IPFwdAdr, m_FwdPort);
 		m_pSdrInterface->StartSdr();
 		m_pSdrInterface->m_MissedPackets = 0;
 

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>438</width>
+    <width>412</width>
     <height>300</height>
    </rect>
   </property>
@@ -34,16 +34,15 @@
     <rect>
      <x>0</x>
      <y>50</y>
-     <width>431</width>
+     <width>411</width>
      <height>191</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
+     <family>MS Shell Dlg 2</family>
+     <pointsize>8</pointsize>
      <weight>50</weight>
-     <italic>false</italic>
      <bold>false</bold>
     </font>
    </property>
@@ -78,7 +77,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>11</pointsize>
+     <pointsize>8</pointsize>
      <weight>50</weight>
      <bold>false</bold>
      <underline>false</underline>

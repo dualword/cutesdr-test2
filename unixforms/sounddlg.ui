@@ -52,33 +52,27 @@
   <widget class="QLabel" name="label_1">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>110</x>
      <y>20</y>
-     <width>251</width>
-     <height>20</height>
+     <width>121</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="text">
     <string>Input Sound Device</string>
    </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>110</x>
      <y>80</y>
-     <width>251</width>
-     <height>20</height>
+     <width>121</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="text">
     <string>Output Sound Device</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
    </property>
   </widget>
   <widget class="QCheckBox" name="checkBoxStereo">

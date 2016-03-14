@@ -239,6 +239,14 @@
 #define CI_CLOSE_ASYNC_PORT 0x0201
  #define CI_CLOSE_ASYNC_PORT_SETRESPLEN 5
 
+#define CI_CHANGERATE_ASYNC_PORT 0x0202
+ #define CI_CHANGERATE_ASYNC_PORT_SETRESPLEN 9
+
+#define CI_AUXSIGNAL_AMP 0x0288
+ #define CI_AUXSIGNAL_AMP_REQLEN 4
+ #define CI_AUXSIGNAL_AMP_SETRESPLEN 8
+//Parameter 1  is a 2 byte unsigned value specifying the Audio DAC1 gainx1000 (1 to 64000) == 0.001 to 64.000
+//Parameter 2  is a 2 byte unsigned value specifying the Audio DAC2 gainx1000 (1 to 64000) == 0.001 to 64.000
 
 /*  Software/Firmware Update MODE Control Items  */
 #define CI_UPDATE_MODE_CONTROL 0x0300
