@@ -40,7 +40,6 @@
 #include "gui/sdrsetupdlg.h"
 #include "ui_sdrsetupdlg.h"
 #include "gui/mainwindow.h"
-#include "QSpinBox.h"
 #include <QDebug>
 
 CSdrSetupDlg::CSdrSetupDlg(QWidget *parent, CSdrInterface* pSdrInterface) :

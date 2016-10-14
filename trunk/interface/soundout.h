@@ -53,7 +53,7 @@ public:
 	virtual ~CSoundOut();
 
 	//Exposed functions
-	void Start(int OutDevIndx, bool StereoOut, TYPEREAL UsrDataRate)
+    void Start(int OutDevIndx, bool StereoOut, double UsrDataRate)
 					{emit StartSig(OutDevIndx, StereoOut, UsrDataRate);}
 	void Stop(){emit StopSig();}	//stops soundcard output
 
@@ -66,13 +66,13 @@ public:
 	TYPESTEREO16 m_RData[OUTQSIZE];	//exposed buffer holding 48ksps resampled data
 
 signals:
-	void StartSig(int OutDevIndx, bool StereoOut, double UsrDataRate);
+    void StartSig(int OutDevIndx, bool StereoOut, double UsrDataRate);
 	void StopSig();
 
 private slots:
 	void ThreadInit();	//overrided function is called by new thread when started
 	void ThreadExit();	//overrided function is called by new thread when stopped
-	void StartSlot(int OutDevIndx, bool StereoOut, double UsrDataRate);
+    void StartSlot(int OutDevIndx, bool StereoOut, double UsrDataRate);
 	void StopSlot();	//stops soundcard output
 	void GetNewData();
 

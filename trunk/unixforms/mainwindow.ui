@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>572</width>
-    <height>275</height>
+    <height>289</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -168,6 +168,11 @@
            <height>30</height>
           </size>
          </property>
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
          <property name="toolTip">
           <string>Demod Center Frequency</string>
          </property>
@@ -184,9 +189,9 @@
         <widget class="QSpinBox" name="SpanspinBox">
          <property name="geometry">
           <rect>
-           <x>10</x>
+           <x>9</x>
            <y>60</y>
-           <width>120</width>
+           <width>121</width>
            <height>22</height>
           </rect>
          </property>
@@ -205,6 +210,7 @@
          <property name="font">
           <font>
            <family>MS Shell Dlg 2</family>
+           <pointsize>10</pointsize>
            <weight>50</weight>
            <bold>false</bold>
           </font>
@@ -252,6 +258,11 @@
            <height>0</height>
           </size>
          </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
          <property name="toolTip">
           <string>Vertical Scale</string>
          </property>
@@ -279,6 +290,11 @@
            <width>0</width>
            <height>20</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
          </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -316,6 +332,11 @@
            <width>120</width>
            <height>0</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
          </property>
          <property name="toolTip">
           <string>Maximum Screen dB</string>
@@ -427,7 +448,7 @@
          </property>
          <property name="font">
           <font>
-           <pointsize>8</pointsize>
+           <pointsize>10</pointsize>
            <weight>50</weight>
            <bold>false</bold>
            <kerning>false</kerning>
@@ -471,7 +492,7 @@
      <x>0</x>
      <y>0</y>
      <width>572</width>
-     <height>21</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -726,7 +726,7 @@ CAscpTxMsg TxMsg;
 	if(m_FileRecordActive)
 		StopFileRecord();
 	m_Running = false;
-	m_pSoundCardOut->Stop();
+    m_pSoundCardOut->Stop();
     TxMsg.InitTxMsg(TYPE_HOST_SET_CITEM);
     TxMsg.AddCItem(CI_RX_STATE);
     TxMsg.AddParm8(RX_STATE_DATACOMPLEX);

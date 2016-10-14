@@ -22,6 +22,11 @@
      <height>23</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+    </font>
+   </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
    </property>
@@ -35,8 +40,13 @@
      <x>10</x>
      <y>10</y>
      <width>101</width>
-     <height>261</height>
+     <height>341</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
    </property>
    <property name="title">
     <string>Mode</string>
@@ -46,13 +56,18 @@
      <rect>
       <x>20</x>
       <y>21</y>
-      <width>58</width>
-      <height>231</height>
+      <width>68</width>
+      <height>284</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QRadioButton" name="AMradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>AM</string>
        </property>
@@ -60,6 +75,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="SAMradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>SAM</string>
        </property>
@@ -67,6 +87,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="FMradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>FM</string>
        </property>
@@ -74,6 +99,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="WFMradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>WFM</string>
        </property>
@@ -81,6 +111,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="USBradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>USB</string>
        </property>
@@ -88,6 +123,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="LSBradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>LSB</string>
        </property>
@@ -95,6 +135,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="CWUradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>CWU</string>
        </property>
@@ -102,6 +147,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="CWLradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>CWL</string>
        </property>
@@ -109,6 +159,11 @@
      </item>
      <item>
       <widget class="QRadioButton" name="PSKradioButton">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>PSK</string>
        </property>
@@ -138,6 +193,11 @@
      <height>0</height>
     </size>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="suffix">
     <string> Hz</string>
    </property>
@@ -163,6 +223,11 @@
      <height>201</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="title">
     <string>AGC</string>
    </property>
@@ -177,6 +242,11 @@
       <width>81</width>
       <height>17</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>AGC On</string>
@@ -196,6 +266,11 @@
       <horstretch>0</horstretch>
       <verstretch>0</verstretch>
      </sizepolicy>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="frameShape">
      <enum>QFrame::StyledPanel</enum>
@@ -219,6 +294,11 @@
       <height>41</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="frameShape">
      <enum>QFrame::StyledPanel</enum>
     </property>
@@ -238,6 +318,11 @@
       <height>41</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="frameShape">
      <enum>QFrame::StyledPanel</enum>
     </property>
@@ -256,6 +341,11 @@
       <width>131</width>
       <height>17</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="toolTip">
      <string>Use Hang Timer instead of Decay</string>

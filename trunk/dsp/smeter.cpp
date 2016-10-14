@@ -74,7 +74,7 @@ void CSMeter::ProcessData(int length, TYPECPX* pInData, TYPEREAL SampleRate)
 		//calculate instantaeous power magnitude of pInData which is I*I + Q*Q
 		TYPECPX in = pInData[i];
 		//convert I/Q magnitude to dB power
-		TYPEREAL mag = 10.0*MLOG10((in.re*in.re+in.im*in.im)/ MAX_PWR + 1e-50);
+        TYPEREAL mag = 10.0*MLOG10((in.re*in.re+in.im*in.im)/ MAX_PWR + 1e-30);
 		//calculate attack and decay average
 		m_AttackAve = (1.0-m_AttackAlpha)*m_AttackAve + m_AttackAlpha*mag;
 		m_DecayAve = (1.0-m_DecayAlpha)*m_DecayAve + m_DecayAlpha*mag;
@@ -108,6 +108,7 @@ TYPEREAL CSMeter::GetPeak()
 ////////////////////////////////////////////////////////////////////////////////////
 TYPEREAL CSMeter::GetAve()
 {
+//    qDebug()<<m_AverageMag << m_CalibrationOffset;
 	return m_AverageMag + SMETER_CALIBRATION + m_CalibrationOffset;
 }
 

@@ -340,7 +340,9 @@ TYPEREAL LminusR;
 	for(int i=0; i<InLength; i++)
 	{
 		m_D0 = pInData[i];
-		m_RawFm[i] = FMDEMOD_GAIN*MATAN2( (m_D1.re*m_D0.im - m_D0.re*m_D1.im), (m_D1.re*m_D0.re + m_D1.im*m_D0.im));//~266 nSec/sample
+//        m_RawFm[i] = FMDEMOD_GAIN*MATAN2( (m_D1.re*m_D0.im - m_D0.re*m_D1.im), (m_D1.re*m_D0.re + m_D1.im*m_D0.im));//~266 nSec/sample
+        m_RawFm[i] = FMDEMOD_GAIN*arctan2( (m_D1.re*m_D0.im - m_D0.re*m_D1.im), (m_D1.re*m_D0.re + m_D1.im*m_D0.im));//~266 nSec/sample
+
 		m_D1 = m_D0;
 	}
 //StopPerformance(InLength);

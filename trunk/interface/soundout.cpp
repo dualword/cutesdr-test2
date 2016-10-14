@@ -86,7 +86,7 @@ qDebug()<<"CSoundOut destructor";
 void CSoundOut::ThreadInit()	//overrided funciton is called by new thread when started
 {
 	//use event loop to service external calls.
-	connect(this,SIGNAL( StartSig(int, bool, double) ), this, SLOT(StartSlot(int, bool, double) ) );
+    connect(this,SIGNAL( StartSig(int, bool, double) ), this, SLOT(StartSlot(int, bool, double) ) );
 	connect(this,SIGNAL( StopSig()), this, SLOT(StopSlot()) );
 //qDebug()<<"Soundout Thread Init "<<this->thread()->currentThread();
 }
@@ -96,7 +96,7 @@ void CSoundOut::ThreadInit()	//overrided funciton is called by new thread when s
 /////////////////////////////////////////////////////////////////////
 void CSoundOut::ThreadExit()
 {
-	StopSlot();
+    StopSlot();
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -105,8 +105,8 @@ void CSoundOut::ThreadExit()
 void CSoundOut::StartSlot(int OutDevIndx, bool StereoOut, double UsrDataRate)
 {
 QAudioDeviceInfo  DeviceInfo;
-//qDebug()<<"Soundout Thread "<<this->thread()->currentThread();
-	m_pThread->setPriority(QThread::HighestPriority);
+qDebug()<<"Soundout Thread "<<this->thread()->currentThread();
+    m_pThread->setPriority(QThread::HighestPriority);
 	m_StereoOut = StereoOut;
 	//Get required soundcard from list
 	m_OutDevices = DeviceInfo.availableDevices(QAudio::AudioOutput);
@@ -123,7 +123,12 @@ QAudioDeviceInfo  DeviceInfo;
 	else
 		m_OutAudioFormat.setChannelCount(1);
 
-	m_pAudioOutput = new QAudioOutput(m_OutDeviceInfo, m_OutAudioFormat, this);
+    if(m_pAudioOutput)
+    {
+        delete m_pAudioOutput;
+        m_pAudioOutput = NULL;
+    }
+    m_pAudioOutput = new QAudioOutput(m_OutDeviceInfo, m_OutAudioFormat, this);
 	if(!m_pAudioOutput)
 	{
 		qDebug()<<"Soundcard output error";
@@ -143,7 +148,8 @@ QAudioDeviceInfo  DeviceInfo;
 		m_pIODevice = m_pAudioOutput->start(); //start Qt AudioOutput, get pointer to its QIODevice
 		m_pAudioOutput->setNotifyInterval(20);	//20mSec update interval
 		GetNewData();	//fill buffer initially with zeros
-		return;
+        qDebug()<<"Soundcard output Opened ok";
+        return;
 	}
 	else
 	{
@@ -163,12 +169,8 @@ void CSoundOut::StopSlot()
 				|| (QAudio::IdleState==m_pAudioOutput->state()) )
 			m_pAudioOutput->stop();
 	}
-	if(m_pAudioOutput)
-	{
-		delete m_pAudioOutput;
-		m_pAudioOutput = NULL;
-	}
-//qDebug()<<"Soundcard output stopped";
+
+qDebug()<<"Soundcard output stopped";
 }
 
 /////////////////////////////////////////////////////////////////////
