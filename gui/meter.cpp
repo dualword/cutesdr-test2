@@ -117,7 +117,7 @@ void CMeter::resizeEvent(QResizeEvent* )
 //////////////////////////////////////////////////////////////////////
 // Slot called to update meter Receiver level position
 //////////////////////////////////////////////////////////////////////
-void CMeter::SetdBmLevel(double dbm, bool Overload)
+void CMeter::SetdBmLevel(TYPEREAL dbm, bool Overload)
 {
 	m_dBm = (int)dbm;
 	m_Slevel = CalcPosFromdB(dbm);
@@ -133,7 +133,7 @@ void CMeter::SetdBmLevel(double dbm, bool Overload)
 //////////////////////////////////////////////////////////////////////
 // called to calculate meter position from a dB level
 //////////////////////////////////////////////////////////////////////
-int CMeter::CalcPosFromdB(double db)
+int CMeter::CalcPosFromdB(TYPEREAL db)
 {
 qreal w = (qreal)m_Pixmap.width();
 	w = w - 2.0*CTRL_MARGIN*w;	//width of meter scale in pixels
@@ -156,7 +156,7 @@ qreal w = (qreal)m_Pixmap.width();
 //////////////////////////////////////////////////////////////////////
 // called to set Squelch Threshold meter position from a dB level
 //////////////////////////////////////////////////////////////////////
-void CMeter::SetSquelchPos(double db)
+void CMeter::SetSquelchPos(TYPEREAL db)
 {
 	m_SquelchPos = CalcPosFromdB(db);
 	DrawOverlay();

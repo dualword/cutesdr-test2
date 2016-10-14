@@ -27,6 +27,7 @@
 //	2015-08-27  ver 1.19 Changed Cloudxx max BW to 1.5MHz, added wav file saving
 //	2016-01-10  ver 1.20b1 Removed x86 assembly code in wfmdemod, added settings saving in OnExit() (thanks alex for fix)
 //	2016-01-10  ver 1.20b2 Removed another x86 assembly code in wfmdemod changed StayOnTop inhibit for Linux
+//	2016-10-14  ver 1.20b3 Release candidate
 
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================

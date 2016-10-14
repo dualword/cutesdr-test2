@@ -48,12 +48,16 @@
 //////////////////////////////////////////////////////////////////////
 // Local defines
 //////////////////////////////////////////////////////////////////////
+#ifdef USE_DOUBLE_PRECISION
 #define SINC_PERIOD_PTS 10000	//number of points in sinc table between "zero crossings"
 								//smaller value increases noise floor
-
 #define SINC_PERIODS 28	//number of input sample periods("zero crossings"-1) in
 						//sinc function(should be even)
 						//decreasing reduces alias free bandwidth
+#else   //if using single precision math assume lightweight CPU and dont worry so much about resample quality
+#define SINC_PERIOD_PTS 1000
+#define SINC_PERIODS 10
+#endif
 
 #define SINC_LENGTH	( (SINC_PERIODS)*SINC_PERIOD_PTS + 1)//number of total points in sinc table
 

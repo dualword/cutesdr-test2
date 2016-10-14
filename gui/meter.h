@@ -11,7 +11,7 @@
 #include <QtGui>
 #include <QFrame>
 #include <QImage>
-
+#include "dsp/datatypes.h"
 
 class CMeter : public QFrame
 {
@@ -25,12 +25,12 @@ public:
 
 	void draw();		//call to draw new fft data onto screen plot
 	void UpdateOverlay(){DrawOverlay();}
-	void SetSquelchPos(double db);		//{ m_SquelchPos = CalcPosFromdB(db);}
+    void SetSquelchPos(TYPEREAL db);		//{ m_SquelchPos = CalcPosFromdB(db);}
 
 signals:
 
 public slots:
-	void SetdBmLevel(double dbm, bool Overload);
+    void SetdBmLevel(TYPEREAL dbm, bool Overload);
 
 protected:
 		//re-implemented widget event handlers
@@ -39,7 +39,7 @@ protected:
 
 private:
 	void DrawOverlay();
-	int CalcPosFromdB(double db);
+    int CalcPosFromdB(TYPEREAL db);
 	QPixmap m_Pixmap;
 	QPixmap m_OverlayPixmap;
 	QSize m_Size;

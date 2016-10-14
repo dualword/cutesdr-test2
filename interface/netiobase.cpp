@@ -112,7 +112,7 @@ QHostAddress CIPAdr(ClientAdr);
 	{
 		qDebug()<<"Udp Bind fail"<<CIPAdr << ServerPort<<m_pUdpSocket->errorString().toLocal8Bit();
 	}
-	m_pUdpFwdSocket->bind( m_FwdPort );
+    m_pUdpFwdSocket->bind( m_FwdPort );
 }
 
 ////////////////////////////////////////////////////////////////////////
