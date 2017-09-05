@@ -138,6 +138,9 @@ void CDemodSetupDlg::InitDlg()
 	case DEMOD_PSK:
 		ui->PSKradioButton->setChecked(true);
 		break;
+	case DEMOD_FSK:
+		ui->FSKradioButton->setChecked(true);
+		break;
 	}
 	m_pDemodInfo = &(((MainWindow*)this->parent())->m_DemodSettings[m_DemodMode]);
 	UpdateDemodInfo();
@@ -217,6 +220,8 @@ void CDemodSetupDlg::ModeChanged()
 		m_DemodMode = DEMOD_CWL;
 	else if(ui->PSKradioButton->isChecked())
 		m_DemodMode = DEMOD_PSK;
+	else if(ui->FSKradioButton->isChecked())
+		m_DemodMode = DEMOD_FSK;
 	((MainWindow*)this->parent())->SetupDemod(m_DemodMode);
 	m_pDemodInfo = &(((MainWindow*)this->parent())->m_DemodSettings[m_DemodMode]);
 	UpdateDemodInfo();

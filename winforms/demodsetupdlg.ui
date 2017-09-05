@@ -35,7 +35,7 @@
      <x>10</x>
      <y>10</y>
      <width>101</width>
-     <height>261</height>
+     <height>291</height>
     </rect>
    </property>
    <property name="title">
@@ -47,7 +47,7 @@
       <x>20</x>
       <y>21</y>
       <width>58</width>
-      <height>231</height>
+      <height>261</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -111,6 +111,13 @@
       <widget class="QRadioButton" name="PSKradioButton">
        <property name="text">
         <string>PSK</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="FSKradioButton">
+       <property name="text">
+        <string>FSK</string>
        </property>
       </widget>
      </item>
@@ -429,8 +436,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>45</x>
-     <y>163</y>
+     <x>46</x>
+     <y>181</y>
     </hint>
     <hint type="destinationlabel">
      <x>178</x>
@@ -445,8 +452,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>65</x>
-     <y>186</y>
+     <x>66</x>
+     <y>207</y>
     </hint>
     <hint type="destinationlabel">
      <x>124</x>
@@ -461,8 +468,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>36</x>
-     <y>209</y>
+     <x>37</x>
+     <y>233</y>
     </hint>
     <hint type="destinationlabel">
      <x>35</x>
@@ -541,8 +548,8 @@
    <slot>ModeChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>57</x>
-     <y>109</y>
+     <x>58</x>
+     <y>129</y>
     </hint>
     <hint type="destinationlabel">
      <x>175</x>
@@ -563,6 +570,22 @@
     <hint type="destinationlabel">
      <x>76</x>
      <y>292</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>FSKradioButton</sender>
+   <signal>clicked()</signal>
+   <receiver>CDemodSetupDlg</receiver>
+   <slot>ModeChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>47</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>54</x>
+     <y>311</y>
     </hint>
    </hints>
   </connection>
