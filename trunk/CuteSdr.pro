@@ -53,8 +53,10 @@ SOURCES += gui/main.cpp \
 	dsp/noiseproc.cpp \
     dsp/wfmdemod.cpp \
 	dsp/wfmmod.cpp \
-	dsp/pskmod.cpp \
-	dsp/pskdemod.cpp
+    dsp/pskmod.cpp \
+    dsp/pskdemod.cpp \
+    dsp/fskmod.cpp \
+    dsp/fskdemod.cpp
 
 HEADERS  += gui/mainwindow.h \
 	gui/sounddlg.h \
@@ -105,7 +107,10 @@ HEADERS  += gui/mainwindow.h \
 	dsp/pskmod.h \
 	dsp/pskdemod.h \
 	dsp/psktables.h \
-	dsp/rbdsconstants.h
+    dsp/rbdsconstants.h \
+    dsp/fskmod.h \
+    dsp/fskdemod.h \
+    dsp/fircoef.h
 
 
 #Use separate forms for each OS

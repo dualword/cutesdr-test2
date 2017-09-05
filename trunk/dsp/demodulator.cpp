@@ -136,6 +136,10 @@ void CDemodulator::SetInputSampleRate(TYPEREAL InputRate)
 				m_DemodOutputRate = m_DownConverterOutputRate;
 				m_pPskDemod->SetPskParams(m_DownConverterOutputRate, m_PskRate, BPSK_MODE);
 				break;
+			case DEMOD_FSK:
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_DemodOutputRate = m_DownConverterOutputRate;
+				break;
 		}
 	}
 }
@@ -194,6 +198,12 @@ void CDemodulator::SetDemod(int Mode, tDemodInfo CurrentDemodInfo)
 				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
 				m_pPskDemod = new CPskDemod();
 				m_pPskDemod->SetPskParams(m_DownConverterOutputRate, m_PskRate, BPSK_MODE);
+				m_DemodOutputRate = m_DownConverterOutputRate;
+				break;
+			case DEMOD_FSK:
+//qDebug()<<"Desired MaxOutputBW="<<m_DesiredMaxOutputBandwidth;
+				m_DownConverterOutputRate = m_DownConvert.SetDataRate(m_InputRate, m_DesiredMaxOutputBandwidth);
+				m_pFskDemod = new CFskDemod(m_DownConverterOutputRate);
 				m_DemodOutputRate = m_DownConverterOutputRate;
 				break;
 		}
@@ -298,6 +308,10 @@ g_pTestBench->DisplayData(n, 1.0, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
 					if(n>0)
 						n = m_pPskDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
+				case DEMOD_FSK:
+					if(n>0)
+						n = m_pFskDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
+					break;
 			}
 g_pTestBench->DisplayData(n, 1.0, pOutData, m_DemodOutputRate,PROFILE_4);
 			if(SquelchState)
@@ -378,6 +392,9 @@ g_pTestBench->DisplayData(n, 1.0, m_pDemodTmpBuf, m_DemodOutputRate,PROFILE_2);
 					break;
 				case DEMOD_PSK:
 					n = m_pPskDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
+					break;
+				case DEMOD_FSK:
+					n = m_pFskDemod->ProcessData(n, m_pDemodTmpBuf, pOutData);
 					break;
 			}
 			if(SquelchState)

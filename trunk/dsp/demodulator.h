@@ -48,6 +48,7 @@
 #include "dsp/wfmdemod.h"
 #include "dsp/ssbdemod.h"
 #include "dsp/pskdemod.h"
+#include "dsp/fskdemod.h"
 
 #define DEMOD_AM 0		//defines for supported demod modes
 #define DEMOD_SAM 1
@@ -58,8 +59,9 @@
 #define DEMOD_CWL 6
 #define DEMOD_WFM 7
 #define DEMOD_PSK 9
+#define DEMOD_FSK 10
 
-#define NUM_DEMODS 10	//manually update if modify number of demod types
+#define NUM_DEMODS 11	//manually update if modify number of demod types
 
 #define MAX_INBUFSIZE 250000	//maximum size of demod input buffer
 								//pick so that worst case decimation leaves
@@ -147,6 +149,7 @@ private:
 	CFmDemod* m_pFmDemod;
 	CWFmDemod* m_pWFmDemod;
 	CPskDemod* m_pPskDemod;
+	CFskDemod* m_pFskDemod;
 	CSsbDemod* m_pSsbDemod;	//includes CW modes
 };
 

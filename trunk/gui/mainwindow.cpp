@@ -76,7 +76,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.20b3")
+#define PROGRAM_TITLE_VERSION tr(" 1.20b4")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -251,7 +251,7 @@ MainWindow::MainWindow(QWidget *parent) :
 		g_pTestBench->Init();
 	}
 
-	if(DEMOD_PSK == m_DemodMode)
+	if( (DEMOD_PSK == m_DemodMode) || (DEMOD_FSK == m_DemodMode) )
 		SetChatDialogState(true);
 
 	StopRecord();
@@ -1176,9 +1176,10 @@ void MainWindow::SetChatDialogState(int state)
 /////////////////////////////////////////////////////////////////////
 void MainWindow::SetupDemod(int index)
 {
+qDebug()<<index;
 	if(m_DemodMode != index)
 	{
-		if(DEMOD_PSK == index)
+		if( (DEMOD_PSK == index) || (DEMOD_FSK == index) )
 			SetChatDialogState(true);
 		else
 			SetChatDialogState(false);
@@ -1300,4 +1301,13 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_PSK].Symetric = true;
 	m_DemodSettings[DEMOD_PSK].DefFreqClickResolution = 1;
 	m_DemodSettings[DEMOD_PSK].FilterClickResolution = 5;
+
+	m_DemodSettings[DEMOD_FSK].txt = tr("FSK");
+	m_DemodSettings[DEMOD_FSK].HiCutmin = 200;
+	m_DemodSettings[DEMOD_FSK].HiCutmax = 20;
+	m_DemodSettings[DEMOD_FSK].LowCutmax = -200;
+	m_DemodSettings[DEMOD_FSK].LowCutmin = -200;
+	m_DemodSettings[DEMOD_FSK].Symetric = true;
+	m_DemodSettings[DEMOD_FSK].DefFreqClickResolution = 10;
+	m_DemodSettings[DEMOD_FSK].FilterClickResolution = 10;
 }
