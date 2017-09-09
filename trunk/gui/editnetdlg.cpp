@@ -98,6 +98,7 @@ quint32 ip;
 
 	dlg.m_IPAdr = m_IPAdr.toIPv4Address();
 	dlg.m_Port = m_Port;
+	dlg.m_ActiveHostAdrIndex = m_ActiveHostAdrIndex;
 //	dlg.m_NameFilter = "SDR-14";	//if want to limit search to a specific device
 	dlg.InitDlg();
 	if( dlg.exec() )
@@ -113,6 +114,7 @@ quint32 ip;
 			ui.lineEdit_TCPPort->setText(QString().number( m_Port ));
 			m_ActiveDevice = dlg.m_Name;
 			ui.label_SDR->setText(m_ActiveDevice);
+			m_ActiveHostAdrIndex = dlg.m_ActiveHostAdrIndex;
 		}
 	}
 }
