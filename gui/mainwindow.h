@@ -109,6 +109,7 @@ private:
 	qint32 m_Percent2DScreen;
 	qint32 m_DemodMode;
 	qint32 m_RecordMode;
+	int m_ActiveHostAdrIndex;
 	TYPEREAL m_NCOSpurOffsetI;	//NCO spur reduction variables
 	TYPEREAL m_NCOSpurOffsetQ;
 	tNoiseProcdInfo m_NoiseProcSettings;

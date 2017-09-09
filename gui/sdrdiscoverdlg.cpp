@@ -66,21 +66,46 @@ CSdrDiscoverDlg::CSdrDiscoverDlg(QWidget *parent) :
 	ui->listWidget->clear();
     m_Name = "";
 	m_NameFilter = "";
-	m_pUdpDiscoverSocket = new QUdpSocket(this);
-	connect(m_pUdpDiscoverSocket, SIGNAL(readyRead()), this, SLOT(ReadUDPMessages()));
+	m_ActiveHostAdrIndex = 0;
+	m_pUdpRxSocket = new QUdpSocket(this);
+	m_pUdpTxSocket = new QUdpSocket(this);
+	connect(m_pUdpRxSocket, SIGNAL(readyRead()), this, SLOT(ReadUDPMessages()));
 	m_UdpOpen = false;
 }
 
 CSdrDiscoverDlg::~CSdrDiscoverDlg()
 {
-	if(m_pUdpDiscoverSocket)
-		delete m_pUdpDiscoverSocket;
-    delete ui;
+	if(m_pUdpRxSocket)
+	{
+		if(m_UdpOpen)
+			m_pUdpRxSocket->close();
+		delete m_pUdpRxSocket;
+	}
+	if(m_pUdpTxSocket)
+	{
+		if(m_UdpOpen)
+			m_pUdpTxSocket->close();
+		delete m_pUdpTxSocket;
+	}
+	delete ui;
 }
 
 //Fill in initial data
 void CSdrDiscoverDlg::InitDlg()
 {
+	GetHostInfo();
+
+	if( m_ActiveHostAdrIndex >= m_HostAdrList.length() )
+		m_ActiveHostAdrIndex = m_HostAdrList.length() - 1;
+	if( m_ActiveHostAdrIndex < 0 )
+		m_ActiveHostAdrIndex = 0;
+	if(m_HostAdrList.length() > 0)
+	{
+		m_ActiveHostAdr = m_HostAdrList.at(m_ActiveHostAdrIndex);
+		m_ActiveBroadcastAdr = m_BroadcastAdrList.at(m_ActiveHostAdrIndex);
+		ui->comboBoxHosts->setCurrentIndex( m_ActiveHostAdrIndex);
+	}
+	m_UdpOpen = false;
 	OnFind();
 }
 
@@ -97,19 +122,28 @@ void CSdrDiscoverDlg::CloseUdp()
 {
 	if(m_UdpOpen)
 	{
-		m_pUdpDiscoverSocket->close();
+		m_pUdpRxSocket->close();
+		m_pUdpTxSocket->close();
 		m_UdpOpen = false;
-qDebug("UDP Close");
+		qDebug("UDP Close");
 	}
 }
 
 void CSdrDiscoverDlg::SendDiscoverRequest()
 {
-tDiscover_COMMONMSG reqmsg;
+	tDiscover_COMMONMSG reqmsg;
 	//bind UDP socket with receive port value
 	if(!m_UdpOpen)
-		m_pUdpDiscoverSocket->bind(DISCOVER_CLIENT_PORT);
+	{
+		//Rx on any interface
+		bool x = m_pUdpRxSocket->bind(QHostAddress::AnyIPv4, DISCOVER_CLIENT_PORT);
+		qDebug()<<"UDP Rx bind "<<x;
+		//Tx on specified Interface IP
+		x = m_pUdpTxSocket->bind(m_ActiveHostAdr, DISCOVER_SERVER_PORT);
+		qDebug()<<"UDP Tx bind "<<x;
+	}
 	m_UdpOpen = true;
+	qDebug("UDP Open");
 	qint64 length = sizeof(tDiscover_COMMONMSG);
 	memset((void*)&reqmsg, 0, length);
 	reqmsg.length[0] = length&0xFF;
@@ -117,10 +151,10 @@ tDiscover_COMMONMSG reqmsg;
 	reqmsg.key[0] = KEY0;
 	reqmsg.key[1] = KEY1;
 	reqmsg.op = MSG_REQ;
-	for(int i=0; i<m_NameFilter.length(); i++)
-		reqmsg.name[i] = m_NameFilter[i].toLatin1();
-	m_pUdpDiscoverSocket->writeDatagram( (const char*)&reqmsg, length, QHostAddress::Broadcast, DISCOVER_SERVER_PORT);
-	m_CloseTimer.singleShot(250, this, SLOT( CloseUdp()) );
+	length = m_pUdpTxSocket->writeDatagram( (const char*)&reqmsg, length, m_ActiveBroadcastAdr, DISCOVER_SERVER_PORT);
+//qDebug()<<"UDP Sent "<<length<<" On "<<m_ActiveHostAdr << m_ActiveBroadcastAdr;
+	length = m_pUdpTxSocket->writeDatagram( (const char*)&reqmsg, length, QHostAddress::Broadcast, DISCOVER_SERVER_PORT);
+	m_CloseTimer.singleShot(1000, this, SLOT( CloseUdp()) );	//wait for any responses to finish
 }
 
 //Called when UDP messages are received on the client port for parsing
@@ -132,10 +166,10 @@ int index=0;
 bool InUse;
 tDiscover_COMMONMSG tmpmsg;
 char Buf[2048];	//buffer to hold received UDP packet
-	while( m_pUdpDiscoverSocket->hasPendingDatagrams() )
+	while( m_pUdpRxSocket->hasPendingDatagrams() )
 	{	//loop and get all UDP packets availaable
-		totallength = m_pUdpDiscoverSocket->pendingDatagramSize();
-		m_pUdpDiscoverSocket->readDatagram( Buf, totallength);	//read entire UDP packet
+		totallength = m_pUdpRxSocket->pendingDatagramSize();
+		m_pUdpRxSocket->readDatagram( Buf, totallength);	//read entire UDP packet
 
 		//see if msg cam from same device that is already in the list
 		//if so then delete old one so new one will get added
@@ -225,4 +259,49 @@ int index = ui->listWidget->currentRow();
 		 m_Name = "";
 	}
 	QDialog::accept();		//call base class to exit
+}
+void CSdrDiscoverDlg::GetHostInfo()
+{
+//	QList<QHostAddress> HostAdrList;
+	QList<QNetworkInterface> HostInterfaceList;
+	QNetworkInterface iface;
+	QList<QNetworkAddressEntry> HostAdrList;
+
+	HostInterfaceList = iface.allInterfaces();
+
+	QNetworkInterface::InterfaceFlags Flags;
+	for (int i = 0; i < HostInterfaceList.size(); ++i)
+	{
+		Flags = HostInterfaceList.at(i).flags();
+		if( (Flags & QNetworkInterface::CanBroadcast) &&
+			(Flags & QNetworkInterface::IsUp) &&
+			!(Flags & QNetworkInterface::IsLoopBack) )
+		{	//look at only interfaces that are active, support broadcast, and are not Loopback
+//			qDebug()<<m_Str  << Flags;
+			HostAdrList = HostInterfaceList.at(i).addressEntries();
+			for(int j=0; j<HostAdrList.size(); j++)
+			{	//list only IPV4 addresses on each interface
+				if( QAbstractSocket::IPv4Protocol == HostAdrList[j].ip().protocol() )
+				{
+					m_Str = HostInterfaceList.at(i).humanReadableName() + "  ";
+					m_Str += HostAdrList[j].ip().toString();
+					ui->comboBoxHosts->addItem(m_Str );
+					m_HostAdrList.append(HostAdrList[j].ip());
+					m_BroadcastAdrList.append(HostAdrList[j].broadcast());
+				}
+			}
+		}
+	}
+}
+
+void CSdrDiscoverDlg::on_comboBoxHosts_currentIndexChanged(int index)
+{
+	if( index < m_HostAdrList.length() )
+	{
+		m_ActiveHostAdrIndex = index;
+		m_ActiveHostAdr = m_HostAdrList.at(m_ActiveHostAdrIndex);
+		m_ActiveBroadcastAdr = m_BroadcastAdrList.at(m_ActiveHostAdrIndex);
+		qDebug()<< "Active Host Address = "<< m_ActiveHostAdr.toString();
+		qDebug()<< "Active Broadcast Address = "<< m_ActiveBroadcastAdr.toString();
+	}
 }

@@ -22,6 +22,7 @@ public:
 	void InitDlg();
 	bool eventFilter(QObject* o, QEvent* e);
 
+	int m_ActiveHostAdrIndex;
 	QHostAddress m_IPAdr;
 	quint32 m_Port;
 	bool m_UseUdpFwd;

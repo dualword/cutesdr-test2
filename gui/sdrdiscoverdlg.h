@@ -14,6 +14,7 @@
 #include <QTimer>
 #include <QListWidget>
 #include <QKeyEvent>
+#include <QNetworkInterface>
 
 #define MAX_DEVICES 32
 
@@ -140,6 +141,7 @@ public:
 	quint32 m_IPAdr;
 	unsigned short m_Port;
 	QString m_Name;
+	int m_ActiveHostAdrIndex;
 
 public slots:
 	void accept();
@@ -150,14 +152,23 @@ private slots:
 	void ReadUDPMessages();
 	void SendDiscoverRequest();
 	void CloseUdp();
+	void on_comboBoxHosts_currentIndexChanged(int index);
 
 private:
     Ui::CSdrDiscoverDlg *ui;
 	void ParseMsg(int index);
+	void GetHostInfo();
+
 	QTimer m_Timer;
 	QTimer m_CloseTimer;
 	bool m_UdpOpen;
-    QUdpSocket* m_pUdpDiscoverSocket;
+	QString m_Str;
+	QUdpSocket* m_pUdpTxSocket;
+	QUdpSocket* m_pUdpRxSocket;
+	QHostAddress m_ActiveHostAdr;
+	QHostAddress m_ActiveBroadcastAdr;
+	QList<QHostAddress> m_HostAdrList;
+	QList<QHostAddress> m_BroadcastAdrList;
 	tDiscover_COMMONMSG m_DiscovermsgCommon[MAX_DEVICES];
 	tDiscover_NETSDR m_DiscovermsgNetSDR[MAX_DEVICES];
 	tDiscover_CLOUDSDR m_DiscovermsgCloudSDR[MAX_DEVICES];

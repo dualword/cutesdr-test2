@@ -28,6 +28,7 @@
 //	2016-01-10  ver 1.20b1 Removed x86 assembly code in wfmdemod, added settings saving in OnExit() (thanks alex for fix)
 //	2016-01-10  ver 1.20b2 Removed another x86 assembly code in wfmdemod changed StayOnTop inhibit for Linux
 //	2016-10-14  ver 1.20b3 Release candidate
+//	2017-09-09  ver 1.20b4 Added network Interface selection
 
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
@@ -345,6 +346,7 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("AlwaysOnTop"),m_AlwaysOnTop);
 	settings.setValue(tr("Volume"),m_Volume);
 	settings.setValue(tr("Percent2DScreen"),m_Percent2DScreen);
+	settings.setValue(tr("ActiveHostAdrIndex"),m_ActiveHostAdrIndex);
 	settings.setValue(tr("InvertSpectrum"),m_InvertSpectrum);
 	settings.setValue(tr("USFm"),m_USFm);
 	settings.setValue(tr("UseCursorText"),m_UseCursorText);
@@ -454,6 +456,7 @@ void MainWindow::readSettings()
 	m_RadioType = settings.value(tr("RadioType"), 0).toInt();
 	m_Volume = settings.value(tr("Volume"),100).toInt();
 	m_Percent2DScreen = settings.value(tr("Percent2DScreen"),50).toInt();
+	m_ActiveHostAdrIndex = settings.value(tr("ActiveHostAdrIndex"),0).toInt();
 
 	m_NCOSpurOffsetI = settings.value(tr("NCOSpurOffsetI"),0.0).toDouble();
 	m_NCOSpurOffsetQ = settings.value(tr("NCOSpurOffsetQ"),0.0).toDouble();
@@ -757,6 +760,7 @@ CEditNetDlg dlg(this);
 	dlg.m_FwdPort = m_FwdPort;
 	dlg.m_ActiveDevice = m_ActiveDevice;
 	dlg.m_UseUdpFwd = m_UseUdpFwd;
+	dlg.m_ActiveHostAdrIndex = m_ActiveHostAdrIndex;
 	dlg.InitDlg();
 	if( dlg.exec() )
 	{
@@ -774,6 +778,7 @@ CEditNetDlg dlg(this);
 			m_FwdPort = dlg.m_FwdPort;
 			m_UseUdpFwd = dlg.m_UseUdpFwd;
 			m_ActiveDevice = dlg.m_ActiveDevice;
+			m_ActiveHostAdrIndex = dlg.m_ActiveHostAdrIndex;
 		}
 	}
 }
