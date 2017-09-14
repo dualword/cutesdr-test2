@@ -22,11 +22,6 @@
      <height>32</height>
     </rect>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>11</pointsize>
-    </font>
-   </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
    </property>
@@ -46,7 +41,7 @@
    <property name="font">
     <font>
      <family>MS Shell Dlg 2</family>
-     <pointsize>9</pointsize>
+     <pointsize>8</pointsize>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -58,16 +53,11 @@
   <widget class="QPushButton" name="pushButtonFind">
    <property name="geometry">
     <rect>
-     <x>150</x>
+     <x>300</x>
      <y>10</y>
      <width>91</width>
      <height>31</height>
     </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>11</pointsize>
-    </font>
    </property>
    <property name="toolTip">
     <string>Press to Find all SDR's on Network</string>
@@ -87,7 +77,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>11</pointsize>
+     <pointsize>8</pointsize>
      <weight>50</weight>
      <bold>false</bold>
      <underline>false</underline>
@@ -100,7 +90,34 @@
     <set>Qt::AlignCenter</set>
    </property>
   </widget>
+  <widget class="QComboBox" name="comboBoxHosts">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>241</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>0</y>
+     <width>231</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Network Interface to Use</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
  </widget>
+ <layoutdefault spacing="6" margin="11"/>
  <resources/>
  <connections>
   <connection>
