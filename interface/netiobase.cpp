@@ -243,7 +243,7 @@ void CNetio::DisconnectFromServerSlot()
 ///////////////////////////////////////////////////////////////////////////////
 void CNetio::TcpStateChanged(QAbstractSocket::SocketState State)
 {
-//	qDebug()<<State;
+qDebug()<<State;
 	switch(State)
 	{
 		case QAbstractSocket::ConnectingState:
