@@ -30,6 +30,7 @@
 //	2016-10-14  ver 1.20b3 Release candidate
 //	2017-09-09  ver 1.20b4 Added network Interface selection
 //	2017-09-14  ver 1.20b5 Added FSK demod but not finished
+//	2017-09-17  ver 1.20b6 Cleaned up DSC mode
 
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
@@ -78,7 +79,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.20b5")
+#define PROGRAM_TITLE_VERSION tr(" 1.20b6")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -1308,10 +1309,10 @@ void MainWindow::InitDemodSettings()
 	m_DemodSettings[DEMOD_PSK].DefFreqClickResolution = 1;
 	m_DemodSettings[DEMOD_PSK].FilterClickResolution = 5;
 
-	m_DemodSettings[DEMOD_FSK].txt = tr("FSK");
-	m_DemodSettings[DEMOD_FSK].HiCutmin = 200;
-	m_DemodSettings[DEMOD_FSK].HiCutmax = 20;
-	m_DemodSettings[DEMOD_FSK].LowCutmax = -200;
+	m_DemodSettings[DEMOD_FSK].txt = tr("Raw DSC");
+	m_DemodSettings[DEMOD_FSK].HiCutmin = 20;
+	m_DemodSettings[DEMOD_FSK].HiCutmax = 200;
+	m_DemodSettings[DEMOD_FSK].LowCutmax = -20;
 	m_DemodSettings[DEMOD_FSK].LowCutmin = -200;
 	m_DemodSettings[DEMOD_FSK].Symetric = true;
 	m_DemodSettings[DEMOD_FSK].DefFreqClickResolution = 10;

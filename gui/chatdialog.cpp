@@ -48,10 +48,11 @@ CChatDialog::CChatDialog(QWidget *parent, Qt::WindowFlags f) :
 	ui->setupUi(this);
 	m_pSdrInterface = NULL;
 	connect(this, SIGNAL(SendChatData(quint8) ), this,  SLOT( GotChatData(quint8) ) );
+	connect(this, SIGNAL(SendChatStr(QString) ), this,  SLOT( GotChatStr(QString) ) );
 //	ui->plainTextEditRx->setCenterOnScroll(true);
 	ui->plainTextEditRx->setReadOnly(true);
 	ui->plainTextEditRx->setTextInteractionFlags(Qt::NoTextInteraction);
-	setWindowTitle("PSK Text");
+	setWindowTitle("PSK/FSK Text");
 	ui->comboBoxPskMode->addItem("BPSK31");
 	ui->comboBoxPskMode->addItem("BPSK63");
 }
@@ -75,6 +76,12 @@ QString str(qch);
 	{
 		ui->plainTextEditRx->insertPlainText(str);
 	}
+	ui->plainTextEditRx->ensureCursorVisible();
+}
+
+void CChatDialog::GotChatStr(QString str)
+{
+	ui->plainTextEditRx->insertPlainText(str+"\n");
 	ui->plainTextEditRx->ensureCursorVisible();
 }
 

@@ -78,7 +78,7 @@ void CFskMod::SetSampleRate(TYPEREAL SampleRate, TYPEREAL FreqOffset)
 /////////////////////////////////////////////////////////////////////////////////
 //	Create FSK Modulation Signal
 /////////////////////////////////////////////////////////////////////////////////
-void CFskMod::GenerateData(int Length, TYPEREAL SigAmplitude, TYPEREAL NoiseAmplitude, TYPECPX* pOutData)
+void CFskMod::GenerateData(int Length, TYPEREAL SigAmplitude, TYPECPX* pOutData)
 {
 int i;
 double rad;
@@ -106,21 +106,6 @@ double u2;
 		{
 			m_SymbTime -= m_SymbPeriod;
 			m_FskState = CreateDSCData();
-		}
-		//////////////////  Gaussian Noise generator
-		// Generate two uniform random numbers between -1 and +1
-		// that are inside the unit circle
-		if(NoiseAmplitude > 0.0001)
-		{	//create and add noise samples to signal
-			do {
-				u1 = 1.0 - 2.0 * (double)rand()/(double)RAND_MAX ;
-				u2 = 1.0 - 2.0 * (double)rand()/(double)RAND_MAX ;
-				r = u1*u1 + u2*u2;
-			}while(r >= 1.0 || r == 0.0);
-			rad = sqrt(-2.0*log(r)/r);
-			//add noise samples to generator output
-			pOutData[i].re += (NoiseAmplitude*u1*rad);
-			pOutData[i].im += (NoiseAmplitude*u2*rad);
 		}
 	}
 	m_FskAcc = (double)fmod((double)m_FskAcc, K_2PI);	//keep radian counter bounded

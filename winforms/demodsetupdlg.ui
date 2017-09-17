@@ -117,7 +117,7 @@
      <item>
       <widget class="QRadioButton" name="FSKradioButton">
        <property name="text">
-        <string>FSK</string>
+        <string>DSC</string>
        </property>
       </widget>
      </item>

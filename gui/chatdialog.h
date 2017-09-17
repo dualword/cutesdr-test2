@@ -55,8 +55,10 @@ public:
 
 signals:
 	void SendChatData(quint8 ch);
+	void SendChatStr(QString str);
 
 private slots:
+	void GotChatStr(QString str);
 	void GotChatData(quint8 ch);
 	void OnClear();
 	void OnPskModeChanged(int index);
