@@ -4,11 +4,12 @@
 // FSK demodulation and basic DSC decode into raw bytes
 // History:
 //	2012-10-19  Initial creation MSW
-//	2012-10-23  Modified MSW
+//	2017-09-17  Modified MSW
 //////////////////////////////////////////////////////////////////////
 #include "fskdemod.h"
 #include "gui/testbench.h"
 #include "dsp/datatypes.h"
+#include "gui/chatdialog.h"
 #include "dsp/fircoef.h"
 #include <QDebug>
 
@@ -23,7 +24,7 @@
 // value in table is 255 if not a valid character
 //else returns 7 bit character value for 10 bit symbol.
 // lsb is first data bit in transmission order
-const quint8 CHARTBL[] = {
+const quint8 CHARTBL[0x400] = {
 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,  //0000 to 000F
 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,  //0010 to 001F
 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,  //0020 to 002F
@@ -293,8 +294,8 @@ TYPECPX Osc;
 		m_AudioShiftOsc1.im = OscGn * Osc.im;
 		//
 		//Cpx multiply Input sample by audio frequency(bring baseband up to 1700Hz)
-		pOutData[i].re = g_TestValue*( (cxIn.re * Osc.re) + (cxIn.im * Osc.im) );
-		pOutData[i].im = g_TestValue*( (cxIn.im * Osc.re) - (cxIn.re * Osc.im) );
+		pOutData[i].re = ( (cxIn.re * Osc.re) + (cxIn.im * Osc.im) );
+		pOutData[i].im = ( (cxIn.im * Osc.re) - (cxIn.re * Osc.im) );
 	}
 
 	return InLength;
@@ -546,9 +547,12 @@ int rxphzcnt = 0;
 				{	//here if EEC correct MSG received in m_RxBuf[]
 					m_Str1.sprintf("*** Valid Msg ");
 					for(i=1; i<=m_RxBufIndex; i++)
+					{
 						m_Str1 += m_Str2.sprintf("% d",m_RxBuf[i]);
+					}
 g_pTestBench->SendDebugTxt(m_Str1);
 qDebug()<<"Got Valid Msg ecc = "<<m_Ecc << m_Str1;
+				emit g_pChatDialog->SendChatStr(m_Str1);
 				}
 				else
 				{
@@ -560,6 +564,7 @@ qDebug()<<"Got Valid Msg ecc = "<<m_Ecc << m_Str1;
 					}
 					m_Str1.sprintf("??? Got Bad Msg  Cnt=%d",rxphzcnt);
 qDebug()<<"Got BAD Msg ecc = "<<m_Ecc;
+					emit g_pChatDialog->SendChatStr(m_Str1);
 					g_pTestBench->SendDebugTxt(m_Str1);
 				}
 				m_RxDecodeState = STATE_PHASEDET;

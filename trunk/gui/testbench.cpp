@@ -80,7 +80,8 @@ const char* PROF_STR[NUM_GENMODES][NUM_PROFILES] =
 {
 	{"Off",	"PreFilter","PostFilter","PostAGC","PostDemod","Soundcard","Profile 6","Noise Blanker"},
 	{"Off",	"PreFilter","PostFilter","PostAGC","PostDemod","Soundcard","Profile 6","Noise Blanker"},
-	{"Off",	"PreFilter","PostFilter","PostBit","PostDemod","Soundcard","Profile 6","Noise Blanker"}
+	{"Off",	"PreFilter","PostFilter","PostBit","PostDemod","Soundcard","Profile 6","Noise Blanker"},
+	{"Off", "IQ Input Data", "BP Filtered IQ", "FSK + CLK", "Profile 4", "Profile 5", "Profile 6", "Profile 7"}
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -126,6 +127,7 @@ CTestBench::CTestBench(QWidget *parent) :
 
 	m_pWFmMod = NULL;
 	m_pPskMod = NULL;
+	m_pFskMod = NULL;
 	m_GenMode = GENMODE_NORMAL;
 
 
@@ -162,6 +164,7 @@ CTestBench::CTestBench(QWidget *parent) :
 
 	m_pWFmMod = new CWFmMod();
 	m_pPskMod = new CPskMod();
+	m_pFskMod = new CFskMod();
 }
 
 CTestBench::~CTestBench()
@@ -172,6 +175,8 @@ CTestBench::~CTestBench()
 		delete m_pWFmMod;
 	if(m_pPskMod)
 		delete m_pPskMod;
+	if(m_pFskMod)
+		delete m_pFskMod;
 	delete ui;
 }
 
@@ -224,6 +229,7 @@ void CTestBench::Init()
 	ui->comboBoxGenMode->addItem("Normal",0);
 	ui->comboBoxGenMode->addItem("WFM",1);
 	ui->comboBoxGenMode->addItem("PSK",2);
+	ui->comboBoxGenMode->addItem("FSK",3);
 	ui->comboBoxGenMode->setCurrentIndex(m_GenMode);
 
 	ui->spinBoxStart->setValue(m_SweepStartFrequency/1000.0);
@@ -444,6 +450,10 @@ TYPEREAL u2;
 //			m_pPskMod->Init(m_GenSampleRate, 31.25, BPSK_MODE);
 			m_pPskMod->Init(m_GenSampleRate, 62.5, BPSK_MODE);
 		}
+		else if(GENMODE_FSK == m_GenMode)
+		{
+			m_pFskMod->SetSampleRate(m_GenSampleRate,m_SweepStartFrequency);
+		}
 		emit ResetSignal();
 	}
 
@@ -537,6 +547,10 @@ m_DisplaySkipCounter = -2;
 	else if(GENMODE_PSK == m_GenMode)
 	{
 		m_pPskMod->GenerateData(length, m_SignalAmplitude, pBuf);
+	}
+	else if(GENMODE_FSK == m_GenMode)
+	{
+		m_pFskMod->GenerateData(length, m_SignalAmplitude, pBuf);
 	}
 	//add in noise to signal
 	for(i=0; i<length; i++)

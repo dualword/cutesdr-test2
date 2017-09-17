@@ -48,6 +48,7 @@
 #include "dsp/fft.h"
 #include "dsp/wfmmod.h"
 #include "dsp/pskmod.h"
+#include "dsp/fskmod.h"
 
 
 extern TYPEREAL g_TestValue;
@@ -73,7 +74,8 @@ extern TYPEREAL g_TestValue;
 #define GENMODE_NORMAL 0
 #define GENMODE_WFM 1
 #define GENMODE_PSK 2
-#define NUM_GENMODES 3
+#define GENMODE_FSK 3
+#define NUM_GENMODES 4
 
 
 #define TEST_FFTSIZE 2048
@@ -235,6 +237,7 @@ private:
 	QFile m_File;
 	CWFmMod* m_pWFmMod;
 	CPskMod* m_pPskMod;
+	CFskMod* m_pFskMod;
 
 };
 

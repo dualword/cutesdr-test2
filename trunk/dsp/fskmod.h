@@ -15,7 +15,7 @@ class CFskMod
 {
 public:
 	CFskMod();
-	void GenerateData(int InLength,TYPEREAL Amplitude, TYPEREAL NoiseAmplitude, TYPECPX* pOutData);
+	void GenerateData(int InLength,TYPEREAL Amplitude, TYPECPX* pOutData);
 	void SetSampleRate(TYPEREAL SampleRate, TYPEREAL FreqOffset);
 
 private:
