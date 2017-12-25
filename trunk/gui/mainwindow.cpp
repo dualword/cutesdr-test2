@@ -30,7 +30,7 @@
 //	2016-10-14  ver 1.20b3 Release candidate
 //	2017-09-09  ver 1.20b4 Added network Interface selection
 //	2017-09-14  ver 1.20b5 Added FSK demod but not finished
-//	2017-09-17  ver 1.20b6 Cleaned up DSC mode
+//	2017-12-25  ver 1.20 Cleaned up DSC mode, recompile with Qt 5.10
 
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
@@ -79,7 +79,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.20b6")
+#define PROGRAM_TITLE_VERSION tr(" 1.20")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170

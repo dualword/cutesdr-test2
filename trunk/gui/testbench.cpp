@@ -1353,7 +1353,7 @@ QRect rect;
 	for( int i=0; i<TB_TIMEVERT_DIVS-1; i++)
 	{
 		y = (int)( (float)i*pixperdiv );
-		painter.drawStaticText(5, y-1, QString::number(yval));
+		painter.drawText(5, y-1, QString::number(yval));
 		yval -= (m_VertRange/10);
 	}
 	//copy into 2Dbitmap the overlay bitmap.
@@ -1447,7 +1447,7 @@ QRect rect;
 	for( int i=0; i<TB_VERT_DIVS-1; i++)
 	{
 		y = (int)( (float)i*pixperdiv );
-		painter.drawStaticText(5, y-1, QString::number(dB)+" dB");
+		painter.drawText(5, y-1, QString::number(dB)+" dB");
 		dB -= m_dBStepSize;
 	}
 	m_MindB = m_MaxdB - (TB_VERT_DIVS)*m_dBStepSize;

@@ -690,7 +690,7 @@ QRect rect;
 	for( int i=0; i<VERT_DIVS-1; i+=vskip)
 	{
 		y = (int)( (float)i*pixperdiv );
-		painter.drawStaticText(5, y-1, QString::number(dB)+" dB");
+		painter.drawText(5, y-1, QString::number(dB)+" dB");
 		dB -= (m_dBStepSize*vskip);
 	}
 	m_MindB = m_MaxdB - (VERT_DIVS)*m_dBStepSize;

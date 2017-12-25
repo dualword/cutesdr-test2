@@ -49,7 +49,6 @@
      <property name="midLineWidth">
       <number>0</number>
      </property>
-     <zorder></zorder>
     </widget>
    </item>
    <item row="1" column="0">
@@ -67,11 +66,6 @@
          <width>100</width>
          <height>17</height>
         </size>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
        </property>
        <property name="text">
         <string>Time Domain</string>
@@ -91,11 +85,6 @@
          <width>110</width>
          <height>0</height>
         </size>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
        </property>
        <property name="text">
         <string>Enable Peak</string>
@@ -153,11 +142,6 @@
          <height>20</height>
         </size>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
-       </property>
        <property name="suffix">
         <string> Hz</string>
        </property>
@@ -192,11 +176,6 @@
          <height>25</height>
         </size>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
-       </property>
        <property name="text">
         <string>Reset</string>
        </property>
@@ -215,11 +194,6 @@
          <width>160</width>
          <height>22</height>
         </size>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
        </property>
       </widget>
      </item>
@@ -259,11 +233,6 @@
           <height>0</height>
          </size>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
         </property>
@@ -285,11 +254,6 @@
           <width>151</width>
           <height>20</height>
          </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
         </property>
         <property name="suffix">
          <string> Hz/Sec</string>
@@ -316,11 +280,6 @@
           <height>20</height>
          </rect>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="suffix">
          <string> KHz</string>
         </property>
@@ -346,11 +305,6 @@
           <height>20</height>
          </rect>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="suffix">
          <string> KHz</string>
         </property>
@@ -375,11 +329,6 @@
           <width>91</width>
           <height>22</height>
          </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
         </property>
         <property name="suffix">
          <string> dB</string>
@@ -409,11 +358,6 @@
           <height>0</height>
          </size>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="suffix">
          <string> dB</string>
         </property>
@@ -431,7 +375,7 @@
         <property name="geometry">
          <rect>
           <x>220</x>
-          <y>20</y>
+          <y>10</y>
           <width>70</width>
           <height>17</height>
          </rect>
@@ -441,11 +385,6 @@
           <width>70</width>
           <height>0</height>
          </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Gen On</string>
@@ -465,11 +404,6 @@
           <width>110</width>
           <height>0</height>
          </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
         </property>
         <property name="suffix">
          <string> mS</string>
@@ -499,11 +433,6 @@
           <height>0</height>
          </size>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="suffix">
          <string> mS</string>
         </property>
@@ -526,11 +455,6 @@
           <height>16</height>
          </rect>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Pulse Mode</string>
         </property>
@@ -542,24 +466,19 @@
         <property name="geometry">
          <rect>
           <x>220</x>
-          <y>40</y>
+          <y>30</y>
           <width>69</width>
           <height>22</height>
          </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
         </property>
         <property name="currentText">
          <string/>
         </property>
         <property name="maxVisibleItems">
-         <number>3</number>
+         <number>4</number>
         </property>
         <property name="maxCount">
-         <number>3</number>
+         <number>4</number>
         </property>
        </widget>
       </widget>
@@ -583,11 +502,6 @@
          <width>150</width>
          <height>16777215</height>
         </size>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-        </font>
        </property>
        <property name="readOnly">
         <bool>true</bool>
@@ -632,11 +546,6 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="suffix">
          <string> Range</string>
         </property>
@@ -665,11 +574,6 @@
           <height>20</height>
          </rect>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
-        </property>
         <property name="suffix">
          <string> mSec</string>
         </property>
@@ -694,11 +598,6 @@
           <width>131</width>
           <height>20</height>
          </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
         </property>
         <property name="suffix">
          <string/>
