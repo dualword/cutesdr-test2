@@ -60,7 +60,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>8</pointsize>
+     <pointsize>12</pointsize>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -83,7 +83,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>8</pointsize>
+     <pointsize>12</pointsize>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -106,7 +106,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>8</pointsize>
+     <pointsize>12</pointsize>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -161,7 +161,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>8</pointsize>
+     <pointsize>12</pointsize>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -181,7 +181,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>8</pointsize>
+     <pointsize>12</pointsize>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -204,6 +204,7 @@
    </property>
    <property name="font">
     <font>
+     <pointsize>12</pointsize>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -216,13 +217,13 @@
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>71</width>
+      <width>81</width>
       <height>40</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>12</pointsize>
       <weight>50</weight>
       <bold>false</bold>
      </font>
@@ -277,7 +278,7 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>12</pointsize>
       <weight>50</weight>
       <bold>false</bold>
      </font>
@@ -300,7 +301,7 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>12</pointsize>
       <weight>50</weight>
       <bold>false</bold>
      </font>
@@ -323,6 +324,7 @@
     </property>
     <property name="font">
      <font>
+      <pointsize>12</pointsize>
       <weight>50</weight>
       <bold>false</bold>
      </font>
