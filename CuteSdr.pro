@@ -30,6 +30,7 @@ SOURCES += gui/main.cpp \
 	gui/rdsdecode.cpp \
 	gui/chatdialog.cpp \
 	gui/recordsetupdlg.cpp \
+	gui/filetxdlg.cpp \
 	interface/soundout.cpp \
     interface/sdrinterface.cpp \
     interface/netiobase.cpp \
@@ -56,7 +57,7 @@ SOURCES += gui/main.cpp \
     dsp/pskmod.cpp \
     dsp/pskdemod.cpp \
     dsp/fskmod.cpp \
-    dsp/fskdemod.cpp
+    dsp/fskdemod.cpp \
 
 HEADERS  += gui/mainwindow.h \
 	gui/sounddlg.h \
@@ -76,6 +77,7 @@ HEADERS  += gui/mainwindow.h \
 	gui/rdsdecode.h \
 	gui/chatdialog.h \
 	gui/recordsetupdlg.h \
+	gui/filetxdlg.h \
 	interface/soundout.h \
     interface/sdrinterface.h \
     interface/protocoldefs.h \
@@ -110,8 +112,7 @@ HEADERS  += gui/mainwindow.h \
     dsp/rbdsconstants.h \
     dsp/fskmod.h \
     dsp/fskdemod.h \
-    dsp/fircoef.h
-
+    dsp/fircoef.h \
 
 #Use separate forms for each OS
 win32 {
@@ -128,7 +129,8 @@ FORMS += winforms/mainwindow.ui \
 	winforms/aboutdlg.ui \
 	winforms/noiseprocdlg.ui  \
 	winforms/chatdialog.ui \
-	winforms/recordsetupdlg.ui
+	winforms/recordsetupdlg.ui \
+	winforms/filetxdlg.ui
 }
 
 macx {
@@ -145,7 +147,8 @@ FORMS += macforms/mainwindow.ui \
 	macforms/aboutdlg.ui \
 	macforms/noiseprocdlg.ui \
 	macforms/chatdialog.ui \
-	macforms/recordsetupdlg.ui
+	macforms/recordsetupdlg.ui \
+	winforms/filetxdlg.ui
 }
 
 unix:!macx {
@@ -162,8 +165,10 @@ FORMS += unixforms/mainwindow.ui \
 	unixforms/aboutdlg.ui \
 	unixforms/noiseprocdlg.ui \
 	unixforms/chatdialog.ui \
-	unixforms/recordsetupdlg.ui
+	unixforms/recordsetupdlg.ui \
+	winforms/filetxdlg.ui
 }
+
 unix:SOURCES +=
 unix:!macx:SOURCES +=
 

@@ -47,6 +47,7 @@ private slots:
 	void OnVolumeSlider(int value);
 	void OnRecordSetupDlg();
 	void OnRecord();
+	void OnFileSendDlg();
 
 	void OnRun();
 	void OnSpanChanged(int spanKhz);
@@ -86,7 +87,9 @@ private:
 	bool m_USFm;
 	bool m_UseCursorText;
 	bool m_UseUdpFwd;
+	bool m_TxRepeat;
 	qint64 m_CenterFrequency;
+	qint64 m_TxFrequency;
 	qint64 m_DemodFrequency;
 	quint32 m_SpanFrequency;
 	QHostAddress m_IPAdr;
@@ -114,6 +117,7 @@ private:
 	TYPEREAL m_NCOSpurOffsetQ;
 	tNoiseProcdInfo m_NoiseProcSettings;
 	QString m_RecordFilePath;
+	QString m_TxFilePath;
 
 
 	bool m_FreqChanged;

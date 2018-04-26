@@ -512,9 +512,16 @@
     </property>
     <addaction name="actionNoise_Processing"/>
    </widget>
+   <widget class="QMenu" name="menuTransmit">
+    <property name="title">
+     <string>Transmit</string>
+    </property>
+    <addaction name="actionFile_Send"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSetup"/>
    <addaction name="menuDemod"/>
+   <addaction name="menuTransmit"/>
    <addaction name="menuNoise"/>
    <addaction name="menuAbout"/>
   </widget>
@@ -579,6 +586,11 @@
   <action name="actionRecordSetup">
    <property name="text">
     <string>Record Setup</string>
+   </property>
+  </action>
+  <action name="actionFile_Send">
+   <property name="text">
+    <string>File Send..</string>
    </property>
   </action>
  </widget>

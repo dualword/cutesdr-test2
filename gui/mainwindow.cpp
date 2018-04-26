@@ -31,6 +31,7 @@
 //	2017-09-09  ver 1.20b4 Added network Interface selection
 //	2017-09-14  ver 1.20b5 Added FSK demod but not finished
 //	2017-12-25  ver 1.20 Cleaned up DSC mode, recompile with Qt 5.10
+//	2018-04-24  ver 1.21b0 Adding File transmit capability
 
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
@@ -74,12 +75,13 @@
 #include "gui/displaydlg.h"
 #include "gui/aboutdlg.h"
 #include "gui/recordsetupdlg.h"
+#include "gui/filetxdlg.h"
 #include "interface/perform.h"
 
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   D E F I N E S <--------------------------*/
 /*---------------------------------------------------------------------------*/
-#define PROGRAM_TITLE_VERSION tr(" 1.20")
+#define PROGRAM_TITLE_VERSION tr(" 1.21 beta0")
 
 #define MAX_FFTDB 60
 #define MIN_FFTDB -170
@@ -144,6 +146,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionDemod_Setup, SIGNAL(triggered()), this, SLOT(OnDemodDlg()));
 	connect(ui->actionNoise_Processing, SIGNAL(triggered()), this, SLOT(OnNoiseProcDlg()));
 	connect(ui->actionRecordSetup,SIGNAL(triggered()), this, SLOT(OnRecordSetupDlg()));
+	connect(ui->actionFile_Send,SIGNAL(triggered()), this, SLOT(OnFileSendDlg()));
+
 
 	connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(OnAbout()));
 
@@ -331,6 +335,7 @@ void MainWindow::writeSettings()
 
 	settings.setValue(tr("RadioType"), m_RadioType);
 	settings.setValue(tr("CenterFrequency"),(int)m_CenterFrequency);
+	settings.setValue(tr("TxFrequency"),(int)m_TxFrequency);
 	settings.setValue(tr("SpanFrequency"),(int)m_SpanFrequency);
 	settings.setValue(tr("IPAdr"),m_IPAdr.toIPv4Address());
 	settings.setValue(tr("Port"),m_Port);
@@ -352,8 +357,9 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("InvertSpectrum"),m_InvertSpectrum);
 	settings.setValue(tr("USFm"),m_USFm);
 	settings.setValue(tr("UseCursorText"),m_UseCursorText);
-
 	settings.setValue("RecordFilePath", m_RecordFilePath);
+	settings.setValue("TxFilePath", m_TxFilePath);
+
 	settings.setValue("UseUdpFwd", m_UseUdpFwd);
 	settings.setValue(tr("IPFwdAdr"),m_IPFwdAdr.toIPv4Address());
 	settings.setValue(tr("FwdPort"),m_FwdPort);
@@ -370,6 +376,7 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("DemodMode"),m_DemodMode);
 	settings.setValue(tr("RecordMode"),m_RecordMode);
 
+	settings.setValue(tr("TxRepeat"),m_TxRepeat);
 
 	settings.setValue(tr("NBOn"),m_NoiseProcSettings.NBOn);
 	settings.setValue(tr("NBThreshold"),m_NoiseProcSettings.NBThreshold);
@@ -440,6 +447,7 @@ void MainWindow::readSettings()
 	settings.beginGroup(tr("Common"));
 
 	m_CenterFrequency = (qint64)settings.value(tr("CenterFrequency"), 15000000).toUInt();
+	m_TxFrequency = (qint64)settings.value(tr("TxFrequency"), 15000000).toUInt();
 	m_SpanFrequency = settings.value(tr("SpanFrequency"), 100000).toUInt();
 	m_IPAdr.setAddress(settings.value(tr("IPAdr"), 0xC0A80164).toInt() );
 	m_Port = settings.value(tr("Port"), 50000).toUInt();
@@ -473,6 +481,8 @@ void MainWindow::readSettings()
 	m_UseUdpFwd = settings.value(tr("UseUdpFwd"), false).toBool();
 
 	m_NoiseProcSettings.NBOn = settings.value(tr("NBOn"), false).toBool();
+	m_TxRepeat = settings.value(tr("TxRepeat"), false).toBool();
+
 	m_NoiseProcSettings.NBThreshold = settings.value(tr("NBThreshold"),0).toInt();
 	m_NoiseProcSettings.NBWidth = settings.value(tr("NBWidth"),50).toInt();
 
@@ -480,6 +490,7 @@ void MainWindow::readSettings()
 	m_RecordMode = settings.value(tr("RecordMode"), 0).toInt();
 	m_DemodFrequency = (qint64)settings.value(tr("DemodFrequency"), 15000000).toUInt();
 	m_RecordFilePath = settings.value("RecordFilePath",QCoreApplication::applicationDirPath()+"/Record.wav").toString();
+	m_TxFilePath = settings.value("TxFilePath",QCoreApplication::applicationDirPath()+"/Playback.wav").toString();
 
 	settings.endGroup();
 
@@ -805,6 +816,25 @@ void MainWindow::OnNoiseProcDlg()
 CNoiseProcDlg dlg(this);
 	dlg.InitDlg(&m_NoiseProcSettings);
 	dlg.exec();
+}
+
+/////////////////////////////////////////////////////////////////////
+// Menu Bar action item handler.
+//TX File data Menu
+/////////////////////////////////////////////////////////////////////
+void MainWindow::OnFileSendDlg()
+{
+	CFileTxDlg dlg(this, m_pSdrInterface);
+	dlg.m_TxFilePath = m_TxFilePath;
+	dlg.m_TxFrequency = m_TxFrequency;
+	dlg.m_TxRepeat = m_TxRepeat;
+	dlg.Init();
+	if( dlg.exec() )
+	{
+		m_TxFilePath = dlg.m_TxFilePath;
+		m_TxFrequency = dlg.m_TxFrequency;
+		m_TxRepeat = dlg.m_TxRepeat;
+	}
 }
 
 /////////////////////////////////////////////////////////////////////
