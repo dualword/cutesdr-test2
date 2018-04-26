@@ -148,7 +148,7 @@ FORMS += macforms/mainwindow.ui \
 	macforms/noiseprocdlg.ui \
 	macforms/chatdialog.ui \
 	macforms/recordsetupdlg.ui \
-	winforms/filetxdlg.ui
+	macforms/filetxdlg.ui
 }
 
 unix:!macx {
@@ -166,7 +166,7 @@ FORMS += unixforms/mainwindow.ui \
 	unixforms/noiseprocdlg.ui \
 	unixforms/chatdialog.ui \
 	unixforms/recordsetupdlg.ui \
-	winforms/filetxdlg.ui
+	unixforms/filetxdlg.ui
 }
 
 unix:SOURCES +=
