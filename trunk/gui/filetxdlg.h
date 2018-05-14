@@ -28,6 +28,8 @@ private slots:
 
 	void on_checkBoxRepeat_clicked(bool checked);
 
+	void on_pushButtonStart_clicked();
+
 protected:
 	void done(int r);	//virtual override
 

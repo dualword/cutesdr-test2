@@ -38,6 +38,7 @@ SOURCES += gui/main.cpp \
 	interface/perform.cpp \
 	interface/dataprocess.cpp \
 	interface/wavefilewriter.cpp \
+	interface/wavefilereader.cpp \
 	dsp/fractresampler.cpp \
     dsp/fastfir.cpp \
     dsp/downconvert.cpp \
@@ -88,6 +89,7 @@ HEADERS  += gui/mainwindow.h \
 	interface/threadwrapper.h \
 	interface/dataprocess.h \
 	interface/wavefilewriter.h \
+	interface/wavefilereader.h \
 	dsp/fractresampler.h \
 	dsp/fastfir.h \
 	dsp/filtercoef.h \

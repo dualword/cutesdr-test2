@@ -47,7 +47,6 @@
 
 #define MAX_WAVE_BUF 16384
 
-
 struct chunk
 {
 	char        id[4];
@@ -174,8 +173,8 @@ void CWaveFileWriter::GetSytemTimeStructure(sSYSTEMTIME& systime)
 	systime.wMonth = datetime.date().month();
 	systime.wDay = datetime.date().day();
 	systime.wDayOfWeek = datetime.date().dayOfWeek();
-	if(7 == systime.wDayOfWeek )	//make 1 to 7 instead of 0 to 6
-		systime.wDayOfWeek  = 0;
+	if(7 == systime.wDayOfWeek)//make 1 to 7 into SYSTIME format of 0 to 6
+		systime.wDayOfWeek = 0 ;
 	systime.wHour = datetime.time().hour();
 	systime.wMinute = datetime.time().minute();
 	systime.wSecond = datetime.time().second();
