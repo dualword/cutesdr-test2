@@ -38,6 +38,19 @@ typedef struct _isCplx
 	qint16 im;
 }tStereo16;
 
+
+struct sSYSTEMTIME
+{
+	quint16 wYear;
+	quint16 wMonth;
+	quint16 wDayOfWeek;
+	quint16 wDay;
+	quint16 wHour;
+	quint16 wMinute;
+	quint16 wSecond;
+	quint16 wMilliseconds;
+};
+
 #ifdef USE_DOUBLE_PRECISION
  #define TYPEREAL tDReal
  #define TYPECPX	tDComplex

@@ -50,43 +50,12 @@
 #include "dsp/datatypes.h"
 
 
-typedef union
-{
-	struct ss1
-	{
-		quint8 b0;
-		quint8 b1;
-		quint8 b2;
-		quint8 b3;
-	}bytes;
-	qint32 all;
-}tiTemp;
-
-typedef union
-{
-	struct ss2
-	{
-		quint8 lsb;
-		quint8 msb;
-	}bytes;
-	qint16 both;
-}tsTemp;
-
-struct sSYSTEMTIME
-{
-	quint16 wYear;
-	quint16 wMonth;
-	quint16 wDayOfWeek;
-	quint16 wDay;
-	quint16 wHour;
-	quint16 wMinute;
-	quint16 wSecond;
-	quint16 wMilliseconds;
-};
 
 class CWaveFileWriter : public QObject
 {
 	Q_OBJECT
+
+
 public:
 	explicit CWaveFileWriter(QObject *parent = 0);
 	~CWaveFileWriter();
