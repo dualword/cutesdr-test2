@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include "interface/sdrinterface.h"
+#include "interface/wavefilereader.h"
 
 namespace Ui {
 class CFileTxDlg;
@@ -36,6 +37,7 @@ protected:
 private:
 	Ui::CFileTxDlg *ui;
 	CSdrInterface* m_pSdrInterface;
+	CWaveFileReader m_FileReader;
 };
 
 #endif // FILETXDLG_H
