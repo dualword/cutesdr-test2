@@ -47,64 +47,37 @@ struct chunk
 {
     char        id[4];
     quint32     size;
-};
+}__attribute__((gcc_struct,packed));
 
 struct RIFFHeader
 {
     chunk       descriptor;     // "RIFF"
     char        type[4];        // "WAVE"
-};
+}__attribute__((gcc_struct,packed));
 
-struct WAVEHeader
-{
-    chunk       descriptor;
-    quint16     audioFormat;
-    quint16     numChannels;
-    quint32     sampleRate;
-    quint32     byteRate;
-    quint16     blockAlign;
-    quint16     bitsPerSample;
-};
 
 struct DATAHeader
 {
     chunk       descriptor;
-};
+}__attribute__((gcc_struct,packed));
 
-struct AUXINFOHeader
-{
-	chunk       descriptor;	//AUXINFO
-	sSYSTEMTIME StartTime;
-	sSYSTEMTIME StopTime;
-	quint32 CenterFreq;
-	quint32 ADFrequency;
-	quint32 IFFrequency;
-	quint32 Bandwidth;
-	quint32 IQOffset;
-	quint32 DBOffset;
-	quint32 MaxVal;
-	quint32 Unused4;
-	quint32 Unused5;
-	quint32 Unused6;
-};
-
-struct CombinedHeader
-{
-	RIFFHeader  riff;
-	WAVEHeader  wave;
-	AUXINFOHeader auxinfo;
-};
 
 CWaveFileReader::CWaveFileReader(QObject *parent)
 	: QFile(parent)
-	, m_headerLength(0)
 {
+	m_FileInfoStr = "No Info";
 }
+
 CWaveFileReader::~CWaveFileReader()
 {
 	close();
 }
 
+/////////////////////////////////////////////////////////////////////
+/// \brief CWaveFileReader::open and read wave header
+/// \param fileName path
+/// \return true if file opens and is correct wave format
+/////////////////////////////////////////////////////////////////////
 bool CWaveFileReader::open(const QString &fileName)
 {
 	close();
@@ -112,59 +85,161 @@ bool CWaveFileReader::open(const QString &fileName)
 	return QFile::open(QIODevice::ReadOnly) && readHeader();
 }
 
-const QAudioFormat &CWaveFileReader::fileFormat() const
-{
-    return m_fileFormat;
-}
-
+/////////////////////////////////////////////////////////////////////
+/// \brief CWaveFileReader::readHeader information
+/// \return true if header read ok
+/////////////////////////////////////////////////////////////////////
 bool CWaveFileReader::readHeader()
 {
+	bool ret = false;
 	seek(0);
-	CombinedHeader header;
-	bool result = read(reinterpret_cast<char *>(&header), sizeof(CombinedHeader)) == sizeof(CombinedHeader);
-	if (result)
+	RIFFHeader riffheader;
+	memset(reinterpret_cast<char *>(&m_AuxiSubChunk), 0, sizeof(sAuxiSubChunk));
+	memset(reinterpret_cast<char *>(&m_FmtSubChunk), 0, sizeof(sFmtSubChunk));
+	m_FileInfoStr = "No Info";
+	bool result = read(reinterpret_cast<char *>(&riffheader), sizeof(RIFFHeader)) == sizeof(RIFFHeader);
+	if(result )
 	{
-		if(memcmp(&header.riff.descriptor.id, "RIFF", 4) == 0
-			&& memcmp(&header.riff.type, "WAVE", 4) == 0
-			&& memcmp(&header.wave.descriptor.id, "fmt ", 4) == 0
-			&& (header.wave.audioFormat == 1 || header.wave.audioFormat == 0))
+		if(	('R'==riffheader.descriptor.id[0]) &&
+			('I'==riffheader.descriptor.id[1]) &&
+			('F'==riffheader.descriptor.id[2]) &&
+			('F'==riffheader.descriptor.id[3]) &&
+			('W' == riffheader.type[0]) &&
+			('A' == riffheader.type[1]) &&
+			('V' == riffheader.type[2]) &&
+			('E' == riffheader.type[3]) )
 		{
-			// Read off remaining header information
-			DATAHeader dataHeader;
-			if(qFromLittleEndian<quint32>(header.wave.descriptor.size) > sizeof(WAVEHeader))
+			ret = true;
+			seek(0);
+			qint64 bytesread = read((char*)m_HeaderBuffer, MAX_HEADER);
+			if(bytesread>0)
 			{
-				// Extended data available
-				quint16 extraFormatBytes;
-				if (peek((char*)&extraFormatBytes, sizeof(quint16)) != sizeof(quint16))
-					return false;
-				const qint64 throwAwayBytes = sizeof(quint16) + qFromLittleEndian<quint16>(extraFormatBytes);
-				if (read(throwAwayBytes).size() != throwAwayBytes)
-					return false;
+				quint32 Start;
+				quint32 Length;
+				if( FindSubChunk("fmt ", &Start, &Length) )
+					memcpy(reinterpret_cast<char *>(&m_FmtSubChunk), &m_HeaderBuffer[Start],Length);
+				else
+					ret = false;
+				if( FindSubChunk("auxi", &Start, &Length) )
+					memcpy(reinterpret_cast<char *>(&m_AuxiSubChunk), &m_HeaderBuffer[Start],Length);
+				else
+					ret = false;
+				if( FindSubChunk("data", &Start, &Length) )
+				{
+					m_DataLength = Length;
+					seek(Start);	//move file pointer to start of data
+				}
+				else
+				{
+					ret = false;
+				}
 			}
-			if(read((char*)&dataHeader, sizeof(DATAHeader)) != sizeof(DATAHeader))
-				return false;
-
-			m_DataLength = dataHeader.descriptor.size;
-			m_CenterFrequency = header.auxinfo.CenterFreq;
-
-			// Establish format
-			if (memcmp(&header.riff.descriptor.id, "RIFF", 4) == 0)
-				m_fileFormat.setByteOrder(QAudioFormat::LittleEndian);
-			else
-				m_fileFormat.setByteOrder(QAudioFormat::BigEndian);
-
-			int bps = qFromLittleEndian<quint16>(header.wave.bitsPerSample);
-			m_fileFormat.setChannelCount(qFromLittleEndian<quint16>(header.wave.numChannels));
-			m_fileFormat.setCodec("audio/pcm");
-			m_fileFormat.setSampleRate(qFromLittleEndian<quint32>(header.wave.sampleRate));
-			m_fileFormat.setSampleSize(qFromLittleEndian<quint16>(header.wave.bitsPerSample));
-			m_fileFormat.setSampleType(bps == 8 ? QAudioFormat::UnSignedInt : QAudioFormat::SignedInt);
-		}
-		else
-		{
-			result = false;
 		}
 	}
-	m_headerLength = pos();
+	if(ret)
+	{
+		qDebug()<<"Fmt read"<<m_FmtSubChunk.audioFormat << m_FmtSubChunk.sampleRate << m_FmtSubChunk.bitsPerSample;
+		qDebug()<<"Auxi read"<<m_AuxiSubChunk.ADFrequency << m_AuxiSubChunk.CenterFreq << m_AuxiSubChunk.Bandwidth;
+		QString CpxStr;
+		if( 2 == m_FmtSubChunk.numChannels)
+			CpxStr = "Complex";
+		else
+			CpxStr = "Real";
+		m_FileInfoStr.sprintf("%d Samples of %s Data  SampleRate = %d  Bits/Sample= %d",m_DataLength, CpxStr, m_FmtSubChunk.sampleRate,m_FmtSubChunk.bitsPerSample );
+	}
+	else
+	{
+		m_FileInfoStr = "Invalid RIFF Wave File";
+		qDebug()<<m_FileInfoStr;
+	}
 	return result;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief CWaveFileReader::FindSubChunk
+/// \param Id passed 4 character string of subchunk to find in m_HeaderBuffer
+/// \param pStart  returned starting offset of chunk data from start of file header buffer
+/// \param pLength returned length of subchunk data
+/// \return true if sub chunk found
+///////////////////////////////////////////////////////////////////////////////
+bool CWaveFileReader::FindSubChunk(const char*Id, quint32* pStart, quint32* pLength)
+{
+	if(!pStart || !pLength)
+		return false;
+	bool found = false;
+	*pStart = 0;
+	*pLength = 0;
+	for(int i=0; i<(MAX_HEADER-5); i++)
+	{	//search all locations for 4 character substring ID
+		if( (m_HeaderBuffer[i+0] == Id[0]) &&
+			(m_HeaderBuffer[i+1] == Id[1]) &&
+			(m_HeaderBuffer[i+2] == Id[2]) &&
+			(m_HeaderBuffer[i+3] == Id[3]) )
+		{
+			found = true;
+			*pStart = i+8;	//don't include header and length
+			*pLength = m_HeaderBuffer[i+7]; *pLength <<= 8;
+			*pLength += m_HeaderBuffer[i+6]; *pLength <<= 8;
+			*pLength += m_HeaderBuffer[i+5]; *pLength <<= 8;
+			*pLength += m_HeaderBuffer[i+4];
+qDebug()<<Id <<"SubChunk Found"<<*pStart << *pLength;
+			break;
+		}
+	}
+	return found;
+}
+
+/////////////////////////////////////////////////////////////////////////
+/// \brief CWaveFileReader::GetNextDataBlock
+/// \param pData   pointer to callers complex float data buffer
+/// \param NumSamples
+/// \return number of sample read, -1 if reached end of file or error
+/////////////////////////////////////////////////////////////////////////
+int CWaveFileReader::GetNextDataBlock(TYPECPX* pData, int NumSamples)
+{
+	if(m_FmtSubChunk.numChannels != 2)
+		return -1;
+
+}
+
+/////////////////////////////////////////////////////////////////////////
+/// \brief CWaveFileReader::GetNextDataBlock
+/// \param pData   pointer to callers real float data buffer
+/// \param NumSamples
+/// \return number of sample read, -1 if reached end of file or error
+/////////////////////////////////////////////////////////////////////////
+int CWaveFileReader::GetNextDataBlock(TYPEREAL* pData, int NumSamples)
+{
+	if(m_FmtSubChunk.numChannels != 1)
+		return -1;
+
+}
+
+/////////////////////////////////////////////////////////////////////////
+/// \brief CWaveFileReader::GetNextDataBlock
+/// \param pData   pointer to callers complex 16 bit data buffer
+/// \param NumSamples
+/// \return number of sample read, -1 if reached end of file or error
+/////////////////////////////////////////////////////////////////////////
+int CWaveFileReader::GetNextDataBlock(tStereo16* pData, int NumSamples)
+{
+	if(m_FmtSubChunk.numChannels != 2)
+		return -1;
+
+}
+
+/////////////////////////////////////////////////////////////////////////
+/// \brief CWaveFileReader::GetNextDataBlock
+/// \param pData   pointer to callers real 16bit data buffer
+/// \param NumSamples
+/// \return number of sample read, -1 if reached end of file or error
+/////////////////////////////////////////////////////////////////////////
+int CWaveFileReader::GetNextDataBlock(qint16* pData, int NumSamples)
+{
+	if(m_FmtSubChunk.numChannels != 1)
+		return -1;
+
+}
+
+
+

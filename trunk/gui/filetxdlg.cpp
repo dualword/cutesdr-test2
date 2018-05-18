@@ -1,6 +1,5 @@
 #include "filetxdlg.h"
 #include "ui_filetxdlg.h"
-#include "interface/wavefilereader.h"
 #include <QFileDialog>
 
 CFileTxDlg::CFileTxDlg(QWidget *parent, CSdrInterface* pSdrInterface) :
@@ -31,6 +30,9 @@ void CFileTxDlg::Init()
 	ui->lineEdit->setText(m_TxFilePath);
 	ui->frameTxFreqCtrl->SetFrequency(m_TxFrequency);
 	ui->checkBoxRepeat->setChecked(m_TxRepeat);
+	m_FileReader.open(m_TxFilePath);
+//	ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
+	m_FileReader.close();
 }
 
 void CFileTxDlg::done(int r)	//virtual override
@@ -53,6 +55,9 @@ void CFileTxDlg::on_pushButtonFileSelect_clicked()
 	{
 		m_TxFilePath = str;
 		ui->lineEdit->setText(m_TxFilePath);
+		m_FileReader.open(m_TxFilePath);
+		ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
+		m_FileReader.close();
 	}
 }
 
@@ -63,11 +68,10 @@ void CFileTxDlg::on_checkBoxRepeat_clicked(bool checked)
 
 void CFileTxDlg::on_pushButtonStart_clicked()
 {
-	CWaveFileReader FileReader;
-	if(FileReader.open(m_TxFilePath) )
+	if(m_FileReader.open(m_TxFilePath) )
 	{
-		qDebug()<<FileReader.fileFormat() << FileReader.headerLength() << FileReader.dataLength() << FileReader.centerFrequency();
-		FileReader.close();
+		ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
+		m_FileReader.close();
 	}
 	else
 	{

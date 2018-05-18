@@ -51,13 +51,15 @@ struct chunk
 {
 	char        id[4];
 	quint32     size;
-};
+}__attribute__((gcc_struct,packed));
+
 
 struct RIFFHeader
 {
 	chunk       descriptor;     // "RIFF"
 	char        type[4];        // "WAVE"
-};
+}__attribute__((gcc_struct,packed));
+
 
 struct WAVEHeader
 {
@@ -68,7 +70,8 @@ struct WAVEHeader
 	quint32     byteRate;
 	quint16     blockAlign;
 	quint16     bitsPerSample;
-};
+	quint16		cbSize;
+}__attribute__((gcc_struct,packed));
 
 struct AUXINFO
 {	//custom chunk used by Spectravue for additional file information
@@ -85,12 +88,14 @@ struct AUXINFO
 	quint32 Unused4;
 	quint32 Unused5;
 	quint32 Unused6;
-};
+}__attribute__((gcc_struct,packed));
+
 
 struct DATAHeader
 {
 	chunk       descriptor;
-};
+}__attribute__((gcc_struct,packed));
+
 
 struct CombinedHeader
 {
@@ -98,7 +103,8 @@ struct CombinedHeader
 	WAVEHeader  wave;
 	AUXINFO		auxi;
 	DATAHeader  data;
-};
+}__attribute__((gcc_struct,packed));
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 /// Constructor/Destructor
@@ -193,8 +199,10 @@ bool CWaveFileWriter::WriteHeader(const QAudioFormat &format)
 	CombinedHeader header;
 	memset(&header, 0, m_HeaderLength);
 
-	GetSytemTimeStructure(header.auxi.StartTime);
-	GetSytemTimeStructure(header.auxi.StopTime);
+	sSYSTEMTIME stime;
+	GetSytemTimeStructure(stime);
+	header.auxi.StartTime = stime;
+	header.auxi.StopTime = stime;
 
 	// RIFF header
 	memcpy(header.riff.descriptor.id, "RIFF", 4);
@@ -210,6 +218,7 @@ bool CWaveFileWriter::WriteHeader(const QAudioFormat &format)
 	header.wave.byteRate = (quint32)(m_Format.sampleRate() * format.channelCount() * format.sampleSize() / 8);
 	header.wave.blockAlign = (quint16)(m_Format.channelCount() * format.sampleSize() / 8);
 	header.wave.bitsPerSample = (quint16)m_Format.sampleSize();
+	header.wave.cbSize = 0;
 
 	// auxi header
 	memcpy(header.auxi.descriptor.id, "auxi", 4);
