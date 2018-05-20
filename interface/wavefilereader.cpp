@@ -126,7 +126,7 @@ bool CWaveFileReader::readHeader()
 					ret = false;
 				if( FindSubChunk("data", &Start, &Length) )
 				{
-					m_DataLength = Length;
+					m_NumSamples = Length/(m_FmtSubChunk.bitsPerSample/8);
 					seek(Start);	//move file pointer to start of data
 				}
 				else
@@ -138,14 +138,12 @@ bool CWaveFileReader::readHeader()
 	}
 	if(ret)
 	{
-		qDebug()<<"Fmt read"<<m_FmtSubChunk.audioFormat << m_FmtSubChunk.sampleRate << m_FmtSubChunk.bitsPerSample;
-		qDebug()<<"Auxi read"<<m_AuxiSubChunk.ADFrequency << m_AuxiSubChunk.CenterFreq << m_AuxiSubChunk.Bandwidth;
-		QString CpxStr;
+		char Tbuf[256];
 		if( 2 == m_FmtSubChunk.numChannels)
-			CpxStr = "Complex";
+			strcpy(Tbuf, "Complex");
 		else
-			CpxStr = "Real";
-		m_FileInfoStr.sprintf("%d Samples of %s Data  SampleRate = %d  Bits/Sample= %d",m_DataLength, CpxStr, m_FmtSubChunk.sampleRate,m_FmtSubChunk.bitsPerSample );
+			strcpy(Tbuf, "Real");
+		m_FileInfoStr.sprintf("%d Samples of %s Data\nSampleRate = %d  Bits/Sample= %d", m_NumSamples, Tbuf, (int)m_FmtSubChunk.sampleRate, (int)m_FmtSubChunk.bitsPerSample );
 	}
 	else
 	{
@@ -193,13 +191,69 @@ qDebug()<<Id <<"SubChunk Found"<<*pStart << *pLength;
 /// \brief CWaveFileReader::GetNextDataBlock
 /// \param pData   pointer to callers complex float data buffer
 /// \param NumSamples
-/// \return number of sample read, -1 if reached end of file or error
+/// \return number of sample read, 0 if reached end of file or -1 error
 /////////////////////////////////////////////////////////////////////////
 int CWaveFileReader::GetNextDataBlock(TYPECPX* pData, int NumSamples)
 {
+int ByteLength = 0;
+int i;
+int j = -1;
 	if(m_FmtSubChunk.numChannels != 2)
+	{
+		qDebug()<<"Not 2 channels";
 		return -1;
-
+	}
+	if(24 == m_FmtSubChunk.bitsPerSample)
+	{
+		tBtoL data;
+		ByteLength = NumSamples*6;
+		if(ByteLength < MAX_RDDATABLK)
+		{
+			data.all = 0;
+			qint64 bytesread = read((char*)m_DataBuffer, ByteLength);
+			if(bytesread <= 0)
+			{
+				return bytesread;
+			}
+			for( i=0,j=0; i<bytesread; i+=6,j++)
+			{
+				TYPECPX cpxtmp;
+				data.bytes.b1 = m_DataBuffer[i];		//combine 3 bytes into 32 bit signed int
+				data.bytes.b2 = m_DataBuffer[i+1];
+				data.bytes.b3 = m_DataBuffer[i+2];
+				cpxtmp.re = (TYPEREAL)data.all/2147483647.0;
+				data.bytes.b1 = m_DataBuffer[i+3];		//combine 3 bytes into 32 bit signed int
+				data.bytes.b2 = m_DataBuffer[i+4];
+				data.bytes.b3 = m_DataBuffer[i+5];
+				cpxtmp.im = (TYPEREAL)data.all/2147483647.0;
+				pData[j] = cpxtmp;
+			}
+		}
+	}
+	else
+	{	//here if samples are 16 bits
+		tBtoS data;
+		ByteLength = NumSamples*4;
+		if(ByteLength < MAX_RDDATABLK)
+		{
+			data.all = 0;
+			qint64 bytesread = read((char*)m_DataBuffer, ByteLength);
+			if(bytesread <= 0)
+				return 0;
+			for( int i=0,j=0; i<bytesread; i+=4,j++)
+			{
+				TYPECPX cpxtmp;
+				data.bytes.b0 = m_DataBuffer[i];		//combine 3 bytes into 32 bit signed int
+				data.bytes.b1 = m_DataBuffer[i+1];
+				cpxtmp.re = (TYPEREAL)data.sall/65535.0;
+				data.bytes.b0 = m_DataBuffer[i+2];		//combine 3 bytes into 32 bit signed int
+				data.bytes.b1 = m_DataBuffer[i+3];
+				cpxtmp.im = (TYPEREAL)data.sall/65535.0;
+				pData[j] = cpxtmp;
+			}
+		}
+	}
+	return j;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -211,8 +265,11 @@ int CWaveFileReader::GetNextDataBlock(TYPECPX* pData, int NumSamples)
 int CWaveFileReader::GetNextDataBlock(TYPEREAL* pData, int NumSamples)
 {
 	if(m_FmtSubChunk.numChannels != 1)
+	{
+		qDebug()<<"Not 2 channels";
 		return -1;
-
+	}
+	return -1;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -224,8 +281,11 @@ int CWaveFileReader::GetNextDataBlock(TYPEREAL* pData, int NumSamples)
 int CWaveFileReader::GetNextDataBlock(tStereo16* pData, int NumSamples)
 {
 	if(m_FmtSubChunk.numChannels != 2)
+	{
+		qDebug()<<"Not 2 channels";
 		return -1;
-
+	}
+	return -1;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -237,8 +297,11 @@ int CWaveFileReader::GetNextDataBlock(tStereo16* pData, int NumSamples)
 int CWaveFileReader::GetNextDataBlock(qint16* pData, int NumSamples)
 {
 	if(m_FmtSubChunk.numChannels != 1)
+	{
+		qDebug()<<"Not 2 channels";
 		return -1;
-
+	}
+	return -1;
 }
 
 

@@ -51,6 +51,30 @@ struct sSYSTEMTIME
 	quint16 wMilliseconds;
 };
 
+
+typedef union
+{
+	struct bs
+	{
+		unsigned char b0;
+		unsigned char b1;
+		unsigned char b2;
+		unsigned char b3;
+	}bytes;
+	int all;
+}tBtoL;
+
+typedef union
+{
+	struct bs
+	{
+		unsigned char b0;
+		unsigned char b1;
+	}bytes;
+	signed short sall;
+	unsigned short all;
+}tBtoS;
+
 #ifdef USE_DOUBLE_PRECISION
  #define TYPEREAL tDReal
  #define TYPECPX	tDComplex

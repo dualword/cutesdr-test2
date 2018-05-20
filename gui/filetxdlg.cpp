@@ -1,6 +1,8 @@
 #include "filetxdlg.h"
 #include "ui_filetxdlg.h"
 #include <QFileDialog>
+#include  "interface/wavefilewriter.h"
+#include "dsp/datamodifier.h"
 
 CFileTxDlg::CFileTxDlg(QWidget *parent, CSdrInterface* pSdrInterface) :
 	QDialog(parent),
@@ -31,7 +33,7 @@ void CFileTxDlg::Init()
 	ui->frameTxFreqCtrl->SetFrequency(m_TxFrequency);
 	ui->checkBoxRepeat->setChecked(m_TxRepeat);
 	m_FileReader.open(m_TxFilePath);
-//	ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
+	ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
 	m_FileReader.close();
 }
 
@@ -68,13 +70,55 @@ void CFileTxDlg::on_checkBoxRepeat_clicked(bool checked)
 
 void CFileTxDlg::on_pushButtonStart_clicked()
 {
+	CWaveFileWriter FileWriter;
+	CDataModifier DataModifier;
+
 	if(m_FileReader.open(m_TxFilePath) )
 	{
-		ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
+		if( !FileWriter.open( "d:\\testwr.wav",true, m_FileReader.GetSampleRate(), true, 0) )
+		{
+			m_FileReader.close();
+			qDebug()<<"File write open error";
+			return;
+		}
+		int sampleswritten = 0;
+		int samplesread = 0;
+		DataModifier.Init(m_FileReader.GetSampleRate());
+		DataModifier.SetSweepRate(1.0);
+		DataModifier.SetSweepStart(-100.0);
+		DataModifier.SetSweepStop(100.0);
+		while(sampleswritten < m_FileReader.GetNumberSamples())
+		{
+			//copy in blocks of 512 samples
+			samplesread = m_FileReader.GetNextDataBlock( m_TxDataBuf, 512);
+			if( samplesread > 0 )
+			{
+				DataModifier.ProcessBlock(m_TxDataBuf, samplesread);
+				if( !FileWriter.Write(m_TxDataBuf, samplesread) )
+				{
+					m_FileReader.close();
+					FileWriter.close();
+					qDebug()<<"File copy error";
+					m_FileReader.close();
+					FileWriter.close();
+					return;
+				}
+				sampleswritten += samplesread;
+			}
+			else
+			{
+				if(samplesread < 0 )
+					qDebug()<<"File read error";
+				else
+					qDebug()<<"File operation complete";
+				break;
+			}
+		}
 		m_FileReader.close();
+		FileWriter.close();
 	}
 	else
 	{
-		qDebug()<<"File read Fail";
+		qDebug()<<"File read open Fail";
 	}
 }

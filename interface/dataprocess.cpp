@@ -44,6 +44,7 @@
 /*---------------------------------------------------------------------------*/
 #include "dataprocess.h"
 #include "sdrinterface.h"
+#include "dsp/datatypes.h"
 #include <QDebug>
 
 /*---------------------------------------------------------------------------*/
@@ -60,28 +61,7 @@
 /*---------------------------------------------------------------------------*/
 /*--------------------> L O C A L   T Y P E D E F S <------------------------*/
 /*---------------------------------------------------------------------------*/
-typedef union
-{
-	struct bs
-	{
-		unsigned char b0;
-		unsigned char b1;
-		unsigned char b2;
-		unsigned char b3;
-	}bytes;
-	int all;
-}tBtoL;
 
-typedef union
-{
-	struct bs
-	{
-		unsigned char b0;
-		unsigned char b1;
-	}bytes;
-	signed short sall;
-	unsigned short all;
-}tBtoS;
 
 /////////////////////////////////////////////////////////////////////
 // Constructor/Destructor

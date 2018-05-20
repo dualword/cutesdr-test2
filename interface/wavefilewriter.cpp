@@ -124,7 +124,7 @@ CWaveFileWriter::~CWaveFileWriter()
 /// Open wave file for writing
 /// returns trus if opened ok
 ///////////////////////////////////////////////////////////////////////////////////////
-bool CWaveFileWriter::Open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq)
+bool CWaveFileWriter::open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq)
 {
 	if (m_File.isOpen())
 		return false; // file already open
@@ -157,7 +157,7 @@ bool CWaveFileWriter::Open( QString fileName, bool complex, int Rate, bool Data2
 ///////////////////////////////////////////////////////////////////////////////////////
 /// update wav header and close file
 ///////////////////////////////////////////////////////////////////////////////////////
-void CWaveFileWriter::Close()
+void CWaveFileWriter::close()
 {
 	if (m_File.isOpen())
 	{
@@ -278,7 +278,7 @@ bool CWaveFileWriter::WriteDataLength()
 /// Direct Write of byte data into wave file. Up to caller to know data size and
 ///  number of channels. returns true if writes ok
 ///////////////////////////////////////////////////////////////////////////////////////
-bool CWaveFileWriter::Write(int Length,  qint8* pbuf)
+bool CWaveFileWriter::Write(qint8* pbuf, int Length )
 {
 	if( 0 == Length)
 		return true;
@@ -289,5 +289,65 @@ bool CWaveFileWriter::Write(int Length,  qint8* pbuf)
 	m_DataLength += written;
 	m_Mutex.unlock();
 	return written == Length;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+/// Write Complex data samples  into wave file. returns true if writes ok
+///////////////////////////////////////////////////////////////////////////////////////
+bool CWaveFileWriter::Write(TYPECPX* pbuf, int Numsamples )
+{
+	int i;
+	int j;
+	if( 0 == Numsamples)
+		return true;
+	if (!m_File.isOpen() || (m_Format.channelCount() != 2 ) )
+		return false; // file not open
+	if(24 == m_Format.sampleSize())
+	{
+		if( MAX_WRDATABLK < (Numsamples * 6))
+			return false;
+		tBtoL data;
+		i=0;
+		for( j=0; j<Numsamples; j++)
+		{
+			data.all = (qint32)(pbuf[j].re * 2147483647.0);
+			m_DataBuffer[i++] = data.bytes.b1;
+			m_DataBuffer[i++] = data.bytes.b2;
+			m_DataBuffer[i++] = data.bytes.b3;
+			data.all = (qint32)(pbuf[j].im * 2147483647.0);
+			m_DataBuffer[i++] = data.bytes.b1;
+			m_DataBuffer[i++] = data.bytes.b2;
+			m_DataBuffer[i++] = data.bytes.b3;
+		}
+		m_Mutex.lock();
+		qint64 written = m_File.write((const char *)m_DataBuffer, i );
+		if(written < 0)
+			return false;
+		m_DataLength += written;
+		m_Mutex.unlock();
+	}
+	else
+	{	//16 bit samples
+		if( MAX_WRDATABLK < (Numsamples * 4))
+			return false;
+		tBtoS data;
+		i=0;
+		for( j=0; j<Numsamples; j++)
+		{
+			data.sall = (qint16)(pbuf[j].re * 65535.0);
+			m_DataBuffer[i++] = data.bytes.b0;
+			m_DataBuffer[i++] = data.bytes.b1;
+			data.sall = (qint16)(pbuf[j].im * 65535.0);
+			m_DataBuffer[i++] = data.bytes.b0;
+			m_DataBuffer[i++] = data.bytes.b1;
+		}
+		m_Mutex.lock();
+		qint64 written = m_File.write((const char *)m_DataBuffer, i );
+		if(written < 0)
+			return false;
+		m_DataLength += written;
+		m_Mutex.unlock();
+	}
 }
 
