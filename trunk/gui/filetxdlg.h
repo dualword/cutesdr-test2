@@ -5,6 +5,9 @@
 #include "interface/sdrinterface.h"
 #include "interface/wavefilereader.h"
 
+
+#define MAX_TXBLKSAMPLES 1024
+
 namespace Ui {
 class CFileTxDlg;
 }
@@ -38,6 +41,7 @@ private:
 	Ui::CFileTxDlg *ui;
 	CSdrInterface* m_pSdrInterface;
 	CWaveFileReader m_FileReader;
+	TYPECPX m_TxDataBuf[MAX_TXBLKSAMPLES];
 };
 
 #endif // FILETXDLG_H

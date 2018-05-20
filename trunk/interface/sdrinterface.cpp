@@ -196,7 +196,7 @@ qDebug()<<"CSdrInterface destructor";
 		if(m_FileRecordActive)
 			StopFileRecord();
 		if(m_pWaveFileWriter->isOpen())
-			m_pWaveFileWriter->Close();
+			m_pWaveFileWriter->close();
 		delete m_pWaveFileWriter;
 	}
 	if(m_pSoundCardOut)
@@ -223,7 +223,7 @@ bool ret = false;
 	{
 		if(RECORDMODE_IQ == m_RecordMode)
 		{
-			if(m_pWaveFileWriter->Open(Filename, true, m_SampleRate, m_24BitData, CenterFreq) )
+			if(m_pWaveFileWriter->open(Filename, true, m_SampleRate, m_24BitData, CenterFreq) )
 			{
 				m_FileRecordActive = true;
 				ret = true;
@@ -232,7 +232,7 @@ qDebug()<<"Start IQ Record";
 		}
 		else
 		{
-			if(m_pWaveFileWriter->Open(Filename, m_StereoOut, 48000, false, CenterFreq) )
+			if(m_pWaveFileWriter->open(Filename, m_StereoOut, 48000, false, CenterFreq) )
 			{
 				m_FileRecordActive = true;
 				ret = true;
@@ -246,7 +246,7 @@ qDebug()<<"Start Audio Record";
 void CSdrInterface::StopFileRecord()
 {
 qDebug()<<"Stop Record";
-	m_pWaveFileWriter->Close();
+	m_pWaveFileWriter->close();
 	m_FileRecordActive = false;
 }
 
@@ -1073,7 +1073,7 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 			n = m_pSoundCardOut->PutOutQueue(n, SoundBuf);
 			if( m_FileRecordActive && (RECORDMODE_AUDIO == m_RecordMode) )
 			{	//write stereo audio to file if active
-				if(!m_pWaveFileWriter->Write(n*4, (qint8*)m_pSoundCardOut->m_RData ))
+				if(!m_pWaveFileWriter->Write( (qint8*)m_pSoundCardOut->m_RData, n*4 ))
 					StopFileRecord();
 			}
 		}
@@ -1086,7 +1086,7 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 			n = m_pSoundCardOut->PutOutQueue(n, (TYPEREAL*)SoundBuf);
 			if( m_FileRecordActive && (RECORDMODE_AUDIO == m_RecordMode) )
 			{	//write mono audio to file if active
-				if(!m_pWaveFileWriter->Write(n*2, (qint8*)m_pSoundCardOut->m_RData ))
+				if(!m_pWaveFileWriter->Write((qint8*)m_pSoundCardOut->m_RData, n*2 ))
 					StopFileRecord();
 			}
 		}
@@ -1098,7 +1098,7 @@ void CSdrInterface::ProcessUdpData(char* pBuf, qint64 Length)
 	if(m_pdataProcess) m_pdataProcess->PutInQ(pBuf,Length);
 	if( (m_FileRecordActive) && (RECORDMODE_IQ == m_RecordMode) )
 	{	//write IQ data to file if active
-		if(!m_pWaveFileWriter->Write(Length-4, (qint8*)(pBuf+4) ))	//write packet minus header
+		if(!m_pWaveFileWriter->Write((qint8*)(pBuf+4), Length-4 ))	//write packet minus header
 			StopFileRecord();
 	}
 }

@@ -59,6 +59,7 @@ SOURCES += gui/main.cpp \
     dsp/pskdemod.cpp \
     dsp/fskmod.cpp \
     dsp/fskdemod.cpp \
+    dsp/datamodifier.cpp
 
 HEADERS  += gui/mainwindow.h \
 	gui/sounddlg.h \
@@ -115,6 +116,7 @@ HEADERS  += gui/mainwindow.h \
     dsp/fskmod.h \
     dsp/fskdemod.h \
     dsp/fircoef.h \
+    dsp/datamodifier.h
 
 #Use separate forms for each OS
 win32 {

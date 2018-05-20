@@ -50,6 +50,8 @@
 #include "dsp/datatypes.h"
 
 
+#define MAX_WRDATABLK 8192	//max bytes per data block read
+
 
 class CWaveFileWriter : public QObject
 {
@@ -59,9 +61,10 @@ class CWaveFileWriter : public QObject
 public:
 	explicit CWaveFileWriter(QObject *parent = 0);
 	~CWaveFileWriter();
-	bool Open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq);
-	void Close();
-	bool Write( int NumSamples, qint8* buffer);
+	bool open( QString fileName, bool complex, int Rate, bool Data24Bit, qint64 CenterFreq);
+	void close();
+	bool Write( qint8* buffer, int Length );
+	bool Write( TYPECPX* buffer, int Numsamples );
 	bool isOpen() const { return m_File.isOpen(); }
 
 private:
@@ -72,6 +75,7 @@ private:
 	QFile m_File;
 	QAudioFormat m_Format;
 	QMutex m_Mutex;
+	quint8 m_DataBuffer[MAX_WRDATABLK];
 	qint64 m_HeaderLength;
 	qint64 m_DataLength;
 	qint64 m_CenterFrequency;
