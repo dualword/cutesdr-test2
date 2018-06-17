@@ -101,7 +101,7 @@ public:
 	virtual void ParseAscpMsg( CAscpRxMsg* pMsg){Q_UNUSED(pMsg)}
 	virtual void ProcessUdpData(char* pBuf, qint64 Length){Q_UNUSED(pBuf);Q_UNUSED(Length)}
 	void SendAscpMsg(CAscpTxMsg* pMsg);
-
+	void SendUdpMsg(quint8* pBuf, int Length);
 	eStatus m_Status;
 
 signals:
@@ -130,6 +130,7 @@ private:
 	quint16 m_ClientPort;
 	CUdp* m_pUdpIo;
 	QTcpSocket* m_pTcpClient;
+	QUdpSocket m_UdpTxSocket;
 };
 
 #endif // NETIO_H

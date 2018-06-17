@@ -38,6 +38,12 @@ typedef struct _isCplx
 	qint16 im;
 }tStereo16;
 
+typedef struct _iICplx
+{
+	qint32 re;
+	qint32 im;
+}tICpx32;
+
 
 struct sSYSTEMTIME
 {

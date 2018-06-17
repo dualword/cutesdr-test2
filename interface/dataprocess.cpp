@@ -55,6 +55,7 @@
 #define PKT_LENGTH_24_SMALL 388
 #define PKT_LENGTH_16_SMALL 516
 
+
 #define IN_QUEUE_SIZE 1000
 #define QUEUE_BUF_LENGTH 256	//maximum number of possible complex samples in UDP packets
 
@@ -179,6 +180,10 @@ TYPECPX cpxtmp;
 			cpxtmp.im = (TYPEREAL)seq.sall;
 			m_pInQueue[m_InHead][j] = cpxtmp;
 		}
+	}
+	else
+	{
+		return;
 	}
 	if(++m_InHead >= IN_QUEUE_SIZE)
 		m_InHead = 0;

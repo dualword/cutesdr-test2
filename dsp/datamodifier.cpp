@@ -13,7 +13,6 @@ CDataModifier::CDataModifier()
 
 void CDataModifier::Init(TYPEREAL SampleRate)
 {
-int i;
 	m_SampleRate = SampleRate;
 	//initialize sweep generator values
 	m_SweepFrequency = m_SweepStartFrequency;
@@ -55,8 +54,8 @@ void CDataModifier::ProcessBlock(TYPECPX* pBuf, int NumSamples)
 	for(int i=0; i<NumSamples; i++)
 	{
 		//create complex sin/cos modulation signal
-		Osc.re = 0.5*MCOS(m_SweepAcc);
-		Osc.im = 0.5*MSIN(m_SweepAcc);
+		Osc.re = 0.7*MCOS(m_SweepAcc);
+		Osc.im = 0.7*MSIN(m_SweepAcc);
 		//inc phase accummulator with normalized freqeuency step
 		m_SweepAcc += ( m_SweepFrequency*m_SweepFreqNorm );
 		if(	m_SweepDirUp )

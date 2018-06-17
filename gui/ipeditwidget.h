@@ -9,6 +9,7 @@
 #define IPEDITWIDGET_H
 
 #include <QWidget>
+#include <QIntValidator>
 #include "ui_ipeditframe.h"
 
 class CIPEditWidget : public QFrame

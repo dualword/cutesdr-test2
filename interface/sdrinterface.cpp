@@ -186,6 +186,7 @@ CSdrInterface::CSdrInterface()
 	m_Status = NOT_CONNECTED;
 	m_ChannelMode = CI_RX_CHAN_SETUP_SINGLE_1;	//default channel settings for NetSDR
 	m_Channel = CI_RX_CHAN_1;
+	m_TxMsgFifoPtr = 0;
 }
 
 CSdrInterface::~CSdrInterface()
@@ -1095,10 +1096,22 @@ void CSdrInterface::ProcessIQData(TYPECPX *pIQData, int NumSamples)
 
 void CSdrInterface::ProcessUdpData(char* pBuf, qint64 Length)
 {
-	if(m_pdataProcess) m_pdataProcess->PutInQ(pBuf,Length);
+	if(Length <= PKT_LENGTH_TXMSG)
+	{//here if is Tx UDP messages
+		m_TxMsgFifoPtr++;
+		if(m_TxMsgFifoPtr>=MSGFIFO_SIZE)
+			m_TxMsgFifoPtr = 0;
+		for(int i=0; i<Length; i++)
+			m_TxAscpMsg[m_TxMsgFifoPtr].Buf8[i] = pBuf[i];
+		emit NewTxMsg(m_TxMsgFifoPtr);
+		return;
+	}
+	if(m_pdataProcess)
+		m_pdataProcess->PutInQ(pBuf,Length);
 	if( (m_FileRecordActive) && (RECORDMODE_IQ == m_RecordMode) )
 	{	//write IQ data to file if active
 		if(!m_pWaveFileWriter->Write((qint8*)(pBuf+4), Length-4 ))	//write packet minus header
 			StopFileRecord();
 	}
 }
+

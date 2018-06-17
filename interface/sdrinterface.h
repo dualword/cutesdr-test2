@@ -52,6 +52,10 @@
 #define RECORDMODE_AUDIO 0
 #define RECORDMODE_IQ 1
 
+#define PKT_LENGTH_TXMSG 16		//if msg is less than this then if TX control  msg
+
+#define MSGFIFO_SIZE 8
+
 
 /////////////////////////////////////////////////////////////////////
 // Derived class from NetIOBase for all the custom SDR msg processing
@@ -109,6 +113,9 @@ public:
 	float m_BootRev;
 	float m_AppRev;
 	int m_MissedPackets;
+	CAscpRxMsg m_TxAscpMsg[MSGFIFO_SIZE];
+	int m_TxMsgFifoPtr;
+
 
 	//GUI Public settings and access functions
 	void SetRadioType(qint32 radiotype ){m_RadioType = (eRadioType)radiotype;}
@@ -163,16 +170,18 @@ public:
 	int GetStereoLock(int* pPilotLock){ return m_Demodulator.GetStereoLock(pPilotLock);}
 	int GetNextRdsGroupData(tRDS_GROUPS* pGroupData){return m_Demodulator.GetNextRdsGroupData(pGroupData);}
 
+
 signals:
 	void NewInfoData();			//emitted when sdr information is received after GetSdrInfo()
 	void NewFftData();			//emitted when new FFT data is available
+	void NewTxFiFoStatus(int BytesFree);		//emitted to tell Tx fifo buffer status
 	void FreqChange(int freq);	//emitted if requested frequency has been clamped by radio
+	void NewTxMsg(int FifoPtr);	//emitted when sdr tx msg is received from UDP
 
 private:
 	void SendAck(quint8 chan);
 	void Start6620Download();
 	void NcoSpurCalibrate(TYPECPX* pData, qint32 NumSamples);
-
 
 	bool m_Running;
 	bool m_ScreenUpateFinished;
@@ -220,7 +229,6 @@ private:
 	CSoundOut* m_pSoundCardOut;
 	CDataProcess* m_pdataProcess;
 	CWaveFileWriter* m_pWaveFileWriter;
-
 
 CIir m_Iir;
 

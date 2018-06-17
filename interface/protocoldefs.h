@@ -221,6 +221,20 @@
  #define CI_RX_CALIBRATION_DATA_SETRESPLEN 7	//param 1 == channel ID param 2== 16 bit DC offset
 
 /*  Transmitter Specific Control Items  */
+/*  Transmitter Specific Control Items  */
+#define CI_TX_STATE 0x0118
+ #define CI_TX_STATE_REQLEN 5
+ #define CI_TX_STATE_SETRESPLEN 6
+//Parameter 1 is a 1 byte channel ID.
+//Parameter 2 is a 1 byte Transmit state.
+	#define TX_STATE_OFF 0
+	#define TX_STATE_ON 1
+	#define TX_STATE_DELAYOFF 2
+
+#define CI_TX_FREQUENCY 0x0120
+ #define CI_TX_FREQUENCY_REQLEN 5
+ #define CI_TX_FREQUENCY_SETRESPLEN 10		//param 1 == channel ID
+
 #define CI_TX_DA_MODE 0x012A
  #define CI_TX_DA_MODE_REQLEN 5
  #define CI_TX_DA_MODE_SETRESPLEN 6

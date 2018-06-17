@@ -192,7 +192,7 @@ TYPEREAL WindowGain;
 		for(i=0; i<m_FFTSize; i++)	//Rectangle(no window)
 			m_pWindowTbl[i] = 1.0*WindowGain;
 #endif
-#if 1
+#if 0
 		WindowGain = 2.0;
 		for(i=0; i<m_FFTSize; i++)	//Hann
 			m_pWindowTbl[i] = WindowGain*(.5  - .5 *MCOS( (K_2PI*i)/(m_FFTSize-1) ));
@@ -218,7 +218,7 @@ TYPEREAL WindowGain;
 				+ 0.14128*MCOS( (2.0*K_2PI*i)/(m_FFTSize-1) )
 				- 0.01168*MCOS( (3.0*K_2PI*i)/(m_FFTSize-1) ) );
 #endif
-#if 0
+#if 1
 		WindowGain = 2.8;
 		for(i=0; i<m_FFTSize; i++)	//Nuttall
 			m_pWindowTbl[i] = WindowGain*(0.355768
