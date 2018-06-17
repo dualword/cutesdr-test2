@@ -8,7 +8,7 @@
 //	2013-02-05  Modified for CuteSDR. Now TCP runs in gui thread to simplify
 //	2013-07-28  fixed DisconnectFromServerSlot bug
 //	2015-03-26  Added  support for small MTU and UDP keepalive in case of port forwarding timeouts
-//	2015-07-13  removed windsock dependency, Changed a few threading issues
+//	2015-07-13  removed winsock dependency, Changed a few threading issues
 /////////////////////////////////////////////////////////////////////
 //==========================================================================================
 // + + +   This Software is released under the "Simplified BSD License"  + + +
@@ -76,6 +76,7 @@ void CUdp::ThreadInit()	//override called by new thread when started
 	connect(m_pParent, SIGNAL(StartUdp(quint32, quint32, quint16) ), this, SLOT( StartUdpSlot(quint32, quint32, quint16) ) );
 	connect(m_pParent, SIGNAL(StopUdp() ), this, SLOT( StopUdpSlot() ) );
 	connect(m_pParent, SIGNAL(SendUdpKeepalive() ), this, SLOT( SendUdpKeepaliveSlot() ) );
+
 qDebug()<<"UDP Thread "<<this->thread()->currentThread();
 }
 
@@ -337,3 +338,18 @@ void CNetio::SendAscpMsg(CAscpTxMsg* pMsg)
 	if(m_pTcpClient->isValid())
 		m_pTcpClient->write((char*)pMsg->Buf8, (qint64)pMsg->GetLength());
 }
+
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+/*                     ---------------------                                 */
+/*                    | S e n d U d p M s g |                                */
+/*                     ---------------------                                 */
+/*   Called send block to the UDP socket                                     */
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+void CNetio::SendUdpMsg(quint8* pBuf, int Length)
+{
+	quint64 sent = m_UdpTxSocket.writeDatagram((char*)pBuf, (qint64)Length, m_ServerIPAdr, m_ServerPort );
+	if(sent != (qint64)Length)
+		qDebug()<<Length<< m_ServerIPAdr<< m_ServerPort;
+}
+
+

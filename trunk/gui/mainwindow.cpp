@@ -335,7 +335,7 @@ void MainWindow::writeSettings()
 
 	settings.setValue(tr("RadioType"), m_RadioType);
 	settings.setValue(tr("CenterFrequency"),(int)m_CenterFrequency);
-	settings.setValue(tr("TxFrequency"),(int)m_TxFrequency);
+	settings.setValue(tr("TxFrequency"),(unsigned int)m_TxFrequency);
 	settings.setValue(tr("SpanFrequency"),(int)m_SpanFrequency);
 	settings.setValue(tr("IPAdr"),m_IPAdr.toIPv4Address());
 	settings.setValue(tr("Port"),m_Port);

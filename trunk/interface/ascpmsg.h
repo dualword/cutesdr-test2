@@ -69,6 +69,30 @@
 
 #define MAX_ASCPMSG_LENGTH (8192+2)
 
+
+typedef union
+{
+	struct x1
+	{
+		quint16     Hdr;
+		quint16     Sequence;
+		quint8		DataBuf[MAX_ASCPMSG_LENGTH];
+	} __attribute__((gcc_struct,packed)) fld; //!!!!need gcc_struct for GCC bug and x86
+	quint8 Buf8[MAX_ASCPMSG_LENGTH+4];
+}tASCPDataMsg;
+
+typedef  union
+{
+	struct
+	{
+		quint16 header;		// ASCP header length/type
+		quint8 DataItem;
+		quint16 FreeBytes;
+	} __attribute__((gcc_struct,packed))fld;//!!!!need gcc_struct for GCC bug and x86
+	quint8 Buf[5];
+}tDataAck;
+
+
 class CAscpRxMsg
 {
 public:
