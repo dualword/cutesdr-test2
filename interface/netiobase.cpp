@@ -141,7 +141,9 @@ char pBuf[20000];
 		qint64 n = m_pUdpSocket->pendingDatagramSize();
 		if(n<20000)
 		{
+			m_UdpMutex.lock();
 			m_pUdpSocket->readDatagram(pBuf, n);
+			m_UdpMutex.unlock();
 			((CNetio*)m_pParent)->ProcessUdpData(pBuf, n);
 			if(m_UseUdpFwd)
 				if( m_pUdpFwdSocket->isValid())
@@ -167,7 +169,11 @@ char DummyData = 0x5A;
 	if( m_pThread->isRunning() )
 	{
 		if( m_pUdpSocket->isValid())
+		{
+			m_UdpMutex.lock();
 			m_pUdpSocket->writeDatagram(&DummyData, 1, m_ServerIPAdr, m_ServerPort);
+			m_UdpMutex.unlock();
+		}
 	}
 }
 
@@ -347,7 +353,9 @@ void CNetio::SendAscpMsg(CAscpTxMsg* pMsg)
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 void CNetio::SendUdpMsg(quint8* pBuf, int Length)
 {
+	m_pUdpIo->m_UdpMutex.lock();
 	quint64 sent = m_UdpTxSocket.writeDatagram((char*)pBuf, (qint64)Length, m_ServerIPAdr, m_ServerPort );
+	m_pUdpIo->m_UdpMutex.unlock();
 	if(sent != (qint64)Length)
 		qDebug()<<Length<< m_ServerIPAdr<< m_ServerPort;
 }

@@ -54,6 +54,7 @@ public:
 	void SetForwardingParameters(bool UseUdpFwd, QHostAddress IPFwdAdr, quint16 FwdPort)
 						{m_UseUdpFwd = UseUdpFwd; m_IPFwdAdr = IPFwdAdr; m_FwdPort = FwdPort;}
 
+	QMutex m_UdpMutex;
 signals:
 
 private slots:
@@ -73,6 +74,7 @@ private:
 	bool m_UseUdpFwd;
 	QHostAddress m_IPFwdAdr;
 	quint16 m_FwdPort;
+
 };
 
 /////////////////////////////////////////////////////
