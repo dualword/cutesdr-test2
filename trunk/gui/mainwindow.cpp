@@ -359,11 +359,19 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("UseCursorText"),m_UseCursorText);
 	settings.setValue("RecordFilePath", m_RecordFilePath);
 	settings.setValue("TxFilePath", m_TxFilePath);
+	settings.setValue(tr("TxRepeat"),m_TxRepeat);
+	settings.setValue(tr("UseTxFile"),m_UseTxFile);
+
 
 	settings.setValue("UseUdpFwd", m_UseUdpFwd);
 	settings.setValue(tr("IPFwdAdr"),m_IPFwdAdr.toIPv4Address());
 	settings.setValue(tr("FwdPort"),m_FwdPort);
 
+	settings.setValue(tr("TxSignalPower"),m_TxSignalPower);
+	settings.setValue(tr("TxNoisePower"),m_TxNoisePower);
+	settings.setValue(tr("TxSweepStartFrequency"),m_TxSweepStartFrequency);
+	settings.setValue(tr("TxSweepStopFrequency"),m_TxSweepStopFrequency);
+	settings.setValue(tr("TxSweepRate"),m_TxSweepRate);
 
 	//Get NCO spur offsets and save
 	m_pSdrInterface->ManageNCOSpurOffsets(CSdrInterface::NCOSPUR_CMD_READ,
@@ -376,7 +384,6 @@ void MainWindow::writeSettings()
 	settings.setValue(tr("DemodMode"),m_DemodMode);
 	settings.setValue(tr("RecordMode"),m_RecordMode);
 
-	settings.setValue(tr("TxRepeat"),m_TxRepeat);
 
 	settings.setValue(tr("NBOn"),m_NoiseProcSettings.NBOn);
 	settings.setValue(tr("NBThreshold"),m_NoiseProcSettings.NBThreshold);
@@ -471,6 +478,12 @@ void MainWindow::readSettings()
 	m_NCOSpurOffsetI = settings.value(tr("NCOSpurOffsetI"),0.0).toDouble();
 	m_NCOSpurOffsetQ = settings.value(tr("NCOSpurOffsetQ"),0.0).toDouble();
 
+	m_TxSignalPower = settings.value(tr("TxSignalPower"),0.0).toDouble();
+	m_TxNoisePower = settings.value(tr("TxNoisePower"),-160.0).toDouble();
+	m_TxSweepStartFrequency = settings.value(tr("TxSweepStartFrequency"),-1000.0).toInt();
+	m_TxSweepStopFrequency = settings.value(tr("TxSweepStopFrequency"),1000.0).toInt();
+	m_TxSweepRate = settings.value(tr("TxSweepRate"),0.0).toInt();
+
 	m_UseTestBench = settings.value(tr("UseTestBench"), false).toBool();
 	m_AlwaysOnTop = settings.value(tr("AlwaysOnTop"), false).toBool();
 
@@ -482,6 +495,7 @@ void MainWindow::readSettings()
 
 	m_NoiseProcSettings.NBOn = settings.value(tr("NBOn"), false).toBool();
 	m_TxRepeat = settings.value(tr("TxRepeat"), false).toBool();
+	m_UseTxFile = settings.value(tr("UseTxFile"), true).toBool();
 
 	m_NoiseProcSettings.NBThreshold = settings.value(tr("NBThreshold"),0).toInt();
 	m_NoiseProcSettings.NBWidth = settings.value(tr("NBWidth"),50).toInt();
@@ -828,12 +842,24 @@ void MainWindow::OnFileSendDlg()
 	dlg.m_TxFilePath = m_TxFilePath;
 	dlg.m_TxFrequency = m_TxFrequency;
 	dlg.m_TxRepeat = m_TxRepeat;
+	dlg.m_UseTxFile = m_UseTxFile;
+	dlg.m_TxSignalPower = m_TxSignalPower;
+	dlg.m_TxNoisePower = m_TxNoisePower;
+	dlg.m_TxSweepStartFrequency = m_TxSweepStartFrequency;
+	dlg.m_TxSweepStopFrequency = m_TxSweepStopFrequency;
+	dlg.m_TxSweepRate = m_TxSweepRate;
 	dlg.Init();
 	if( dlg.exec() )
 	{
 		m_TxFilePath = dlg.m_TxFilePath;
 		m_TxFrequency = dlg.m_TxFrequency;
 		m_TxRepeat = dlg.m_TxRepeat;
+		m_UseTxFile = dlg.m_UseTxFile;
+		m_TxSignalPower = dlg.m_TxSignalPower;
+		m_TxNoisePower = dlg.m_TxNoisePower;
+		m_TxSweepStartFrequency = dlg.m_TxSweepStartFrequency;
+		m_TxSweepStopFrequency = dlg.m_TxSweepStopFrequency;
+		m_TxSweepRate = dlg.m_TxSweepRate;
 	}
 }
 

@@ -66,6 +66,8 @@ CWaveFileReader::CWaveFileReader(QObject *parent)
 	: QFile(parent)
 {
 	m_FileInfoStr = "No Info";
+	m_DataStartPosition = 0;
+	m_DataLength = 0;
 }
 
 CWaveFileReader::~CWaveFileReader()
@@ -82,6 +84,8 @@ bool CWaveFileReader::open(const QString &fileName)
 {
 	close();
 	setFileName(fileName);
+	m_DataStartPosition = 0;
+	m_DataLength = 0;
 	return QFile::open(QIODevice::ReadOnly) && readHeader();
 }
 
@@ -122,12 +126,14 @@ bool CWaveFileReader::readHeader()
 					ret = false;
 				if( FindSubChunk("auxi", &Start, &Length) )
 					memcpy(reinterpret_cast<char *>(&m_AuxiSubChunk), &m_HeaderBuffer[Start],Length);
-				else
-					ret = false;
+//				else
+//					ret = false;
 				if( FindSubChunk("data", &Start, &Length) )
 				{
-					m_NumSamples = Length/(m_FmtSubChunk.bitsPerSample/8);
-					seek(Start);	//move file pointer to start of data
+					m_DataLength = Length;
+					m_NumSamples = Length/( (m_FmtSubChunk.bitsPerSample*m_FmtSubChunk.numChannels)/8 );
+					m_DataStartPosition = Start;
+					seek(m_DataStartPosition);	//move file pointer to start of data
 				}
 				else
 				{
@@ -140,13 +146,18 @@ bool CWaveFileReader::readHeader()
 	{
 		char Tbuf[256];
 		if( 2 == m_FmtSubChunk.numChannels)
+		{
 			strcpy(Tbuf, "Complex");
+		}
 		else
+		{
 			strcpy(Tbuf, "Real");
+		}
 		m_FileInfoStr.sprintf("%d Samples of %s Data\nSampleRate = %d  Bits/Sample= %d", m_NumSamples, Tbuf, (int)m_FmtSubChunk.sampleRate, (int)m_FmtSubChunk.bitsPerSample );
 	}
 	else
 	{
+		close();
 		m_FileInfoStr = "Invalid RIFF Wave File";
 		qDebug()<<m_FileInfoStr;
 	}
@@ -185,6 +196,15 @@ qDebug()<<Id <<"SubChunk Found"<<*pStart << *pLength;
 		}
 	}
 	return found;
+}
+
+void CWaveFileReader::ResetToBeginning(void)
+{
+	if( isOpen() )
+	{
+		if( (m_DataStartPosition>0) && (m_DataStartPosition<m_DataLength) )
+			seek(m_DataStartPosition);	//move file pointer to start of data
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////
