@@ -88,6 +88,7 @@ private:
 	bool m_UseCursorText;
 	bool m_UseUdpFwd;
 	bool m_TxRepeat;
+	bool m_UseTxFile;
 	qint64 m_CenterFrequency;
 	qint64 m_TxFrequency;
 	qint64 m_DemodFrequency;
@@ -118,7 +119,11 @@ private:
 	tNoiseProcdInfo m_NoiseProcSettings;
 	QString m_RecordFilePath;
 	QString m_TxFilePath;
-
+	TYPEREAL m_TxSignalPower;
+	TYPEREAL m_TxNoisePower;
+	qint32 m_TxSweepStartFrequency;
+	qint32 m_TxSweepStopFrequency;
+	qint32 m_TxSweepRate;
 
 	bool m_FreqChanged;
 	bool m_Recording;

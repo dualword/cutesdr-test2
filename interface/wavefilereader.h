@@ -55,6 +55,7 @@ public:
 	qint64 GetCenterFrequency(){return m_CenterFrequency;}
 	quint32 GetSampleRate(){return m_FmtSubChunk.sampleRate;}
 	quint32 GetNumberSamples(){return m_NumSamples;}
+	void ResetToBeginning(void);
 
 	QString m_FileInfoStr;
 
@@ -65,6 +66,8 @@ private:
 	quint8 m_DataBuffer[MAX_RDDATABLK];
 	quint32 m_NumSamples;
 	quint32 m_CenterFrequency;
+	quint32 m_DataStartPosition;
+	quint32 m_DataLength;
 	sFmtSubChunk m_FmtSubChunk;
 	sAuxiSubChunk m_AuxiSubChunk;
 };

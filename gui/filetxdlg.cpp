@@ -16,7 +16,8 @@ CFileTxDlg::CFileTxDlg(QWidget *parent, CSdrInterface* pSdrInterface) :
 	ui->frameTxFreqCtrl->SetHighlightColor(Qt::darkGray);
 	m_TxFilePath = "";
 	m_TxRepeat = false;
-
+	m_FileTotalSamples = 14400;
+	m_FileSamplesSent = 0;
 }
 
 CFileTxDlg::~CFileTxDlg()
@@ -26,14 +27,27 @@ CFileTxDlg::~CFileTxDlg()
 
 void CFileTxDlg::Init()
 {
+	m_pTimer = new QTimer(this);
+	connect(m_pTimer, SIGNAL(timeout()), this, SLOT(OnTimer()));
 	connect(m_pSdrInterface, SIGNAL(NewTxMsg(int)), this, SLOT(NewTxMsgSlot(int)));
 	connect(ui->frameTxFreqCtrl, SIGNAL(NewFrequency(qint64)), this, SLOT(OnNewCenterFrequency(qint64)));
 	ui->lineEdit->setText(m_TxFilePath);
 	ui->frameTxFreqCtrl->SetFrequency(m_TxFrequency);
 	ui->checkBoxRepeat->setChecked(m_TxRepeat);
+	ui->checkBoxUseFile->setChecked(m_UseTxFile);
+	ui->spinBoxAmp->setValue((int)m_TxSignalPower);
+	ui->spinBoxNoise->setValue((int)m_TxNoisePower);
+	ui->spinBoxStart->setValue(m_TxSweepStartFrequency);
+	ui->spinBoxStop->setValue(m_TxSweepStopFrequency);
+	ui->spinBoxSweep->setValue(m_TxSweepRate);
+
+	ui->progressBar->setValue(0);
 	m_FileReader.open(m_TxFilePath);
 	ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
 	m_FileReader.close();
+	m_TransmitOn = false;
+	m_TxSignalPower = 0.0;
+	m_TxNoisePower = -160.0;
 }
 
 void CFileTxDlg::done(int r)	//virtual override
@@ -69,74 +83,90 @@ void CFileTxDlg::on_checkBoxRepeat_clicked(bool checked)
 	m_TxRepeat = checked;
 }
 
+void CFileTxDlg::on_checkBoxUseFile_clicked(bool checked)
+{
+	m_UseTxFile = checked;
+}
+
+void CFileTxDlg::on_spinBoxAmp_valueChanged(int pwr)
+{
+	m_TxSignalPower = (TYPEREAL)pwr;
+	m_DataModifier.SetSignalPower(m_TxSignalPower);
+}
+
+void CFileTxDlg::on_spinBoxNoise_valueChanged(int pwr)
+{
+	m_TxNoisePower = (TYPEREAL)pwr;
+	m_DataModifier.SetNoisePower(m_TxNoisePower);
+}
+
+void CFileTxDlg::on_spinBoxStart_valueChanged(int start)
+{
+	m_TxSweepStartFrequency = start;
+	m_DataModifier.SetSweepStart(m_TxSweepStartFrequency);
+}
+
+void CFileTxDlg::on_spinBoxStop_valueChanged(int stop)
+{
+	m_TxSweepStopFrequency = stop;
+	m_DataModifier.SetSweepStop(m_TxSweepStopFrequency);
+}
+
+void CFileTxDlg::on_spinBoxSweep_valueChanged(int rate)
+{
+	m_TxSweepRate = rate;
+	m_DataModifier.SetSweepRate(m_TxSweepRate);
+}
+
+
 void CFileTxDlg::on_pushButtonStart_clicked()
 {
-	CWaveFileWriter FileWriter;
-	CDataModifier DataModifier;
 
-	if(m_FileReader.open(m_TxFilePath) )
+	SetTxFreq(m_TxFrequency);
+	m_DataModifier.Init(64000);
+	m_DataModifier.SetSweepRate(m_TxSweepRate);
+	m_DataModifier.SetSweepStart(m_TxSweepStartFrequency);
+	m_DataModifier.SetSweepStop(m_TxSweepStopFrequency);
+	m_DataModifier.SetSignalPower(m_TxSignalPower);
+	m_DataModifier.SetNoisePower(m_TxNoisePower);
+	if(m_UseTxFile)
 	{
-		if( !FileWriter.open( "d:\\testwr.wav",true, m_FileReader.GetSampleRate(), true, 0) )
+		if(m_FileReader.open(m_TxFilePath) )
 		{
-			m_FileReader.close();
-			qDebug()<<"File write open error";
+			m_FileTotalSamples = m_FileReader.GetNumberSamples();
+			m_FileSamplesSent = 0;
+			ui->progressBar->setValue(0);
+			m_pTimer->start(200);		//start up status timer
+		}
+		else
+		{
+			ui->labelFileInfo->setText("File Open Failed");
 			return;
 		}
-		int sampleswritten = 0;
-		int samplesread = 0;
-		DataModifier.Init(m_FileReader.GetSampleRate());
-		DataModifier.SetSweepRate(1.0);
-		DataModifier.SetSweepStart(-100.0);
-		DataModifier.SetSweepStop(100.0);
-		while(sampleswritten < m_FileReader.GetNumberSamples())
-		{
-			//copy in blocks of 512 samples
-			samplesread = m_FileReader.GetNextDataBlock( m_TxDataBuf, 512);
-			if( samplesread > 0 )
-			{
-				DataModifier.ProcessBlock(m_TxDataBuf, samplesread);
-				if( !FileWriter.Write(m_TxDataBuf, samplesread) )
-				{
-					m_FileReader.close();
-					FileWriter.close();
-					qDebug()<<"File copy error";
-					m_FileReader.close();
-					FileWriter.close();
-					return;
-				}
-				sampleswritten += samplesread;
-			}
-			else
-			{
-				if(samplesread < 0 )
-					qDebug()<<"File read error";
-				else
-					qDebug()<<"File operation complete";
-				break;
-			}
-		}
-		m_FileReader.close();
-		FileWriter.close();
 	}
 	else
 	{
-		qDebug()<<"File read open Fail";
 	}
-}
-
-void CFileTxDlg::on_pushButtonStartTest_clicked()
-{
-	SetTxFreq(m_TxFrequency);
-	m_DataModifier.Init(32000);
-	m_DataModifier.SetSweepRate(5000.0);
-	m_DataModifier.SetSweepStart(-15000.0);
-	m_DataModifier.SetSweepStop(15000.0);
 	SetTxState(true);
+	m_TransmitOn = true;
 }
 
-void CFileTxDlg::on_pushButtonStopTest_clicked()
+void CFileTxDlg::on_pushButtonStop_clicked()
 {
+	m_pTimer->stop();		//stop status timer
+	m_TransmitOn = false;
 	SetTxState(false);
+	if(m_FileReader.isOpen())
+		m_FileReader.close();
+}
+
+/////////////////////////////////////////////////////////////////////
+// Status Timer event handler
+/////////////////////////////////////////////////////////////////////
+void CFileTxDlg::OnTimer()
+{
+	if(m_FileTotalSamples>0)
+		ui->progressBar->setValue((100*m_FileSamplesSent)/m_FileTotalSamples);
 }
 
 void CFileTxDlg::NewTxMsgSlot(int FifoPtr)
@@ -176,15 +206,58 @@ void CFileTxDlg::NewTxMsgSlot(int FifoPtr)
 	}
 	else if(pMsg->GetType() == TYPE_DATA_ITEM_ACK)
 	{	//is TX fifo status message from SDR
+		if(!m_TransmitOn)
+			return;
 		tmp16.bytes.b0 = pMsg->Buf8[3];
 		tmp16.bytes.b1 = pMsg->Buf8[4];
 		int BytesAvail = tmp16.all;
 //		qDebug()<<"Tx FIFO = "<<BytesAvail;
-		while(BytesAvail >= (240*6) )
+		if(m_UseTxFile)
 		{
-			GenerateTestData(m_TestBuf, 240);
-			int sent = SendIQDataBlk( m_TestBuf, 240);
-			BytesAvail -= sent;
+			while( BytesAvail >= (240*6) )
+			{
+				int samplesread = m_FileReader.GetNextDataBlock( m_TxDataBuf, 240 );
+				if( samplesread > 0 )
+				{
+					m_FileSamplesSent += samplesread;
+					m_DataModifier.ProcessBlock(m_TxDataBuf, 240);
+					int sent = SendIQDataBlk( m_TxDataBuf, 240 );
+					BytesAvail -= sent;
+				}
+				else if( samplesread < 0 )
+				{
+					qDebug()<<"File read error";
+					m_TransmitOn = false;
+					SetTxState(false);
+					m_FileReader.close();
+					break;
+				}
+				else
+				{
+					if(m_TxRepeat)
+					{
+						m_FileSamplesSent = 0;
+						m_FileReader.ResetToBeginning();
+					}
+					else
+					{
+						m_TransmitOn = false;
+						SetTxState(false);
+						m_FileReader.close();
+						qDebug()<<"File operation complete";
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			while( BytesAvail >= (240*6) )
+			{
+				GenerateTestData(m_TestBuf, 240);
+				int sent = SendIQDataBlk( m_TestBuf, 240);
+				BytesAvail -= sent;
+			}
 		}
 //		qDebug()<<"BA "<<BytesAvail;
 	}
@@ -261,4 +334,83 @@ int CFileTxDlg::SendIQDataBlk(tICpx32* pData, int NumSamples)
 	return len;
 }
 
+int CFileTxDlg::SendIQDataBlk(TYPECPX* pData, int NumSamples)
+{
+	tASCPDataMsg TxMsg;
+	int len=0;
+	for(int j=0; j<NumSamples; j++)
+	{
+		qint32 tmp;
+		tmp = (qint32)(pData[j].re * 2.147483648e9);
+		TxMsg.fld.DataBuf[len++] = (tmp>>24) & 0xFF;	//I2
+		TxMsg.fld.DataBuf[len++] = (tmp>>16) & 0xFF;	//I1
+		TxMsg.fld.DataBuf[len++] = (tmp>>8) & 0xFF;		//I0
+
+		tmp = (qint32)(pData[j].im * 2.147483648e9);
+		TxMsg.fld.DataBuf[len++] = (tmp>>24) & 0xFF;	//Q2
+		TxMsg.fld.DataBuf[len++] = (tmp>>16) & 0xFF;	//Q1
+		TxMsg.fld.DataBuf[len++] = (tmp>>8) & 0xFF;		//Q0
+	}
+	TxMsg.fld.Hdr = TYPE_TARG_DATA_ITEM0<<8;
+	TxMsg.fld.Hdr += (len + 4);
+	TxMsg.fld.Sequence = m_SeqNumber++;
+	if(m_pSdrInterface)
+		m_pSdrInterface->SendUdpMsg(TxMsg.Buf8, len+4);
+	return len;
+}
+
+
+#if 0
+CWaveFileWriter FileWriter;
+CDataModifier DataModifier;
+if(m_FileReader.open(m_TxFilePath) )
+{
+	if( !FileWriter.open( "d:\\testwr.wav",true, m_FileReader.GetSampleRate(), true, 0) )
+	{
+		m_FileReader.close();
+		qDebug()<<"File write open error";
+		SetTxState(false);
+		return;
+	}
+	int sampleswritten = 0;
+	int samplesread = 0;
+	DataModifier.Init(m_FileReader.GetSampleRate());
+	DataModifier.SetSweepRate(1.0);
+	DataModifier.SetSweepStart(-100.0);
+	DataModifier.SetSweepStop(100.0);
+	while(sampleswritten < m_FileReader.GetNumberSamples())
+	{
+		//copy in blocks of 512 samples
+		samplesread = m_FileReader.GetNextDataBlock( m_TxDataBuf, 512);
+		if( samplesread > 0 )
+		{
+			DataModifier.ProcessBlock(m_TxDataBuf, samplesread);
+			if( !FileWriter.Write(m_TxDataBuf, samplesread) )
+			{
+				m_FileReader.close();
+				FileWriter.close();
+				qDebug()<<"File copy error";
+				m_FileReader.close();
+				FileWriter.close();
+				return;
+			}
+			sampleswritten += samplesread;
+		}
+		else
+		{
+			if(samplesread < 0 )
+				qDebug()<<"File read error";
+			else
+				qDebug()<<"File operation complete";
+			break;
+		}
+	}
+	m_FileReader.close();
+	FileWriter.close();
+}
+else
+{
+	qDebug()<<"File read open Fail";
+}
+#endif
 

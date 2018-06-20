@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>404</width>
-    <height>271</height>
+    <width>449</width>
+    <height>316</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>100</x>
-     <y>230</y>
+     <x>40</x>
+     <y>270</y>
      <width>171</width>
      <height>32</height>
     </rect>
@@ -32,8 +32,8 @@
   <widget class="QPushButton" name="pushButtonFileSelect">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>20</y>
+     <x>20</x>
+     <y>90</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -46,7 +46,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>50</y>
+     <y>130</y>
      <width>361</width>
      <height>20</height>
     </rect>
@@ -58,8 +58,8 @@
   <widget class="CFreqCtrl" name="frameTxFreqCtrl">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>80</y>
+     <x>20</x>
+     <y>50</y>
      <width>181</width>
      <height>31</height>
     </rect>
@@ -92,8 +92,8 @@
   <widget class="QPushButton" name="pushButtonStart">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>82</y>
+     <x>20</x>
+     <y>10</y>
      <width>75</width>
      <height>31</height>
     </rect>
@@ -106,7 +106,7 @@
    <property name="geometry">
     <rect>
      <x>37</x>
-     <y>200</y>
+     <y>240</y>
      <width>331</width>
      <height>23</height>
     </rect>
@@ -118,7 +118,7 @@
   <widget class="QCheckBox" name="checkBoxRepeat">
    <property name="geometry">
     <rect>
-     <x>230</x>
+     <x>100</x>
      <y>90</y>
      <width>70</width>
      <height>17</height>
@@ -132,7 +132,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>120</y>
+     <y>160</y>
      <width>321</width>
      <height>61</height>
     </rect>
@@ -156,30 +156,180 @@
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButtonStartTest">
+  <widget class="QPushButton" name="pushButtonStop">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>20</y>
-     <width>75</width>
-     <height>23</height>
+     <x>120</x>
+     <y>10</y>
+     <width>81</width>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Start</string>
+    <string>Stop TX</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButtonStopTest">
+  <widget class="QCheckBox" name="checkBoxUseFile">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>20</y>
-     <width>75</width>
-     <height>23</height>
+     <x>160</x>
+     <y>90</y>
+     <width>61</width>
+     <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>Stop</string>
+    <string>Use File</string>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinBoxAmp">
+   <property name="geometry">
+    <rect>
+     <x>219</x>
+     <y>10</y>
+     <width>111</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>90</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="suffix">
+    <string> dB</string>
+   </property>
+   <property name="prefix">
+    <string>Pwr </string>
+   </property>
+   <property name="minimum">
+    <number>-160</number>
+   </property>
+   <property name="maximum">
+    <number>0</number>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinBoxStart">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>40</y>
+     <width>111</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="suffix">
+    <string> Hz</string>
+   </property>
+   <property name="prefix">
+    <string>Start </string>
+   </property>
+   <property name="minimum">
+    <number>-32000</number>
+   </property>
+   <property name="maximum">
+    <number>32000</number>
+   </property>
+   <property name="singleStep">
+    <number>1</number>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinBoxSweep">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>70</y>
+     <width>151</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="suffix">
+    <string> Hz/Sec</string>
+   </property>
+   <property name="prefix">
+    <string>Sweep </string>
+   </property>
+   <property name="minimum">
+    <number>0</number>
+   </property>
+   <property name="maximum">
+    <number>100000</number>
+   </property>
+   <property name="singleStep">
+    <number>10</number>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinBoxStop">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>40</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="suffix">
+    <string> Hz</string>
+   </property>
+   <property name="prefix">
+    <string>Stop </string>
+   </property>
+   <property name="minimum">
+    <number>-32000</number>
+   </property>
+   <property name="maximum">
+    <number>32000</number>
+   </property>
+   <property name="singleStep">
+    <number>0</number>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinBoxNoise">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>10</y>
+     <width>101</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="suffix">
+    <string> dB</string>
+   </property>
+   <property name="prefix">
+    <string>Noise </string>
+   </property>
+   <property name="minimum">
+    <number>-160</number>
+   </property>
+   <property name="maximum">
+    <number>0</number>
    </property>
   </widget>
  </widget>
