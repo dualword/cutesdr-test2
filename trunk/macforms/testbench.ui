@@ -281,7 +281,7 @@
          </rect>
         </property>
         <property name="suffix">
-         <string> KHz</string>
+         <string> kHz</string>
         </property>
         <property name="prefix">
          <string>Stop </string>
@@ -306,7 +306,7 @@
          </rect>
         </property>
         <property name="suffix">
-         <string> KHz</string>
+         <string> kHz</string>
         </property>
         <property name="prefix">
          <string>Start </string>

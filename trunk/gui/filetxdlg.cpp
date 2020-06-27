@@ -18,6 +18,7 @@ CFileTxDlg::CFileTxDlg(QWidget *parent, CSdrInterface* pSdrInterface) :
 	m_TxRepeat = false;
 	m_FileTotalSamples = 14400;
 	m_FileSamplesSent = 0;
+	m_CtrlLockout = true;
 }
 
 CFileTxDlg::~CFileTxDlg()
@@ -46,8 +47,7 @@ void CFileTxDlg::Init()
 	ui->labelFileInfo->setText(m_FileReader.m_FileInfoStr);
 	m_FileReader.close();
 	m_TransmitOn = false;
-	m_TxSignalPower = 0.0;
-	m_TxNoisePower = -160.0;
+	m_CtrlLockout = false;
 }
 
 void CFileTxDlg::done(int r)	//virtual override

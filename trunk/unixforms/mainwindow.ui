@@ -216,10 +216,10 @@
           </font>
          </property>
          <property name="toolTip">
-          <string>Frequency Span in KHz</string>
+          <string>Frequency Span in kHz</string>
          </property>
          <property name="suffix">
-          <string> KHz</string>
+          <string> kHz</string>
          </property>
          <property name="prefix">
           <string>Span </string>

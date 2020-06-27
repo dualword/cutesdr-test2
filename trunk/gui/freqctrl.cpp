@@ -153,7 +153,7 @@ qint64 pwr = 1;
 			break;
 		case UNITS_KHZ:
 			m_DecPos = 3;
-			m_UnitString = "KHz";
+			m_UnitString = "kHz";
 			break;
 		case UNITS_MHZ:
 			m_DecPos = 6;
@@ -263,7 +263,7 @@ void CFreqCtrl::SetUnits(FUNITS units)
 			break;
 		case UNITS_KHZ:
 			m_DecPos = 3;
-			m_UnitString = "KHz";
+			m_UnitString = "kHz";
 			break;
 		case UNITS_MHZ:
 			m_DecPos = 6;

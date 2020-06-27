@@ -63,19 +63,19 @@ CSdrSetupDlg::~CSdrSetupDlg()
 //Fill in initial data
 void CSdrSetupDlg::InitDlg()
 {
-	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(0)/1000 )+ " KHz  ";
+	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(0)/1000 )+ " kHz  ";
 	m_Str2 = QString().number(m_pSdrInterface->GetSampleRateFromIndex(0)/1000.0)+ " Ksps";
 	ui->radioButtonRate0->setText(m_Str1 + m_Str2 );
-	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(1)/1000 )+ " KHz  ";
+	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(1)/1000 )+ " kHz  ";
 	m_Str2 = QString().number(m_pSdrInterface->GetSampleRateFromIndex(1)/1000.0)+ " Ksps";
 	ui->radioButtonRate1->setText(m_Str1 + m_Str2 );
-	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(2)/1000 )+ " KHz  ";
+	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(2)/1000 )+ " kHz  ";
 	m_Str2 = QString().number(m_pSdrInterface->GetSampleRateFromIndex(2)/1000.0)+ " Ksps";
 	ui->radioButtonRate2->setText(m_Str1 + m_Str2 );
-	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(3)/1000 )+ " KHz  ";
+	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(3)/1000 )+ " kHz  ";
 	m_Str2 = QString().number(m_pSdrInterface->GetSampleRateFromIndex(3)/1000.0)+ " Ksps";
 	ui->radioButtonRate3->setText(m_Str1 + m_Str2 );
-	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(4)/1000 )+ " KHz  ";
+	m_Str1 = QString().number( m_pSdrInterface->GetMaxBWFromIndex(4)/1000 )+ " kHz  ";
 	m_Str2 = QString().number(m_pSdrInterface->GetSampleRateFromIndex(4)/1000.0)+ " Ksps";
 	ui->radioButtonRate4->setText(m_Str1 + m_Str2 );
 

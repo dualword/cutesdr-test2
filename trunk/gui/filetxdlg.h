@@ -70,6 +70,7 @@ private:
 	QTimer *m_pTimer;
 	TYPECPX m_TxDataBuf[MAX_TXBLKSAMPLES];
 	tICpx32 m_TestBuf[MAX_TXBLKSAMPLES];
+	bool m_CtrlLockout;
 	bool m_TransmitOn;
 	quint16 m_SeqNumber;
 	quint32 m_FileTotalSamples;

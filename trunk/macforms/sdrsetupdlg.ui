@@ -60,7 +60,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>500 KHz</string>
+     <string>500 kHz</string>
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate1">
@@ -76,7 +76,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>100 KHz</string>
+     <string>100 kHz</string>
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate0">
@@ -92,7 +92,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>50 KHz </string>
+     <string>50 kHz </string>
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate3">
@@ -108,7 +108,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>1000 KHz</string>
+     <string>1000 kHz</string>
     </property>
    </widget>
    <widget class="QRadioButton" name="radioButtonRate4">
@@ -124,7 +124,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>2000 KHz</string>
+     <string>2000 kHz</string>
     </property>
    </widget>
   </widget>
